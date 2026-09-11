@@ -1,0 +1,60 @@
+/*
+ * Дизайн-токены — источник истины: design description/styles.md
+ */
+:root {
+  /* Базовые цвета бренда и системы */
+  --color-primary: #0066cc;
+  --color-primary-hover: #0052a3;
+  --color-primary-light: #ebf3fc;
+  --color-primary-border: #99c2f0;
+
+  /* Темные цвета навигации (Activity Bar) */
+  --bg-activity-bar: #101a30;
+  --activity-bar-icon: #8fa0bd;
+  --activity-bar-icon-active: #ffffff;
+  --activity-bar-active-bg: rgba(255, 255, 255, 0.12);
+  --activity-bar-indicator: #0066cc;
+
+  /* Фоновые цвета панелей и подложек */
+  --bg-app: #f4f7fa;
+  --bg-panel: #ffffff;
+  --bg-panel-subtle: #f8fafc;
+  --bg-card-hover: #f1f5f9;
+  --bg-card-selected: #eef5ff;
+
+  /* Границы и разделители */
+  --border-subtle: #edf2f7;
+  --border-default: #d9e1ec;
+  --border-active: #7da7f6;
+
+  /* Текст и типографика */
+  --text-main: #14213d;
+  --text-secondary: #5a6a85;
+  --text-muted: #8c9ba5;
+  --text-eyebrow: #7c8ba1;
+
+  /* Цвета технологических объектов и статусов */
+  --status-working-bg: #e6f9f0;
+  --status-working-text: #0e8345;
+  --status-working-dot: #10b981;
+
+  /* Технологические типы объектов */
+  --marker-wellpad: #f97316; /* Оранжевый - Кустовые площадки / добыча */
+  --marker-processing: #10b981; /* Зеленый - УПН, сбор и подготовка */
+  --marker-delivery: #7c3aed; /* Фиолетовый - Точка сдачи/поставки */
+  --pipeline-oil: #0066cc; /* Синий - Нефтепроводы */
+  --pipeline-gas: #10b981; /* Зеленый - Газопроводы */
+  --pipeline-water: #0ea5e9; /* Голубой - Водоводы */
+
+  /* Скругления */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-pill: 9999px;
+
+  /* Тени */
+  --shadow-card: 0 1px 3px rgba(16, 26, 48, 0.05);
+  --shadow-modal: 0 8px 24px rgba(16, 26, 48, 0.12);
+  --shadow-popover: 0 4px 16px rgba(16, 26, 48, 0.08);
+}
