@@ -1,2 +1,27 @@
 geo_platform_clean/
 /.env
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Сборка и кэш инструментов
+dist/
+*.local
+*.tsbuildinfo
+
+# Editor directories and files
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Локальные дампы и логи
+logs/
+*.log
