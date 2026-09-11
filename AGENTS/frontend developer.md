@@ -16,7 +16,7 @@
 - TypeScript
 - Vite 6
 - Node.js 20
-- @xyflow/react
+- @vis-network/react
 - @tanstack/react-query
 - recharts
 - zod
@@ -107,7 +107,7 @@ frontend/
 
 Для работы с графом используй:
 
-@xyflow/react
+@vis-network/react
 
 Граф должен рассматриваться как отдельная подсистема frontend.
 
