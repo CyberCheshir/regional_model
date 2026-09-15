@@ -28,10 +28,10 @@
   --border-active: #7da7f6;
 
   /* Текст и типографика */
-  --text-main: #14213d;
-  --text-secondary: #5a6a85;
-  --text-muted: #8c9ba5;
-  --text-eyebrow: #7c8ba1;
+  --text-main: #000;
+  --text-secondary: #000;
+  --text-muted: #000;
+  --text-eyebrow: #000;
 
   /* Цвета технологических объектов и статусов */
   --status-working-bg: #e6f9f0;
@@ -45,6 +45,11 @@
   --pipeline-oil: #0066cc; /* Синий - Нефтепроводы */
   --pipeline-gas: #10b981; /* Зеленый - Газопроводы */
   --pipeline-water: #0ea5e9; /* Голубой - Водоводы */
+
+  /* Подложки карты (Этап 6) */
+  --bg-map-topo: #eef3f8; /* Топографический план */
+  --bg-map-satellite: #223018; /* Космоснимки */
+  --radius-panel: 8px; /* Радиус панельных блоков карты */
 
   /* Скругления */
   --radius-sm: 4px;

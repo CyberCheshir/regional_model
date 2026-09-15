@@ -1,0 +1,5 @@
+/* Вариант для правой панели: бордер слева */
+.panel-restore-bar--right {
+  border-right: none;
+  border-left: 1px solid var(--border-default);
+}

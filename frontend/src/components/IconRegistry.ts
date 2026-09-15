@@ -12,9 +12,16 @@ export type IconName =
   // Left Sidebar
   | 'tree-wellpad'
   | 'tree-facility'
+  | 'tree-delivery-point'
   | 'tree-pipeline'
+  | 'chevron'
   | 'action-chart'
   | 'action-visibility'
+  | 'action-add'
+  | 'trash'
+  | 'basemap-topo'
+  | 'basemap-satellite'
+  | 'dev-mode'
   | 'collapse-panel'
   // Inspector tabs
   | 'tab-general'
@@ -22,6 +29,8 @@ export type IconName =
   | 'tab-calendar'
   | 'tab-trends'
   | 'tab-alerts'
+  // Misc actions
+  | 'close'
   // Status & flows
   | 'check-success'
   | 'flow-physical'
@@ -80,6 +89,19 @@ const ICONS: Record<IconName, IconDefinition> = {
     paths:
       '<path d="M3 17V9l4 2.5V9l4 2.5V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v12H3zm12-10.5h-2V8h2V6.5z"/>',
   },
+  'tree-delivery-point': {
+    viewBox: '0 0 20 20',
+    stroke: true,
+    strokeWidth: 1.5,
+    paths:
+      '<circle cx="10" cy="10" r="3"/><path d="M10 1.5V4M10 16v2.5M1.5 10H4M16 10h2.5"/><circle cx="10" cy="10" r="7" stroke-dasharray="2.5 2.5" opacity="0.5"/>',
+  },
+  'chevron': {
+    viewBox: '0 0 16 16',
+    stroke: true,
+    strokeWidth: 1.5,
+    paths: '<path d="M6 3.5 10.5 8 6 12.5"/>',
+  },
   'tree-pipeline': {
     viewBox: '0 0 20 20',
     fill: true,
@@ -98,6 +120,43 @@ const ICONS: Record<IconName, IconDefinition> = {
     strokeWidth: 1.5,
     paths:
       '<path d="M1.5 8s2.5-4.5 6.5-4.5 6.5 4.5 6.5 4.5-2.5 4.5-6.5 4.5S1.5 8 1.5 8z"/><circle cx="8" cy="8" r="2"/>',
+  },
+  'action-add': {
+    viewBox: '0 0 16 16',
+    stroke: true,
+    strokeWidth: 1.6,
+    paths: '<path d="M8 3v10M3 8h10"/>',
+  },
+  // Режим разработчика — «баг»/код
+  'dev-mode': {
+    viewBox: '0 0 16 16',
+    stroke: true,
+    strokeWidth: 1.5,
+    paths:
+      '<path d="M5 2 3.5 4M11 2l1.5 2"/><rect x="4.5" y="5" width="7" height="8" rx="3"/><path d="M2 7h2.5M11.5 7H14M2 10h2.5M11.5 10H14M4 4h8"/>',
+  },
+  // Топографический план — карта со горизонталями
+  'basemap-topo': {
+    viewBox: '0 0 16 16',
+    stroke: true,
+    strokeWidth: 1.4,
+    paths:
+      '<path d="M1.5 4.5 6 2.5l4 2 4.5-2v9L10 13.5l-4-2-4.5 2z"/><path d="M6 2.5v9M10 4.5v9"/><path d="M6.2 6.2c1.2.4 2.6.4 3.6 0"/><path d="M6.2 8.4c1.2.4 2.6.4 3.6 0"/>',
+  },
+  // Космоснимки — спутник
+  'basemap-satellite': {
+    viewBox: '0 0 16 16',
+    stroke: true,
+    strokeWidth: 1.4,
+    paths:
+      '<path d="M5.5 5.5 3 8l2.5 2.5"/><path d="M10.5 5.5 13 8l-2.5 2.5"/><rect x="6" y="6" width="4" height="4" rx="0.6"/><path d="M8 1.5v1.8M8 12.7v1.8M1.5 8h1.8M12.7 8h1.8"/>',
+  },
+  trash: {
+    viewBox: '0 0 16 16',
+    stroke: true,
+    strokeWidth: 1.5,
+    paths:
+      '<path d="M3 4.5h10"/><path d="M6.5 4.5V3h3v1.5"/><path d="M4.5 4.5 5 13h6l.5-8.5"/><path d="M7 7v4M9 7v4"/>',
   },
   'collapse-panel': {
     viewBox: '0 0 16 16',
@@ -164,6 +223,12 @@ const ICONS: Record<IconName, IconDefinition> = {
     dasharray: '2 2',
     paths:
       '<path d="M2 12c3-1 4-7 8-7h4"/><path d="M12 2l3 3-3 3" stroke-dasharray="none"/>',
+  },
+  close: {
+    viewBox: '0 0 16 16',
+    stroke: true,
+    strokeWidth: 1.5,
+    paths: '<path d="M4 4l8 8M12 4l-8 8"/>',
   },
 };
 

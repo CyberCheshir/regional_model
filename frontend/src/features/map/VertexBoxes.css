@@ -1,0 +1,187 @@
+/* VertexBoxes — DOM-слой прямоугольных вершин (кустов) поверх canvas карты. */
+
+.vertex-boxes {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  /* Слой перехватывает события только на самих прямоугольниках */
+  pointer-events: none;
+  z-index: 3;
+}
+
+/*
+ * Внутренний слой — в МИРОВЫХ координатах карты.
+ * Одна CSS-трансформация (translate+scale) синхронно с камерой vis-network:
+ * зум масштабирует весь слой одним композитным шагом (плавно, как canvas).
+ */
+.vertex-boxes__layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  transform-origin: 0 0;
+  /* Дети перехватывают события сами (куст сам задаёт pointer-events: auto) */
+  pointer-events: none;
+}
+
+/* Элемент-обёртка куста (не позиционируется сам — дети absolute) */
+.vertex-box-item {
+  position: static;
+}
+
+/* Область соединения — прозрачная зона вокруг контура куста */
+.vertex-box__connect-area {
+  position: absolute;
+  box-sizing: border-box;
+  border: 1px dashed var(--color-primary, #0066cc);
+  border-radius: calc(var(--radius-sm, 4px) + 2px);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Область соединения точечной вершины — круг */
+.vertex-box__connect-area--point {
+  border-radius: 50%;
+  opacity: 0.4;
+}
+
+.vertex-box {
+  position: absolute;
+  box-sizing: border-box;
+  border: 2px solid;
+  border-radius: var(--radius-md, 6px);
+  pointer-events: auto;
+  cursor: move;
+  user-select: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 2px;
+  overflow: hidden;
+  /* Объём: градиентная заливка (цвет вершины) + тень под объектом +
+     внутренний верхний блик. Цвет приходит через --vertex-color. */
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--vertex-color, #0066cc) 22%, #ffffff) 0%,
+    color-mix(in srgb, var(--vertex-color, #0066cc) 12%, #ffffff) 45%,
+    color-mix(in srgb, var(--vertex-color, #0066cc) 6%, #ffffff) 100%
+  );
+  box-shadow:
+    0 2px 4px rgba(16, 26, 48, 0.18),
+    0 6px 14px rgba(16, 26, 48, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -2px 4px color-mix(in srgb, var(--vertex-color, #0066cc) 10%, transparent);
+  transition: box-shadow 0.12s ease, transform 0.12s ease;
+}
+
+.vertex-box:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 4px 8px rgba(16, 26, 48, 0.22),
+    0 10px 20px rgba(16, 26, 48, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.75),
+    inset 0 -2px 4px color-mix(in srgb, var(--vertex-color, #0066cc) 12%, transparent);
+}
+
+/* Картинка объекта внутри вершины — размер задаётся долей от самой вершины
+   и НЕ зависит от наличия подписи (вкл/выкл «Подписи объектов» не меняет
+   размер картинки). */
+.vertex-box__icon {
+  flex: 0 0 auto;
+  height: 55%;
+  width: auto;
+  max-width: 90%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  opacity: 0.85;
+}
+
+.vertex-box.is-selected {
+  box-shadow:
+    0 0 0 2px var(--color-primary, #0066cc),
+    0 6px 16px rgba(16, 26, 48, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+
+/* Кус — цель снапа ребра (подсветка при рисовании рядом) */
+.vertex-box.is-snap-target {
+  box-shadow: 0 0 0 3px var(--color-primary, #0066cc);
+  border-style: dashed;
+}
+
+.vertex-box__label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-main, #000);
+  pointer-events: none;
+  white-space: nowrap;
+  max-width: 90%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* --- 8 ручек ресайза --- */
+.vertex-box__handle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: var(--bg-panel, #fff);
+  border: 1.5px solid var(--color-primary, #0066cc);
+  border-radius: 2px;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+/* Ручки видны при наведении/выделении (меньше визуального шума) */
+.vertex-box:hover .vertex-box__handle,
+.vertex-box.is-selected .vertex-box__handle {
+  opacity: 1;
+}
+
+.vertex-box__handle--nw {
+  top: -5px;
+  left: -5px;
+}
+
+.vertex-box__handle--n {
+  top: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.vertex-box__handle--ne {
+  top: -5px;
+  right: -5px;
+}
+
+.vertex-box__handle--e {
+  top: 50%;
+  right: -5px;
+  transform: translateY(-50%);
+}
+
+.vertex-box__handle--se {
+  bottom: -5px;
+  right: -5px;
+}
+
+.vertex-box__handle--s {
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.vertex-box__handle--sw {
+  bottom: -5px;
+  left: -5px;
+}
+
+.vertex-box__handle--w {
+  top: 50%;
+  left: -5px;
+  transform: translateY(-50%);
+}

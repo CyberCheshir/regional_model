@@ -1,0 +1,30 @@
+.fluid-seg {
+  display: inline-flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: var(--radius-control, 8px);
+  background: var(--bg-inset, rgba(255, 255, 255, 0.04));
+}
+
+.fluid-seg__item {
+  padding: 5px 14px;
+  border: none;
+  border-radius: var(--radius-control-inner, 6px);
+  background: transparent;
+  color: var(--text-secondary, #000);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.fluid-seg__item:hover {
+  color: var(--text-primary, #e6ecf8);
+}
+
+.fluid-seg__item--active,
+.fluid-seg__item--active:hover {
+  background: var(--bg-card-selected, #24406b);
+  color: var(--text-primary, #e6ecf8);
+  font-weight: 600;
+}

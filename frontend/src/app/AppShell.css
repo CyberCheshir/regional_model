@@ -1,0 +1,110 @@
+/*
+ * AppShell — раскладка рабочего места оверлеями (design description/styles.md §3.5).
+ * Карта (canvas) занимает ВЕСЬ экран слоем 0 и НЕ меняет размер при ресайзе
+ * панелей; панели лежат поверх неё слоем 1. Это исключает пересчёт viewport
+ * vis-network при перетаскивании разделителей.
+ */
+
+.app-shell {
+  position: relative;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background-color: var(--bg-app);
+}
+
+/* Слой 0: центральная карта на весь экран */
+.app-shell__map {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Слой 1: зоны-панели поверх карты */
+.app-shell__activity,
+.app-shell__left,
+.app-shell__right {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 2;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Activity Bar прижат к левому краю */
+.app-shell__activity {
+  left: 0;
+  width: 56px;
+}
+
+/* Обёртки разделителей: фиксированная ширина, позиция — из inline-стилей */
+.app-shell__left-resizer,
+.app-shell__right-resizer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  z-index: 3;
+}
+
+/* Панели-карточки (левая и правая зоны) — непрозрачны, поверх карты */
+.shell-panel {
+  background: var(--bg-panel);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.shell-panel--left {
+  border-right: 1px solid var(--border-default);
+  box-shadow: var(--shadow-card);
+}
+
+.shell-panel--right {
+  border-left: 1px solid var(--border-default);
+  box-shadow: var(--shadow-card);
+}
+
+.shell-panel--collapsed {
+  display: none;
+}
+
+/* Кнопка возврата свернутой панели (тонкая полоса поверх карты) */
+.panel-restore-bar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 3;
+  width: 24px;
+  background: var(--bg-panel);
+  border-right: 1px solid var(--border-default);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* Полоса слева прижимается к Activity Bar, справа — к правому краю */
+.panel-restore-bar:not(.panel-restore-bar--right) {
+  left: 56px;
+}
+
+.panel-restore-bar--right {
+  right: 0;
+}
+
+.panel-restore-bar:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-main);
+}

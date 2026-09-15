@@ -1,0 +1,22 @@
+/* Подсказка в подвале панели */
+.panel-footer-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-panel);
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.panel-footer-hint strong {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.panel-footer-hint__sep {
+  color: var(--text-muted);
+}

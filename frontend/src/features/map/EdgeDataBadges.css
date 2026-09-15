@@ -1,0 +1,25 @@
+/* EdgeDataBadges — метки расхода на рёбрах карты (Этап 6, README 6.3).
+   Абсолютно позиционированный DOM-слой поверх canvas vis-network;
+   координаты обновляются из JS (left/top через inline-стили). */
+
+.edge-badges {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.edge-badge {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  padding: 2px 8px;
+  border-radius: var(--radius-badge, 10px);
+  border: 1px solid var(--border-default, #2a3a58);
+  background: rgba(13, 21, 38, 0.85);
+  color: var(--text-primary, #e6ecf8);
+  font-size: 11px;
+  line-height: 1.2;
+  white-space: nowrap;
+  user-select: none;
+}

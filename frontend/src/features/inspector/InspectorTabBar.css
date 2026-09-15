@@ -1,0 +1,50 @@
+.inspector-tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 6px;
+  border-right: 1px solid var(--border-color, #223350);
+  background: var(--bg-panel, #101a30);
+}
+
+.inspector-tabs__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: 56px;
+  padding: 8px 4px;
+  border: none;
+  border-radius: var(--radius-item, 6px);
+  background: transparent;
+  color: var(--text-secondary, #000);
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.inspector-tabs__item:hover {
+  background: var(--bg-card-hover, #1a2a47);
+  color: var(--text-primary, #e6ecf8);
+}
+
+.inspector-tabs__item--active {
+  background: var(--bg-card-selected, #1f3a63);
+  color: var(--text-primary, #e6ecf8);
+  position: relative;
+}
+
+.inspector-tabs__item--active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--accent, #4a8dff);
+}
+
+.inspector-tabs__label {
+  line-height: 1.1;
+}

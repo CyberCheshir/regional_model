@@ -1,0 +1,18 @@
+/* BasemapTiles — растровый тайловый слой ПОД canvas графа (vis-network). */
+
+.basemap-tiles {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  /* Ниже canvas графа (canvas рисуется поверх) */
+  z-index: 0;
+}
+
+.basemap-tiles__tile {
+  position: absolute;
+  user-select: none;
+  pointer-events: none;
+  /* Сглаживание при дробном масштабе */
+  image-rendering: auto;
+}

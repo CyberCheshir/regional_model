@@ -1,5 +1,7 @@
 import { ICON_REGISTRY, type IconName } from './IconRegistry';
 
+export type { IconName } from './IconRegistry';
+
 export type AppIconProps = {
   /** Имя иконки из реестра (design description/icons.md) */
   name: IconName;
@@ -7,6 +9,8 @@ export type AppIconProps = {
   size?: number;
   /** Цвет (CSS-переменная или значение) */
   color?: string;
+  /** Зеркалить иконку по горизонтали (для правых панелей) */
+  flipped?: boolean;
   className?: string;
   title?: string;
 };
@@ -19,6 +23,7 @@ export function AppIcon({
   name,
   size = 16,
   color = 'currentColor',
+  flipped = false,
   className,
   title,
 }: AppIconProps) {
@@ -30,6 +35,7 @@ export function AppIcon({
   return (
     <svg
       className={className}
+      style={flipped ? { transform: 'scaleX(-1)' } : undefined}
       width={size}
       height={size}
       viewBox={def.viewBox}

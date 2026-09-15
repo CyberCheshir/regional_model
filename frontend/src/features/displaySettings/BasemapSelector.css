@@ -1,0 +1,72 @@
+/* Выбор подложки карты — сегментированный контрол (design description/components.md) */
+
+.basemap-selector {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* Название опции внутри карточки — компактная подпись в строке */
+.basemap-selector__title {
+  font-size: 13px;
+  color: var(--text-main, #000);
+}
+
+/* Общая подложка сегментов (по содержимому, не растягивается) —
+   объёмная «корзина»: внутренняя тень углубляет паз. */
+.basemap-seg {
+  display: inline-flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: var(--radius-md, 6px);
+  background: var(--bg-card-hover, #f1f5f9);
+  box-shadow: inset 0 1px 3px rgba(16, 26, 48, 0.18);
+}
+
+.basemap-seg__item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 8px;
+  border: none;
+  border-radius: var(--radius-sm, 4px);
+  background: transparent;
+  color: var(--text-main, #000);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+.basemap-seg__item:hover {
+  color: var(--color-primary, #0066cc);
+  background: linear-gradient(180deg, #ffffff 0%, #eef2f8 100%);
+  box-shadow: 0 1px 2px rgba(16, 26, 48, 0.18);
+  transform: translateY(-1px);
+}
+
+.basemap-seg__item:active {
+  transform: translateY(0);
+  box-shadow: inset 0 2px 3px rgba(16, 26, 48, 0.2);
+}
+
+.basemap-seg__item:focus-visible {
+  outline: 2px solid var(--color-primary, #0066cc);
+  outline-offset: 1px;
+}
+
+/* Активный сегмент — выпуклая «приподнятая» подложка с градиентом и тенью */
+.basemap-seg__item--active,
+.basemap-seg__item--active:hover {
+  background: linear-gradient(180deg, #ffffff 0%, #e9f0fb 100%);
+  color: var(--color-primary, #0066cc);
+  font-weight: 600;
+  transform: translateY(0);
+  box-shadow:
+    0 2px 4px rgba(16, 26, 48, 0.2),
+    0 1px 1px rgba(16, 26, 48, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}

@@ -1,0 +1,32 @@
+/* Разделитель (sash) для изменения ширины панелей */
+
+.panel-resizer {
+  width: 6px;
+  height: 100%;
+  z-index: 10;
+  cursor: col-resize;
+  position: relative;
+}
+
+/* Визуальная полоса появляется при hover и во время drag */
+.panel-resizer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 2px;
+  width: 2px;
+  background: transparent;
+  transition: background-color 0.15s ease;
+}
+
+.panel-resizer:hover::after,
+.panel-resizer[data-dragging='true']::after {
+  background-color: var(--border-active);
+}
+
+/* Во время drag запрещаем выделение текста во всём shell */
+.app-shell:has(.panel-resizer[data-dragging='true']) {
+  cursor: col-resize;
+  user-select: none;
+}

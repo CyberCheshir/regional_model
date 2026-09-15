@@ -1,0 +1,13 @@
+.left-sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: var(--bg-panel, #141d33);
+}
+
+.left-sidebar__body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}

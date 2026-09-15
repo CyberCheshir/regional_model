@@ -1,0 +1,58 @@
+/* GeoGraphLayer — оверлей графа поверх растровой карты (гео-привязка). */
+
+.geo-graph-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.geo-graph-layer__svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.geo-graph-layer__vertex {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 10px;
+  min-height: 10px;
+  padding: 2px 4px;
+  border: 2px solid;
+  border-radius: var(--radius-sm, 4px);
+  font-size: 11px;
+  font-weight: 600;
+  color: #000;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(16, 26, 48, 0.25);
+}
+
+.geo-graph-layer__vertex.is-selected {
+  box-shadow: 0 0 0 2px var(--color-primary, #0066cc), 0 1px 3px rgba(16, 26, 48, 0.3);
+}
+
+.geo-graph-layer__dot {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.geo-graph-layer__dot--tee {
+  background: #94a3b8;
+}
+
+.geo-graph-layer__dot--tap {
+  background: #7dd3fc;
+}

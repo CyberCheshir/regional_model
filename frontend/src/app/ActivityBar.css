@@ -1,0 +1,105 @@
+/* Activity Bar — вертикальная панель навигации (styles.md §2.1) */
+.activity-bar {
+  width: 100%;
+  height: 100%;
+  /* Объём: лёгкий вертикальный градиент + тень у правого края (separator) */
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--bg-activity-bar) 100%, #ffffff 6%) 0%,
+    var(--bg-activity-bar) 45%,
+    color-mix(in srgb, var(--bg-activity-bar) 100%, #000 10%) 100%
+  );
+  box-shadow:
+    inset -1px 0 0 rgba(255, 255, 255, 0.06),
+    4px 0 12px rgba(16, 26, 48, 0.16);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+}
+
+.activity-bar__list {
+  list-style: none;
+  margin: 0;
+  padding: 8px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Кнопка режима разработчика — прижата к низу панели */
+.activity-bar__item--dev {
+  margin-top: auto;
+  margin-bottom: 8px;
+}
+
+.activity-bar__item {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--activity-bar-icon);
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease, transform 120ms ease,
+    box-shadow 120ms ease;
+  /* Мягкая тень под иконкой — «приподнятость» пункта */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+/* Иконка со слабой тенью для объёма */
+.activity-bar__item svg {
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.35));
+}
+
+.activity-bar__item:hover {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.14),
+    rgba(255, 255, 255, 0.06)
+  );
+  color: var(--activity-bar-icon-active);
+  transform: translateY(-1px);
+  box-shadow:
+    0 3px 6px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+.activity-bar__item:active {
+  transform: translateY(0);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+/* Активный пункт: белая иконка + подложка + синий индикатор слева */
+.activity-bar__item.is-active {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.2),
+    rgba(255, 255, 255, 0.1)
+  );
+  color: var(--activity-bar-icon-active);
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.activity-bar__item.is-active::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--activity-bar-indicator);
+}
+
+.activity-bar__item:focus-visible {
+  outline: 2px solid var(--activity-bar-indicator);
+  outline-offset: 2px;
+}

@@ -1,0 +1,150 @@
+/* Панель инструментов рисования графа (над деревом объектов). */
+
+/* Обёртка-секция «Проектирование» (CollapsibleSection) */
+.graph-toolbar-wrap {
+  border-bottom: 1px solid var(--border-subtle, #edf2f7);
+  background: var(--bg-panel-subtle, #f8fafc);
+}
+
+.graph-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 12px 12px;
+}
+
+/* Группа кнопок с заголовком (UX: смысловая группировка инструментов) */
+.graph-toolbar__group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.graph-toolbar__group-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-eyebrow, #7c8ba1);
+}
+
+.graph-toolbar__group-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Зона удаления — отделена разделителем от инструментов создания */
+.graph-toolbar__danger-zone {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-subtle, #edf2f7);
+}
+
+.graph-toolbar__button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 160px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-default, #d9e1ec);
+  border-radius: var(--radius-md, 6px);
+  /* Объём: лёгкий вертикальный градиент + мягкая тень + верхний блик */
+  background: linear-gradient(
+    180deg,
+    #ffffff 0%,
+    var(--bg-panel, #ffffff) 55%,
+    var(--bg-panel-subtle, #f8fafc) 100%
+  );
+  color: var(--text-main, #000);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  box-shadow:
+    0 1px 2px rgba(16, 26, 48, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transition: background 0.12s ease, border-color 0.12s ease, transform 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+/* Первая строка — иконка фиксированной ширины, чтобы подписи выравнивались */
+.graph-toolbar__button > svg {
+  flex: 0 0 auto;
+  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.7));
+}
+
+/* Растровая иконка (PNG) — тонируем под цвет текста, сохраняя объём */
+.graph-toolbar__icon {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  /* Чёрный силуэт PNG → цвет текста кнопки */
+  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.7));
+}
+
+/* Активный инструмент — иконки в синем цвете (SVG через currentColor, PNG через filter) */
+.graph-toolbar__button.is-active .graph-toolbar__icon {
+  filter: invert(27%) sepia(94%) saturate(1853%) hue-rotate(194deg) brightness(94%) contrast(101%);
+}
+
+.graph-toolbar__button:hover:not(:disabled) {
+  background: linear-gradient(
+    180deg,
+    #ffffff 0%,
+    var(--bg-card-hover, #f1f5f9) 100%
+  );
+  border-color: var(--border-active, #7da7f6);
+  transform: translateY(-1px);
+  box-shadow:
+    0 3px 6px rgba(16, 26, 48, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.graph-toolbar__button:active:not(:disabled) {
+  transform: translateY(0);
+  background: var(--bg-card-selected, #eef5ff);
+  box-shadow: inset 0 2px 4px rgba(16, 26, 48, 0.18);
+}
+
+/* Активный инструмент рисования — «вдавленная» светящаяся подложка */
+.graph-toolbar__button.is-active {
+  background: linear-gradient(
+    180deg,
+    var(--color-primary-light, #ebf3fc) 0%,
+    #dcebfb 100%
+  );
+  border-color: var(--color-primary-border, #99c2f0);
+  color: var(--color-primary, #0066cc);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 102, 204, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+/* Кнопка «Удалить» */
+.graph-toolbar__button--danger {
+  border-color: var(--status-danger-border, #f3b4b4);
+  color: var(--status-danger-text, #b91c1c);
+  background: linear-gradient(180deg, #ffffff 0%, #fdf2f2 100%);
+}
+
+.graph-toolbar__button--danger:hover:not(:disabled) {
+  background: linear-gradient(180deg, #fdecec 0%, #f9dede 100%);
+  border-color: var(--status-danger-text, #b91c1c);
+}
+
+/* Неактивна, пока ничего не выбрано */
+.graph-toolbar__button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.graph-toolbar__label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

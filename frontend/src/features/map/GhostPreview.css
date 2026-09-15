@@ -1,0 +1,34 @@
+/* GhostPreview — полупрозрачный предпросмотр создаваемого элемента. */
+
+.ghost-preview {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.ghost-preview__box {
+  position: absolute;
+  box-sizing: border-box;
+  border: 2px dashed;
+  border-radius: var(--radius-sm, 4px);
+  opacity: 0.85;
+}
+
+.ghost-preview__svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.ghost-preview__dot {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0.6;
+  border: 2px solid #ffffff;
+}

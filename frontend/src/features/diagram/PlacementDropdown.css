@@ -1,0 +1,27 @@
+.placement-dd {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.placement-dd__label {
+  color: var(--text-secondary, #000);
+  white-space: nowrap;
+}
+
+.placement-dd__select {
+  padding: 5px 10px;
+  border: 1px solid var(--border-default, rgba(255, 255, 255, 0.18));
+  border-radius: var(--radius-control-inner, 6px);
+  background: var(--bg-inset, rgba(255, 255, 255, 0.04));
+  color: var(--text-primary, #e6ecf8);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.placement-dd__select:focus-visible {
+  outline: 2px solid var(--accent, #4f8dff);
+  outline-offset: 1px;
+}

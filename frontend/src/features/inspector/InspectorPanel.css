@@ -1,0 +1,51 @@
+/* Обёртка инспектора: шапка панели + тело */
+.inspector-panel-with-header {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: var(--bg-panel, #101a30);
+}
+
+.inspector-panel-with-header__body {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.inspector-panel {
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg-panel, #101a30);
+}
+
+.inspector-panel__content {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+}
+
+/* --- Пустое состояние: объект не выбран --- */
+.inspector-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 100%;
+  padding: 24px;
+  text-align: center;
+  color: var(--text-muted, #000);
+}
+
+.inspector-empty__icon {
+  opacity: 0.5;
+}
+
+.inspector-empty__text {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  max-width: 220px;
+}
