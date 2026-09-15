@@ -4,6 +4,7 @@ import { ActivityBar } from './app/ActivityBar';
 import { LeftSidebar } from './features/objectTree/LeftSidebar';
 import { MapViewport } from './features/map/MapViewport';
 import { MapDiagramModal } from './features/diagram/MapDiagramModal';
+import { TopBar, type ViewMode } from './features/topbar/TopBar';
 import type { TreeNodeData } from './features/objectTree/types';
 import type { GraphToolActionId } from './features/objectTree/GraphToolbar';
 import { findTreeNode } from './features/objectTree/mockData';
@@ -50,6 +51,8 @@ function App() {
     patchMapDisplaySettings,
     devMode,
     toggleDevMode,
+    viewMode,
+    setViewMode,
   } = useUiState();
 
   const {
@@ -149,70 +152,87 @@ function App() {
     setDrawTool(drawTool === nextTool ? 'none' : nextTool);
   };
 
+  /** Смена режима: выход из «Просмотра» сбрасывает активный инструмент. */
+  const handleViewModeChange = (mode: ViewMode) => {
+    setViewMode(mode);
+    if (mode === 'view') setDrawTool('none');
+  };
+
+  const editMode = viewMode === 'edit';
+
   return (
-    <AppShell
-      leftCollapsed={leftCollapsed}
-      rightCollapsed={rightCollapsed}
-      leftWidth={leftWidth}
-      rightWidth={rightWidth}
-      onLeftWidthChange={setLeftWidth}
-      onRightWidthChange={setRightWidth}
-      onToggleLeft={() => setLeftCollapsed((v) => !v)}
-      onToggleRight={() => setRightCollapsed((v) => !v)}
-      activity={
-        <ActivityBar
-          activeModule={activeModule}
-          onModuleChange={setActiveModule}
-          devMode={devMode}
-          onToggleDevMode={toggleDevMode}
-        />
-      }
-      left={
-        <LeftSidebar
-          onCollapse={() => setLeftCollapsed(true)}
-          selectedId={selectedId}
-          onSelect={handleSelect}
-          onOpenDiagram={handleOpenDiagram}
-          displaySettings={mapDisplaySettings}
-          onDisplaySettingsChange={patchMapDisplaySettings}
-          hiddenIds={hiddenIds}
-          onToggleVisibility={(node, visible) => toggleVisibility(node.id, visible)}
-          onGraphTool={handleGraphTool}
-          activeGraphTool={activeGraphAction}
-          canDelete={drawSelections.length > 0}
-          onDelete={removeSelection}
-        />
-      }
-      center={
-        <MapViewport
-          displaySettings={mapDisplaySettings}
-          hiddenNodeIds={hiddenIds}
-          selectedId={selectedId}
-          onSelect={(id, kind) => selectEntity(id, kind)}
-          devMode={devMode}
-        >
-          <MapDiagramModal
-            isOpen={diagramEntityId !== null}
-            entityName={findTreeNode(diagramEntityId ?? '')?.label ?? ''}
-            config={diagramConfig}
-            onChange={setDiagramConfig}
-            onClose={closeDiagram}
+    <div className="app-root">
+      <TopBar
+        breadcrumbs={[{ label: 'Восточная Сибирь' }, { label: 'Региональный модуль' }]}
+        viewMode={viewMode}
+        onViewModeChange={handleViewModeChange}
+        scenarioLabel="Базовый сценарий"
+      />
+      <AppShell
+        leftCollapsed={leftCollapsed}
+        rightCollapsed={rightCollapsed}
+        leftWidth={leftWidth}
+        rightWidth={rightWidth}
+        onLeftWidthChange={setLeftWidth}
+        onRightWidthChange={setRightWidth}
+        onToggleLeft={() => setLeftCollapsed((v) => !v)}
+        onToggleRight={() => setRightCollapsed((v) => !v)}
+        activity={
+          <ActivityBar
+            activeModule={activeModule}
+            onModuleChange={setActiveModule}
+            devMode={devMode}
+            onToggleDevMode={toggleDevMode}
           />
-        </MapViewport>
-      }
-      right={
-        <InspectorPanel
-          entity={selectedDetails}
-          loading={entityLoading}
-          error={entityError}
-          onRetry={refetchEntity}
-          activeTab={inspectorTab}
-          onTabChange={setInspectorTab}
-          onNavigateToRelation={(id) => selectEntity(id, 'facility')}
-          onCollapse={() => setRightCollapsed(true)}
-        />
-      }
-    />
+        }
+        left={
+          <LeftSidebar
+            showGraphTools={editMode}
+            onCollapse={() => setLeftCollapsed(true)}
+            selectedId={selectedId}
+            onSelect={handleSelect}
+            onOpenDiagram={handleOpenDiagram}
+            displaySettings={mapDisplaySettings}
+            onDisplaySettingsChange={patchMapDisplaySettings}
+            hiddenIds={hiddenIds}
+            onToggleVisibility={(node, visible) => toggleVisibility(node.id, visible)}
+            onGraphTool={handleGraphTool}
+            activeGraphTool={activeGraphAction}
+            canDelete={editMode && drawSelections.length > 0}
+            onDelete={removeSelection}
+          />
+        }
+        center={
+          <MapViewport
+            displaySettings={mapDisplaySettings}
+            hiddenNodeIds={hiddenIds}
+            selectedId={selectedId}
+            onSelect={(id, kind) => selectEntity(id, kind)}
+            devMode={devMode}
+          >
+            <MapDiagramModal
+              isOpen={diagramEntityId !== null}
+              entityName={findTreeNode(diagramEntityId ?? '')?.label ?? ''}
+              config={diagramConfig}
+              onChange={setDiagramConfig}
+              onClose={closeDiagram}
+            />
+          </MapViewport>
+        }
+        right={
+          <InspectorPanel
+            entity={selectedDetails}
+            loading={entityLoading}
+            error={entityError}
+            onRetry={refetchEntity}
+            activeTab={inspectorTab}
+            onTabChange={setInspectorTab}
+            onNavigateToRelation={(id) => selectEntity(id, 'facility')}
+            onCollapse={() => setRightCollapsed(true)}
+          />
+        }
+      />
+    </div>
   );
 }
 

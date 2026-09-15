@@ -37,6 +37,8 @@ export type LeftSidebarProps = {
   canDelete?: boolean;
   /** Удалить выделенный элемент */
   onDelete?: () => void;
+  /** Показывать панель «Проектирование» (режим редактирования) */
+  showGraphTools?: boolean;
 };
 
 /**
@@ -56,6 +58,7 @@ export function LeftSidebar({
   activeGraphTool,
   canDelete,
   onDelete,
+  showGraphTools = true,
 }: LeftSidebarProps) {
   const { pipelines, vertices } = useMapDrawing();
 
@@ -118,12 +121,14 @@ export function LeftSidebar({
   return (
     <div className="left-sidebar">
       <PanelHeader title="Управление элементами" onCollapse={onCollapse} />
-      <GraphToolbar
-        onAction={onGraphTool}
-        activeAction={activeGraphTool}
-        canDelete={canDelete}
-        onDelete={onDelete}
-      />
+      {showGraphTools && (
+        <GraphToolbar
+          onAction={onGraphTool}
+          activeAction={activeGraphTool}
+          canDelete={canDelete}
+          onDelete={onDelete}
+        />
+      )}
       <div className="left-sidebar__body">
         <CollapsibleSection title="Группы элементов">
           <ObjectTree

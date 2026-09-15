@@ -11,6 +11,7 @@ import { DEFAULT_MAP_DISPLAY_SETTINGS, type MapDisplaySettings } from '../featur
 import { DEFAULT_DIAGRAM_CONFIG, type DiagramConfig } from '../features/diagram/types';
 import type { InspectorTabId } from '../features/inspector/types';
 import type { SelectedEntity } from '../domain/types';
+import type { ViewMode } from '../features/topbar/TopBar';
 
 /**
  * Глобальный UI-state (Этап 9.4, design description/components.md §3.1).
@@ -51,6 +52,10 @@ type UiState = {
   /** Режим разработчика (dev-оверлеи, координаты и т.п.) */
   devMode: boolean;
   toggleDevMode: () => void;
+
+  /** Режим работы: просмотр или редактирование графа (TopBar) */
+  viewMode: ViewMode;
+  setViewMode: (mode: ViewMode) => void;
 };
 
 const UiStateContext = createContext<UiState | null>(null);
@@ -66,6 +71,7 @@ export function UiStateProvider({ children }: { children: ReactNode }) {
     DEFAULT_MAP_DISPLAY_SETTINGS,
   );
   const [devMode, setDevMode] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>('edit');
 
   const selectEntity = useCallback(
     (id: string | null, kind: SelectedEntity['kind'] = 'facility') => {
@@ -115,6 +121,8 @@ export function UiStateProvider({ children }: { children: ReactNode }) {
       patchMapDisplaySettings,
       devMode,
       toggleDevMode,
+      viewMode,
+      setViewMode,
     }),
     [
       activeModule,
@@ -131,6 +139,7 @@ export function UiStateProvider({ children }: { children: ReactNode }) {
       patchMapDisplaySettings,
       devMode,
       toggleDevMode,
+      viewMode,
     ],
   );
 

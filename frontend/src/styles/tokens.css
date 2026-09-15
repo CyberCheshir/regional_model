@@ -30,8 +30,12 @@
   /* Текст и типографика */
   --text-main: #000;
   --text-secondary: #000;
-  --text-muted: #000;
+  --text-muted: #8a94a6;
   --text-eyebrow: #000;
+
+  /* Верхняя панель (TopBar) */
+  --bg-segment-track: #eef1f5;
+  --topbar-height: 48px;
 
   /* Цвета технологических объектов и статусов */
   --status-working-bg: #e6f9f0;
