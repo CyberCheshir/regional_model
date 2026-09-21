@@ -33,6 +33,18 @@ export type IconName =
   | 'tab-calendar'
   | 'tab-trends'
   | 'tab-alerts'
+  // Parameter panel tabs (UI images/parameter panel)
+  | 'pp-object'
+  | 'pp-connections'
+  | 'pp-period'
+  | 'pp-product'
+  | 'pp-calc'
+  | 'pp-analytics'
+  // Parameter panel actions
+  | 'chevron-right'
+  | 'chevron-down'
+  | 'plus'
+  | 'pencil'
   // Misc actions
   | 'close'
   // Status & flows
@@ -236,6 +248,81 @@ const ICONS: Record<IconName, IconDefinition> = {
     strokeWidth: 1.6,
     paths:
       '<path d="M10 3 18.5 17h-17L10 3z"/><path d="M10 8.5v4"/><circle cx="10" cy="15" r="0.4" fill="currentColor"/>',
+  },
+
+  // --- Parameter panel tabs (20x20) ---
+  // Объект: прямоугольник площадки с точками
+  'pp-object': {
+    viewBox: '0 0 20 20',
+    stroke: true,
+    strokeWidth: 1.6,
+    paths:
+      '<rect x="3" y="3.5" width="14" height="13" rx="2"/><circle cx="7.5" cy="8" r="1.2" fill="currentColor" stroke="none"/><circle cx="12.5" cy="8" r="1.2" fill="currentColor" stroke="none"/><path d="M6.5 13h7"/>',
+  },
+  // Связи: ползунки (sliders)
+  'pp-connections': {
+    viewBox: '0 0 20 20',
+    stroke: true,
+    strokeWidth: 1.6,
+    paths:
+      '<path d="M3 6h14M3 14h14"/><circle cx="8" cy="6" r="2.2" fill="var(--bg-panel)"/><circle cx="13" cy="14" r="2.2" fill="var(--bg-panel)"/>',
+  },
+  // Период работы: флажок на оси времени
+  'pp-period': {
+    viewBox: '0 0 20 20',
+    stroke: true,
+    strokeWidth: 1.6,
+    paths:
+      '<path d="M5 18V3"/><path d="M5 4h10l-2.2 3L15 10H5"/>',
+  },
+  // Профиль продукции: восходящие столбцы графика
+  'pp-product': {
+    viewBox: '0 0 20 20',
+    stroke: true,
+    strokeWidth: 1.6,
+    paths:
+      '<path d="M3 17h14"/><rect x="4.5" y="10" width="3" height="6" rx="0.6"/><rect x="9" y="6" width="3" height="10" rx="0.6"/><rect x="13.5" y="12" width="3" height="4" rx="0.6"/>',
+  },
+  // Расчёт: шеврон в круге (алгоритм)
+  'pp-calc': {
+    viewBox: '0 0 20 20',
+    stroke: true,
+    strokeWidth: 1.6,
+    paths:
+      '<circle cx="10" cy="10" r="7.2"/><path d="M7.5 7.5 11 10l-3.5 2.5" fill="none"/>',
+  },
+  // Аналитика: предупреждение в треугольнике
+  'pp-analytics': {
+    viewBox: '0 0 20 20',
+    stroke: true,
+    strokeWidth: 1.6,
+    paths:
+      '<path d="M10 3 18.5 17h-17L10 3z"/><path d="M10 8v3.5"/><circle cx="10" cy="14.4" r="0.5" fill="currentColor"/>',
+  },
+  'chevron-right': {
+    viewBox: '0 0 16 16',
+    stroke: true,
+    strokeWidth: 1.6,
+    paths: '<path d="M6 3.5 10.5 8 6 12.5"/>',
+  },
+  'chevron-down': {
+    viewBox: '0 0 16 16',
+    stroke: true,
+    strokeWidth: 1.6,
+    paths: '<path d="M3.5 6 8 10.5 12.5 6"/>',
+  },
+  plus: {
+    viewBox: '0 0 16 16',
+    stroke: true,
+    strokeWidth: 1.6,
+    paths: '<path d="M8 3v10M3 8h10"/>',
+  },
+  pencil: {
+    viewBox: '0 0 16 16',
+    stroke: true,
+    strokeWidth: 1.4,
+    paths:
+      '<path d="M11.2 2.6 13.4 4.8 5.6 12.6 2.6 13.4l.8-3z"/><path d="M9.9 3.9l2.2 2.2"/>',
   },
 
   // --- Status & flows ---

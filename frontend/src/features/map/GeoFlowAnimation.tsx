@@ -22,10 +22,10 @@ const DOT_STEP = 18;
 const DOT_COLOR = '#ffffff';
 
 /**
- * Порог LOD: при зуме <= 12 (обзорный масштаб) анимацию не рисуем — точки
- * мелкие и шумные. Совпадает по смыслу с MIN_SCALE_FOR_FLOW в vis-версии.
+ * Порог LOD анимации потока: при зуме < 8 (обзорный масштаб) анимацию НЕ
+ * рисуем — точки мелкие и шумные; при зуме >= 8 («> zoom 8») анимация включена.
  */
-const MIN_ZOOM_FOR_FLOW = 12;
+const MIN_ZOOM_FOR_FLOW = 8;
 
 /**
  * Слой «анимации потока» для ЧИСТОЙ гео-карты (Вариант 2): по всем гео-рёбрам
@@ -73,8 +73,9 @@ export function GeoFlowAnimation({
       }
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // LOD: на обзорном масштабе анимацию не рисуем (мелко и шумно).
-      if (cam.zoom <= MIN_ZOOM_FOR_FLOW) {
+      // LOD: ниже порога (zoom < 8) анимацию не рисуем (мелко и шумно).
+      // При zoom >= 8 — анимация включена.
+      if (cam.zoom < MIN_ZOOM_FOR_FLOW) {
         raf = requestAnimationFrame(draw);
         return;
       }

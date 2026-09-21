@@ -10,9 +10,34 @@ import {
   WellpadNodeSchema,
   type MapGraph,
   type EntityDetails,
+  type ParameterPanelData,
+  type ParameterPanelKind,
+  type ParameterTabId,
+  type ProductProfile,
+  type ProductSeries,
+  type ProductType,
+  type ShutdownPeriod,
+  type WorkPeriod,
+  type HydraulicCalc,
+  type AnalyticsData,
+  type AnalyticsItem,
 } from './schemas';
 
-export type { MapGraph, EntityDetails };
+export type {
+  MapGraph,
+  EntityDetails,
+  ParameterPanelData,
+  ParameterPanelKind,
+  ParameterTabId,
+  ProductProfile,
+  ProductSeries,
+  ProductType,
+  ShutdownPeriod,
+  WorkPeriod,
+  HydraulicCalc,
+  AnalyticsData,
+  AnalyticsItem,
+};
 
 /** Тип флюида: нефть / газ / вода */
 export type FluidType = z.infer<typeof FluidTypeSchema>;

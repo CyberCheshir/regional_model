@@ -130,6 +130,132 @@ export const EntityDetailsSchema = z.object({
 
 export type EntityDetails = z.infer<typeof EntityDetailsSchema>;
 
+/* ------------------------------------------------------------------ */
+/* Панель параметров (UI images/parameter panel) — расширенный инспектор. */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Род панели параметров: определяет НАБОР вкладок (у трубопровода есть
+ * гидравлический расчёт, у площадных объектов — нет).
+ */
+export const ParameterPanelKindSchema = z.enum(['pipeline', 'facility', 'wellpad']);
+export type ParameterPanelKind = z.infer<typeof ParameterPanelKindSchema>;
+
+/** Тип продукта (колонки профиля продукции). */
+export const ProductTypeSchema = z.enum(['oil', 'gas', 'water', 'liquid']);
+export type ProductType = z.infer<typeof ProductTypeSchema>;
+
+/** Вкладки панели параметров (иконки на левом рельсе). */
+export const ParameterTabIdSchema = z.enum([
+  'general',
+  'calendar',
+  'product',
+  'hydraulic',
+  'analytics',
+]);
+export type ParameterTabId = z.infer<typeof ParameterTabIdSchema>;
+
+/** Период вывода из эксплуатации (строка таблицы). */
+export const ShutdownPeriodSchema = z.object({
+  start: z.string(),
+  end: z.string(),
+  reason: z.string(),
+});
+export type ShutdownPeriod = z.infer<typeof ShutdownPeriodSchema>;
+
+/** Период работы объекта (вкладка «Период работы»). */
+export const WorkPeriodSchema = z.object({
+  /** Источник периода: «Профиль транспортировки», «из системы сбора» … */
+  source: z.string(),
+  /** Год ввода в эксплуатацию */
+  startYear: z.number().int(),
+  /** Год вывода из эксплуатации */
+  endYear: z.number().int(),
+  /** Отрезки эксплуатации на таймлайне (год начала / год конца) */
+  activeRanges: z.array(
+    z.object({ start: z.number().int(), end: z.number().int() }),
+  ),
+  /** Периоды вывода из эксплуатации */
+  shutdowns: z.array(ShutdownPeriodSchema),
+});
+export type WorkPeriod = z.infer<typeof WorkPeriodSchema>;
+
+/** Значение продукта по годам (колонка профиля продукции). */
+export const ProductSeriesSchema = z.object({
+  product: ProductTypeSchema,
+  /** Точки ряда: год → значение */
+  points: z.array(z.object({ year: z.number().int(), value: z.number() })),
+});
+export type ProductSeries = z.infer<typeof ProductSeriesSchema>;
+
+/** Профиль продукции (вкладка «Профиль продукции»). */
+export const ProductProfileSchema = z.object({
+  /** Заголовок блока значений: «Поставка» / «Добыча» / «Поступление» */
+  measureLabel: z.string(),
+  /** Диапазон лет профиля */
+  startYear: z.number().int(),
+  endYear: z.number().int(),
+  /** Доступные продукты и их единицы измерения */
+  products: z.array(
+    z.object({
+      product: ProductTypeSchema,
+      unit: z.string(),
+      enabled: z.boolean(),
+    }),
+  ),
+  /** Ряды значений по продуктам */
+  series: z.array(ProductSeriesSchema),
+  /** Ограничение (пунктирная линия графика), опционально */
+  limit: z.number().optional(),
+});
+export type ProductProfile = z.infer<typeof ProductProfileSchema>;
+
+/** Гидравлический расчёт (вкладка «Расчёт», только трубопровод). */
+export const HydraulicCalcSchema = z.object({
+  /** Бейдж состояния: «Актуален» / «Устарел» */
+  state: z.enum(['actual', 'stale', 'none']),
+  /** Расчётный период (год) */
+  period: z.string(),
+  /** Дата/время последнего расчёта */
+  lastRun: z.string(),
+  /** Готовность модели — проверки */
+  readiness: z.array(ValidationItemSchema),
+});
+export type HydraulicCalc = z.infer<typeof HydraulicCalcSchema>;
+
+/** Предупреждение/проверка аналитики. */
+export const AnalyticsItemSchema = z.object({
+  /** Уровень: предупреждение / информация / нет данных */
+  level: z.enum(['warning', 'info', 'none']),
+  title: z.string(),
+  detail: z.string(),
+});
+export type AnalyticsItem = z.infer<typeof AnalyticsItemSchema>;
+
+/** Аналитика (вкладка «Аналитика»). */
+export const AnalyticsDataSchema = z.object({
+  warnings: z.array(AnalyticsItemSchema),
+  recommendations: z.array(AnalyticsItemSchema),
+  modelChecks: z.array(AnalyticsItemSchema),
+});
+export type AnalyticsData = z.infer<typeof AnalyticsDataSchema>;
+
+/** Полный набор данных панели параметров для выбранного объекта. */
+export const ParameterPanelDataSchema = z.object({
+  entity: EntityDetailsSchema,
+  /** Род панели — определяет доступные вкладки */
+  panelKind: ParameterPanelKindSchema,
+  /** Класс объекта для подзаголовка (напр. «Промысловый») */
+  objectClass: z.string().optional(),
+  /** Готовность модели: зелёные галочки (идентификация/состояние) */
+  modelStatus: z.array(ValidationItemSchema),
+  workPeriod: WorkPeriodSchema.nullable(),
+  productProfile: ProductProfileSchema.nullable(),
+  hydraulic: HydraulicCalcSchema.nullable(),
+  analytics: AnalyticsDataSchema.nullable(),
+});
+export type ParameterPanelData = z.infer<typeof ParameterPanelDataSchema>;
+
 /** Парсер ответа с понятной ошибкой (для problem_log: TS5023-стиль проблем избегаем). */
 export function parseOrThrow<T extends z.ZodTypeAny>(schema: T, raw: unknown): z.infer<T> {
   const result = schema.safeParse(raw);

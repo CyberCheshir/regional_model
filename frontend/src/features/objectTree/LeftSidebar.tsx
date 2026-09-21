@@ -125,21 +125,28 @@ export function LeftSidebar({
       groups.push({
         id: 'group-pipelines',
         label: 'Трубопроводы',
-        children: pipelines.map((p) => ({
-          id: p.id,
-          label: p.label,
-          kind: 'pipeline' as const,
-          subType: segmentCountLabel(p.segmentCount),
-          // Сегменты трубопровода — дочерние узлы со СВОИМИ именами.
-          // Имя закреплено за сегментом (задано при создании/пользователем)
-          // и НЕ пересчитывается по позиции — объединение в трубопровод его не меняет.
-          // Fallback — только для старых снимков без имени.
-          children: segmentsOfPipeline(p.id).map((seg) => ({
-            id: seg.id,
-            label: seg.label || 'Сегмент',
-            kind: 'segment' as const,
-          })),
-        })),
+        children: pipelines.map((p) => {
+          // Сегменты трубопровода — из domain layer (единый источник истины).
+          const own = segmentsOfPipeline(p.id);
+          return {
+            id: p.id,
+            label: p.label,
+            kind: 'pipeline' as const,
+            // Актуальное количество сегментов — считаем по факту (own.length),
+            // а НЕ по сохранённому p.segmentCount (он может устареть при
+            // удалении/разрезании сегментов).
+            subType: segmentCountLabel(own.length),
+            // Сегменты трубопровода — дочерние узлы со СВОИМИ именами.
+            // Имя закреплено за сегментом (задано при создании/пользователем)
+            // и НЕ пересчитывается по позиции — объединение в трубопровод его не меняет.
+            // Fallback — только для старых снимков без имени.
+            children: own.map((seg) => ({
+              id: seg.id,
+              label: seg.label || 'Сегмент',
+              kind: 'segment' as const,
+            })),
+          };
+        }),
       });
     }
     return groups;
@@ -169,38 +176,40 @@ export function LeftSidebar({
   return (
     <div className="left-sidebar">
       <PanelHeader title="Управление элементами" onCollapse={onCollapse} />
-      {showGraphTools && (
-        <GraphToolbar
-          onAction={onGraphTool}
-          activeAction={activeGraphTool}
-          canDelete={canDelete}
-          onDelete={onDelete}
-          fluid={fluid}
-          onFluidChange={onFluidChange}
-          pipelineClass={pipelineClass}
-          onPipelineClassChange={onPipelineClassChange}
-          onExportAreas={onExportAreas}
-          canExportAreas={canExportAreas}
-          onImportSample={onImportSample}
-        />
-      )}
-      <div className="left-sidebar__body">
-        <CollapsibleSection title="Группы элементов">
-          <ObjectTree
-            groups={treeGroups}
-            selectedId={selectedId}
-            hiddenIds={effectiveHidden}
-            onSelect={onSelect}
-            onOpenDiagram={onOpenDiagram}
-            onToggleVisibility={handleToggleVisibility}
-            onRename={handleRename}
+      <div className="left-sidebar__scroll">
+        {showGraphTools && (
+          <GraphToolbar
+            onAction={onGraphTool}
+            activeAction={activeGraphTool}
+            canDelete={canDelete}
+            onDelete={onDelete}
+            fluid={fluid}
+            onFluidChange={onFluidChange}
+            pipelineClass={pipelineClass}
+            onPipelineClassChange={onPipelineClassChange}
+            onExportAreas={onExportAreas}
+            canExportAreas={canExportAreas}
+            onImportSample={onImportSample}
           />
-        </CollapsibleSection>
+        )}
+        <div className="left-sidebar__body">
+          <CollapsibleSection title="Группы элементов">
+            <ObjectTree
+              groups={treeGroups}
+              selectedId={selectedId}
+              hiddenIds={effectiveHidden}
+              onSelect={onSelect}
+              onOpenDiagram={onOpenDiagram}
+              onToggleVisibility={handleToggleVisibility}
+              onRename={handleRename}
+            />
+          </CollapsibleSection>
+        </div>
+        {onDisplaySettingsChange && (
+          <DisplaySettingsCard settings={displaySettings} onChange={onDisplaySettingsChange} />
+        )}
+        <PanelFooterHint />
       </div>
-      {onDisplaySettingsChange && (
-        <DisplaySettingsCard settings={displaySettings} onChange={onDisplaySettingsChange} />
-      )}
-      <PanelFooterHint />
     </div>
   );
 }

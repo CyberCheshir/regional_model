@@ -9,7 +9,7 @@ import {
 import type { ModuleId } from '../app/ActivityBar';
 import { DEFAULT_MAP_DISPLAY_SETTINGS, type MapDisplaySettings } from '../features/displaySettings/types';
 import { DEFAULT_DIAGRAM_CONFIG, type DiagramConfig } from '../features/diagram/types';
-import type { InspectorTabId } from '../features/inspector/types';
+import type { ParameterTabId } from '../domain/types';
 import type { SelectedEntity } from '../domain/types';
 import type { ViewMode } from '../features/topbar/TopBar';
 
@@ -30,9 +30,9 @@ type UiState = {
   selectedEntity: SelectedEntity | null;
   selectEntity: (id: string | null, kind?: SelectedEntity['kind']) => void;
 
-  /** Активная вкладка инспектора */
-  inspectorTab: InspectorTabId;
-  setInspectorTab: (t: InspectorTabId) => void;
+  /** Активная вкладка панели параметров */
+  inspectorTab: ParameterTabId;
+  setInspectorTab: (t: ParameterTabId) => void;
 
   /** Видимость объектов: id скрытых */
   hiddenIds: ReadonlySet<string>;
@@ -63,7 +63,7 @@ const UiStateContext = createContext<UiState | null>(null);
 export function UiStateProvider({ children }: { children: ReactNode }) {
   const [activeModule, setActiveModule] = useState<ModuleId>('map');
   const [selectedEntity, setSelectedEntity] = useState<SelectedEntity | null>(null);
-  const [inspectorTab, setInspectorTab] = useState<InspectorTabId>('general');
+  const [inspectorTab, setInspectorTab] = useState<ParameterTabId>('general');
   const [hiddenIds, setHiddenIds] = useState<ReadonlySet<string>>(new Set());
   const [diagramEntityId, setDiagramEntityId] = useState<string | null>(null);
   const [diagramConfig, setDiagramConfig] = useState<DiagramConfig>(DEFAULT_DIAGRAM_CONFIG);

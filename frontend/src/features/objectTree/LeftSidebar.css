@@ -6,8 +6,18 @@
   background: var(--bg-panel, #141d33);
 }
 
-.left-sidebar__body {
-  flex: 1;
+/* Единая прокручиваемая область: инструменты + дерево + настройки + подвал.
+   PanelHeader остаётся над ней (не скроллится). */
+.left-sidebar__scroll {
+  flex: 1 1 auto;
   min-height: 0;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* Тонкий скроллбар, чтобы не перекрывать узкую панель. */
+  scrollbar-width: thin;
+}
+
+.left-sidebar__body {
+  /* Внутри общего скролла — без собственного overflow. */
+  min-height: 0;
 }

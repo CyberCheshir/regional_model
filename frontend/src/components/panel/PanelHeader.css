@@ -4,6 +4,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  /* Не сжимается: остаётся на месте, прокручивается контент под ней. */
+  flex: 0 0 auto;
   padding: 12px 12px 8px 16px;
   border-bottom: 1px solid var(--border-subtle);
   background: var(--bg-panel);

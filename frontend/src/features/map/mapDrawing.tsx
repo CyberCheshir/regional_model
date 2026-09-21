@@ -450,10 +450,10 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
   areasRef.current = areas;
 
   /** Добавить трубопровод в список группы дерева (правило 3). */
-  const registerPipeline = useCallback((id: string, segmentCount: number) => {
+  const registerPipeline = useCallback((id: string) => {
     setPipelines((cur) => {
       if (cur.some((p) => p.id === id)) return cur;
-      return [...cur, { id, label: `Трубопровод ${cur.length + 1}`, segmentCount }];
+      return [...cur, { id, label: `Трубопровод ${cur.length + 1}` }];
     });
   }, []);
 
@@ -491,7 +491,7 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
         return [
           ...others,
           ...kept.filter((p) => touched.has(p.id)),
-          { id: pipelineId, label: `Трубопровод ${others.length + 1}`, segmentCount: target.length },
+          { id: pipelineId, label: `Трубопровод ${others.length + 1}` },
         ];
       });
       return pipelineId;
@@ -509,7 +509,7 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
       const pipelineId =
         prev.segments[0].pipelineId ?? `pipe-${(pipelineSeqRef.current += 1)}`;
       setSegments((cur) => [...cur, ...prev.segments]);
-      registerPipeline(pipelineId, prev.segments.length);
+      registerPipeline(pipelineId);
     }
     setDraft(EMPTY_DRAFT);
   }, [registerPipeline]);
@@ -577,7 +577,6 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
     // ещё не закоммичено — иначе разрез молча не срабатывает).
     const inSegments = segmentsRef.current.find((s) => s.id === edgeId);
     const inDraft = draftRef.current.segments.find((s) => s.id === edgeId);
-    const oldPipelineId = (inSegments ?? inDraft)?.pipelineId ?? null;
 
     const tapPoint = { x, y };
     if (inSegments) {
@@ -592,14 +591,8 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
       if (split) setDraft((cur) => ({ ...cur, segments: split.segments }));
     }
 
-    // Кол-во сегментов трубопровода в дереве выросло на 1 (сегмент стал двумя).
-    if (oldPipelineId) {
-      setPipelines((cur) =>
-        cur.map((p) =>
-          p.id === oldPipelineId ? { ...p, segmentCount: p.segmentCount + 1 } : p,
-        ),
-      );
-    }
+    // Количество сегментов НЕ храним — оно выводится из списка сегментов
+    // (`pipelineId`), поэтому после разреза подпись в дереве обновится сама.
   }, [pushHistory]);
 
   /**
@@ -852,7 +845,7 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
               ];
         setSegments((cur) => [...cur, ...all]);
         // Правило 3: полилиния становится одной записью в группе «Трубопроводы»
-        registerPipeline(pipelineId, all.length);
+        registerPipeline(pipelineId);
       }
       setDraft(EMPTY_DRAFT);
     },
@@ -1098,7 +1091,7 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
         };
         setSegments((all) => [...all, segment]);
         // Правило 3: одиночный сегмент — тоже запись в «Трубопроводах».
-        registerPipeline(singlePipelineId, 1);
+        registerPipeline(singlePipelineId);
         setDraft(EMPTY_DRAFT);
         return;
       }
@@ -1437,7 +1430,7 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
         const seg = nextSegments.find((x) => x.id === segId);
         if (seg) seg.pipelineId = p.id;
       }
-      return { id: p.id, label: p.name, segmentCount: p.segment_ids.length };
+      return { id: p.id, label: p.name };
     });
 
     // 5. Лицензионные участки.

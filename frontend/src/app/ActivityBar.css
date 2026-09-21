@@ -1,17 +1,27 @@
-/* Activity Bar — вертикальная панель навигации (styles.md §2.1) */
+/*
+ * Activity Bar — вертикальная панель навигации (styles.md §2.1).
+ * Светлая тема: те же тона, что и панель параметров (pp-wrap / pp-rail):
+ * светлый фон, тонкая граница справа, серые иконки, синий активный пункт.
+ */
 .activity-bar {
   width: 100%;
   height: 100%;
-  /* Объём: лёгкий вертикальный градиент + тень у правого края (separator) */
+  /* Объём (светлая тема): лёгкий вертикальный градиент + внутренняя
+     подсветка у правого края + тень отделяющая панель от карты. */
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--bg-activity-bar) 100%, #ffffff 6%) 0%,
-    var(--bg-activity-bar) 45%,
-    color-mix(in srgb, var(--bg-activity-bar) 100%, #000 10%) 100%
+    #ffffff 0%,
+    var(--bg-panel-subtle, #f8fafc) 45%,
+    #eef1f6 100%
   );
+  /* Объёмная правая грань: тёмный внутренний стык (граница), плотная тень
+     у самого края и мягкая рассеянная тень дальше (видна на светлой карте). */
   box-shadow:
-    inset -1px 0 0 rgba(255, 255, 255, 0.06),
-    4px 0 12px rgba(16, 26, 48, 0.16);
+    inset -1px 0 0 rgba(16, 26, 48, 0.12),
+    inset -2px 0 0 #cdd7e5,
+    1px 0 0 rgba(16, 26, 48, 0.06),
+    3px 0 6px rgba(16, 26, 48, 0.14),
+    10px 0 20px rgba(16, 26, 48, 0.12);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -42,50 +52,47 @@
   align-items: center;
   justify-content: center;
   border: none;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-md, 6px);
   background: transparent;
-  color: var(--activity-bar-icon);
+  color: var(--text-muted, #8a94a6);
   cursor: pointer;
   transition: background 120ms ease, color 120ms ease, transform 120ms ease,
     box-shadow 120ms ease;
-  /* Мягкая тень под иконкой — «приподнятость» пункта */
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
 }
 
-/* Иконка со слабой тенью для объёма */
+/* Иконка с мягкой тенью — лёгкий объём */
 .activity-bar__item svg {
-  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.35));
+  filter: drop-shadow(0 1px 1px rgba(16, 26, 48, 0.18));
 }
 
+/* Hover: светлая «выпуклая» подложка с тенью, пункт приподнимается */
 .activity-bar__item:hover {
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.14),
-    rgba(255, 255, 255, 0.06)
-  );
-  color: var(--activity-bar-icon-active);
+  background: linear-gradient(180deg, #ffffff, #f1f5f9);
+  color: var(--text-main, #0d1526);
   transform: translateY(-1px);
   box-shadow:
-    0 3px 6px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    0 2px 5px rgba(16, 26, 48, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
+/* Нажатие: подложка «вдавливается» */
 .activity-bar__item:active {
   transform: translateY(0);
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+  background: var(--bg-card-selected, #eef5ff);
+  box-shadow: inset 0 1px 3px rgba(16, 26, 48, 0.14);
 }
 
-/* Активный пункт: белая иконка + подложка + синий индикатор слева */
+/* Активный пункт: синяя иконка + объёмная светлая подложка + индикатор слева */
 .activity-bar__item.is-active {
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.2),
-    rgba(255, 255, 255, 0.1)
-  );
-  color: var(--activity-bar-icon-active);
+  background: linear-gradient(180deg, #ffffff, var(--color-primary-light, #ebf3fc));
+  color: var(--color-primary, #0066cc);
   box-shadow:
-    0 2px 6px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    0 2px 6px rgba(16, 26, 48, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+.activity-bar__item.is-active svg {
+  filter: drop-shadow(0 1px 1px rgba(0, 102, 204, 0.3));
 }
 
 .activity-bar__item.is-active::before {
@@ -95,11 +102,11 @@
   top: 8px;
   bottom: 8px;
   width: 3px;
-  border-radius: var(--radius-pill);
-  background: var(--activity-bar-indicator);
+  border-radius: var(--radius-pill, 9999px);
+  background: var(--activity-bar-indicator, #0066cc);
 }
 
 .activity-bar__item:focus-visible {
-  outline: 2px solid var(--activity-bar-indicator);
+  outline: 2px solid var(--activity-bar-indicator, #0066cc);
   outline-offset: 2px;
 }

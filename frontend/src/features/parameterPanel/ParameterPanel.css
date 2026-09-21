@@ -1,0 +1,994 @@
+/*
+ * Панель параметров (UI images/parameter panel) — светлая тема.
+ * Обёртка + шапка + рельс вкладок + секции + таблица/график профиля продукции.
+ */
+
+.pp-wrap {
+  display: flex;
+  /* Рельс слева на всю высоту, шапка+контент — в правой колонке. */
+  flex-direction: row;
+  height: 100%;
+  min-height: 0;
+  background: var(--bg-panel, #ffffff);
+  color: var(--text-main, #0d1526);
+}
+
+/* Правая колонка: шапка объекта + прокручиваемый контент. */
+.pp-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.pp-wrap__body {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* --- Шапка --- */
+.pp-header-wrap {
+  flex: 0 0 auto;
+  border-bottom: 1px solid var(--border-default, #d9e1ec);
+}
+
+/* Шапка фиксированной высоты (не зависит от длины имени/подзаголовка). */
+.pp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  height: var(--pp-header-height, 88px);
+  box-sizing: border-box;
+  padding: 0 16px;
+  overflow: hidden;
+}
+
+/* Пустая шапка (объект не выбран): только кнопка сворачивания слева. */
+.pp-header--empty {
+  justify-content: flex-start;
+}
+
+.pp-header__titles {
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* Кнопка сворачивания панели — на месте шеврона перед наименованием. */
+.pp-header__collapse {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  margin-left: -4px;
+  border: none;
+  border-radius: var(--radius-sm, 4px);
+  background: transparent;
+  color: var(--text-secondary, #000);
+  cursor: pointer;
+}
+
+.pp-header__collapse:hover:not(:disabled) {
+  background: var(--bg-card-hover, #f1f5f9);
+  color: var(--text-main, #0d1526);
+}
+
+.pp-header__collapse:disabled {
+  cursor: default;
+}
+
+.pp-header__name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--text-main, #0d1526);
+  /* Длинное имя обрезается многоточием, не увеличивая фикс. высоту шапки. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pp-header__subtitle {
+  margin: 3px 0 0;
+  font-size: 12px;
+  color: var(--text-muted, #8a94a6);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pp-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill, 9999px);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  background: var(--status-working-bg, #e6f9f0);
+  color: var(--status-working-text, #0e8345);
+}
+
+.pp-status__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--status-working-dot, #10b981);
+}
+
+.pp-status.status-badge--warning {
+  background: #fdf2e2;
+  color: #b06a00;
+}
+
+.pp-status.status-badge--warning .pp-status__dot {
+  background: #f59e0b;
+}
+
+.pp-status.status-badge--stopped {
+  background: #f1f3f6;
+  color: #5b6678;
+}
+
+.pp-status.status-badge--stopped .pp-status__dot {
+  background: #94a3b8;
+}
+
+/* --- Каркас «рельс + контент» --- */
+.pp__content {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: 8px;
+}
+
+/* --- Рельс вкладок (на всю высоту панели) --- */
+/* Две зоны: верхняя — высотой как pp-header (пустая),
+   нижняя — сами кнопки. Граница между зонами = стык header / content. */
+.pp-rail {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  align-self: stretch;
+  border-right: 1px solid var(--border-subtle, #edf2f7);
+  background: var(--bg-panel-subtle, #f8fafc);
+}
+
+/* Зона 1: точно по высоте шапки (+1px — её нижняя граница). */
+.pp-rail__zone--top {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  height: var(--pp-header-height, 88px);
+  box-sizing: content-box;
+  /* Горизонтальный разделитель на стыке со зоной вкладок. */
+  border-bottom: 1px solid var(--border-default, #d9e1ec);
+}
+
+/* Плитка типа объекта: ТОЧНО как pp-rail__item — 60×60, тот же радиус,
+   но без интерактива (декоративная). */
+.pp-rail__item--kind {
+  justify-content: center;
+  height: 60px;
+  box-sizing: border-box;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Картинка внутри плитки: по центру, с сохранением пропорций. */
+.pp-rail__kind-img {
+  width: 80%;
+  height: 80%;
+  object-fit: contain;
+  display: block;
+}
+
+/* Зона 2: кнопки вкладок. */
+.pp-rail__zone--tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 8px;
+}
+
+.pp-rail__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: 60px;
+  padding: 8px 4px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg, 8px);
+  background: transparent;
+  color: var(--text-muted, #8a94a6);
+  font: inherit;
+  font-size: 9px;
+  line-height: 1.1;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+
+.pp-rail__item:hover {
+  background: var(--bg-card-hover, #f1f5f9);
+  color: var(--text-main, #0d1526);
+}
+
+.pp-rail__item--active {
+  background: var(--color-primary-light, #ebf3fc);
+  border-color: var(--color-primary-border, #99c2f0);
+  color: var(--color-primary, #0066cc);
+}
+
+.pp-rail__label {
+  display: block;
+}
+
+/* --- Секция --- */
+.pp-section {
+  display: flex;
+  flex-direction: column;
+  /* Фиксированная высота секции (заголовок + тело). Настраивается
+     переменной --pp-section-height. */
+  height: var(--pp-section-height, 240px);
+  box-sizing: border-box;
+  padding: 14px 16px;
+  overflow: hidden;
+  border-bottom: 1px solid var(--border-subtle, #edf2f7);
+}
+
+.pp-section__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex: 0 0 auto;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border-subtle, #edf2f7);
+}
+
+.pp-section__title {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-muted, #8a94a6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pp-section__body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: 8px;
+  /* Содержимое, не влезающее в фикс-высоту, прокручивается внутри секции. */
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+/* --- Строка «метка — значение» --- */
+.pp-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pp-row__label {
+  flex: 0 0 auto;
+  font-size: 12px;
+  color: var(--text-muted, #8a94a6);
+  /* Без переносов: метка — ОДНОЙ строкой. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pp-row__value {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: right;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-main, #0d1526);
+  /* Без переносов: значение — ОДНОЙ строкой, лишнее обрезается многоточием. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pp-row__value--mono {
+  font-variant-numeric: tabular-nums;
+}
+
+.pp-muted {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted, #8a94a6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pp-muted--sm {
+  font-size: 11px;
+}
+
+/* --- Редактируемое наименование --- */
+.pp-edit {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 6px;
+  max-width: 100%;
+  min-width: 0;
+  padding: 1px 4px;
+  margin: -1px -4px;
+  border: none;
+  border-radius: var(--radius-sm, 4px);
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  cursor: text;
+}
+
+/* Текст имени — ОДНОЙ строкой, без переносов (лишнее обрезается). */
+.pp-edit__text {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pp-edit:hover {
+  background: var(--color-primary-light, #ebf3fc);
+}
+
+.pp-edit__pencil {
+  opacity: 0;
+  color: var(--color-primary, #0066cc);
+  display: inline-flex;
+}
+
+.pp-edit:hover .pp-edit__pencil,
+.pp-edit:focus-visible .pp-edit__pencil {
+  opacity: 1;
+}
+
+.pp-input {
+  width: 100%;
+  max-width: 220px;
+  padding: 3px 8px;
+  border: 1px solid var(--color-primary-border, #99c2f0);
+  border-radius: var(--radius-sm, 4px);
+  background: #fff;
+  color: var(--text-main, #0d1526);
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.15);
+}
+
+/* --- Ссылки-связи --- */
+.pp-flow-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pp-flow-group + .pp-flow-group {
+  margin-top: 8px;
+}
+
+.pp-flow-group__title {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-main, #0d1526);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pp-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--border-default, #d9e1ec);
+  border-radius: var(--radius-md, 6px);
+  background: #fff;
+  color: var(--color-primary, #0066cc);
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pp-link:hover {
+  background: var(--color-primary-light, #ebf3fc);
+}
+
+.pp-link__text {
+  font-weight: 600;
+  color: var(--color-primary, #0066cc);
+  /* Без переносов: имя связи — ОДНОЙ строкой, лишнее обрезается. */
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pp-link__badge {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-muted, #8a94a6);
+  white-space: nowrap;
+}
+
+/* --- Строка проверки (галочка) --- */
+.pp-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 12px;
+}
+
+.pp-check__dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  font-size: 10px;
+  color: #fff;
+}
+
+.pp-check--ok .pp-check__dot {
+  background: var(--status-working-dot, #10b981);
+}
+
+.pp-check--warning .pp-check__dot {
+  background: #f59e0b;
+}
+
+.pp-check--none .pp-check__dot {
+  background: #cbd5e1;
+}
+
+.pp-check__label {
+  color: var(--text-main, #0d1526);
+  /* Без переносов: метка проверки — ОДНОЙ строкой. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pp-check__value {
+  margin-left: auto;
+  text-align: right;
+  font-weight: 600;
+  color: var(--text-secondary, #3b4657);
+  /* Без переносов: значение — ОДНОЙ строкой. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+/* --- Период работы: таймлайн --- */
+/* Больший отступ сверху: подпись маркера (top: -18px) и «усики» не должны
+   упираться в границу секции/заголовок — иначе верх таймлайна обрезается. */
+.pp-timeline {
+  padding: 30px 0 6px;
+}
+
+/* У трубопровода — ещё больше воздуха сверху (подписи маркеров длиннее). */
+.pp-timeline--pipeline {
+  padding-top: 44px;
+}
+
+.pp-timeline__track {
+  position: relative;
+  height: 8px;
+  border-radius: var(--radius-pill, 9999px);
+  background: #e7edf5;
+}
+
+.pp-timeline__range {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: var(--radius-pill, 9999px);
+  background: var(--color-primary, #0066cc);
+}
+
+.pp-timeline__marker {
+  position: absolute;
+  top: -6px;
+  transform: translateX(-1px);
+}
+
+.pp-timeline__marker::before {
+  content: '';
+  display: block;
+  width: 2px;
+  height: 20px;
+  background: #94a3b8;
+}
+
+.pp-timeline__marker-label {
+  position: absolute;
+  top: -18px;
+  left: 0;
+  font-size: 10px;
+  white-space: nowrap;
+  color: var(--text-muted, #8a94a6);
+}
+
+.pp-timeline__axis {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: 10px;
+  color: var(--text-muted, #8a94a6);
+}
+
+/* --- Таблица периодов вывода --- */
+.pp-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border: 1px solid var(--color-primary-border, #99c2f0);
+  border-radius: var(--radius-md, 6px);
+  background: #fff;
+  color: var(--color-primary, #0066cc);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pp-add-btn:hover {
+  background: var(--color-primary-light, #ebf3fc);
+}
+
+.pp-shutdown-table {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-default, #d9e1ec);
+  border-radius: var(--radius-md, 6px);
+  overflow: hidden;
+}
+
+.pp-shutdown-table__head,
+.pp-shutdown-table__row {
+  display: grid;
+  grid-template-columns: 1.1fr 1.1fr 1.4fr;
+  gap: 8px;
+  padding: 7px 10px;
+  font-size: 11px;
+}
+
+/* Ячейки — ОДНОЙ строкой, без переносов (лишнее обрезается). */
+.pp-shutdown-table__head > *,
+.pp-shutdown-table__row > * {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pp-shutdown-table__head {
+  background: var(--bg-panel-subtle, #f8fafc);
+  color: var(--text-muted, #8a94a6);
+  font-weight: 600;
+}
+
+.pp-shutdown-table__row {
+  color: var(--text-main, #0d1526);
+  border-top: 1px solid var(--border-subtle, #edf2f7);
+}
+
+.pp-shutdown-table__row--empty {
+  color: var(--text-muted, #a9b2c2);
+}
+
+/* --- Профиль продукции: сегмент-переключатель --- */
+.pp-segmented,
+.pp-side-axis {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: var(--radius-md, 6px);
+  background: var(--bg-segment-track, #eef1f5);
+}
+
+.pp-segmented {
+  margin: 12px 16px 4px;
+}
+
+.pp-side-axis {
+  margin: 8px 16px 0;
+}
+
+.pp-segmented__btn,
+.pp-side-axis__btn {
+  padding: 5px 14px;
+  border: none;
+  border-radius: var(--radius-sm, 4px);
+  background: transparent;
+  color: var(--text-secondary, #3b4657);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pp-segmented__btn--active,
+.pp-side-axis__btn--active {
+  background: #fff;
+  color: var(--text-main, #0d1526);
+  box-shadow: var(--shadow-card, 0 1px 3px rgba(16, 26, 48, 0.05));
+}
+
+/* --- Продукты (чекбоксы) --- */
+.pp-products {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  padding: 10px 16px;
+}
+
+.pp-product {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.pp-product__swatch {
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+}
+
+.pp-product__name {
+  color: var(--text-main, #0d1526);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.pp-product__unit {
+  color: var(--text-muted, #8a94a6);
+  white-space: nowrap;
+  font-size: 11px;
+}
+
+/* --- Таблица профиля --- */
+.pp-table-wrap {
+  overflow-x: auto;
+  /* Тонкий скролл, чтобы широкие таблицы (4 продукта) не рвали вёрстку. */
+  scrollbar-width: thin;
+}
+
+.pp-table {
+  width: 100%;
+  min-width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  table-layout: auto;
+}
+
+.pp-table th,
+.pp-table td {
+  padding: 6px 6px;
+  text-align: right;
+  border-bottom: 1px solid var(--border-subtle, #edf2f7);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.pp-table thead th {
+  color: var(--text-muted, #8a94a6);
+  font-weight: 600;
+}
+
+.pp-table__group {
+  text-align: center !important;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--border-default, #d9e1ec) !important;
+  white-space: normal !important;
+}
+
+.pp-table__year-col,
+.pp-table__year {
+  text-align: left !important;
+  font-weight: 600;
+  color: var(--text-main, #0d1526);
+}
+
+.pp-table__product-head {
+  display: table-cell;
+  white-space: normal;
+}
+
+.pp-table__swatch {
+  margin-right: 3px;
+}
+
+.pp-table__swatch {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 4px;
+  border-radius: 2px;
+  vertical-align: middle;
+}
+
+.pp-table__unit {
+  display: block;
+  font-size: 9px;
+  color: var(--text-muted, #8a94a6);
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.pp-table__num {
+  color: var(--text-main, #0d1526);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- График профиля --- */
+.pp-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pp-chart__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pp-chart__eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  color: var(--text-muted, #8a94a6);
+}
+
+.pp-chart__limit {
+  font-size: 11px;
+  color: #b45309;
+}
+
+.pp-chart__plot {
+  position: relative;
+  height: 180px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border-default, #d9e1ec);
+}
+
+.pp-chart__limit-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1px dashed #f59e0b;
+  pointer-events: none;
+}
+
+.pp-chart__bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 100%;
+}
+
+.pp-chart__col {
+  display: flex;
+  align-items: flex-end;
+  gap: 1px;
+  flex: 1 1 0;
+  height: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.pp-chart__col--hover {
+  background: rgba(0, 102, 204, 0.06);
+}
+
+.pp-chart__bar {
+  flex: 1 1 0;
+  min-height: 1px;
+  border-radius: 1px 1px 0 0;
+}
+
+.pp-chart__tooltip {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  border-radius: var(--radius-md, 6px);
+  background: rgba(13, 21, 38, 0.92);
+  color: #fff;
+  font-size: 10px;
+  pointer-events: none;
+}
+
+.pp-chart__tooltip-date {
+  color: #cbd5e1;
+}
+
+.pp-chart__tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pp-chart__tooltip-swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+
+.pp-chart__axis {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--text-muted, #8a94a6);
+}
+
+/* --- Расчёт --- */
+.pp-calc-state {
+  padding: 3px 9px;
+  border-radius: var(--radius-pill, 9999px);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.pp-calc-state--actual {
+  background: var(--status-working-bg, #e6f9f0);
+  color: var(--status-working-text, #0e8345);
+}
+
+.pp-calc-state--stale {
+  background: #fdf2e2;
+  color: #b06a00;
+}
+
+.pp-calc-state--none {
+  background: #f1f3f6;
+  color: #5b6678;
+}
+
+.pp-primary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 14px;
+  border: none;
+  border-radius: var(--radius-md, 6px);
+  background: var(--color-primary, #0066cc);
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pp-primary-btn:hover {
+  background: var(--color-primary-hover, #0052a3);
+}
+
+/* --- Аналитика --- */
+.pp-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.pp-note__dot {
+  flex: 0 0 auto;
+  width: 9px;
+  height: 9px;
+  margin-top: 4px;
+  border-radius: 50%;
+}
+
+.pp-note--ok .pp-note__dot {
+  background: var(--status-working-dot, #10b981);
+}
+
+.pp-note--warning .pp-note__dot {
+  background: #f59e0b;
+}
+
+.pp-note--none .pp-note__dot {
+  background: #cbd5e1;
+}
+
+.pp-note__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.pp-note__title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-main, #0d1526);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pp-note__detail {
+  font-size: 11px;
+  color: var(--text-muted, #8a94a6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* --- Пустое состояние --- */
+.pp-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 100%;
+  padding: 24px;
+  text-align: center;
+  color: var(--text-muted, #8a94a6);
+}
+
+.pp-empty__icon {
+  opacity: 0.5;
+}
+
+.pp-empty__text {
+  margin: 0;
+  max-width: 220px;
+  font-size: 12px;
+  line-height: 1.5;
+}

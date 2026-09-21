@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { AppShell, PANEL_WIDTH_LIMITS } from './app/AppShell';
+import { AppShell, PANEL_WIDTH_LIMITS, SHELL_COLUMNS } from './app/AppShell';
 import { ActivityBar } from './app/ActivityBar';
 import { LeftSidebar } from './features/objectTree/LeftSidebar';
 import { MapViewport } from './features/map/MapViewport';
@@ -8,7 +8,7 @@ import { TopBar, type ViewMode } from './features/topbar/TopBar';
 import type { TreeNodeData } from './features/objectTree/types';
 import type { GraphToolActionId } from './features/objectTree/GraphToolbar';
 import { findTreeNode } from './features/objectTree/mockData';
-import { InspectorPanel } from './features/inspector/InspectorPanel';
+import { ParameterPanel } from './features/parameterPanel/ParameterPanel';
 import { BottomPanel } from './features/timeRange/BottomPanel';
 import { DEFAULT_TIME_RANGE, type TimeRangeState } from './features/timeRange/types';
 import { useEntityDetailsQuery } from './api/queries';
@@ -74,6 +74,8 @@ function buildLocalEntityDetails(
   }
   const pipeline = pipelines.find((p) => p.id === id);
   if (pipeline) {
+    // Кол-во сегментов — ПО ФАКТУ из domain layer (не хранится в записи).
+    const count = segments.filter((s) => s.pipelineId === pipeline.id).length;
     return {
       id: pipeline.id,
       label: pipeline.label,
@@ -82,7 +84,7 @@ function buildLocalEntityDetails(
       licenseArea: '—',
       owner: '—',
       modelStatus: [
-        { label: 'Топология', value: `${pipeline.segmentCount} сегментов`, ok: pipeline.segmentCount > 0 },
+        { label: 'Топология', value: `${count} сегментов`, ok: count > 0 },
       ],
       outgoing: [],
       incoming: [],
@@ -108,9 +110,10 @@ function nodeKindToEntityKind(node: TreeNodeData): SelectedEntity['kind'] {
 }
 function App() {
   const [leftCollapsed, setLeftCollapsed] = useState(false);
-  const [rightCollapsed, setRightCollapsed] = useState(false);
+  // Панель параметров по умолчанию СВЁРНУТА (открывается по кнопке на краю).
+  const [rightCollapsed, setRightCollapsed] = useState(true);
   const [leftWidth, setLeftWidth] = useState<number>(PANEL_WIDTH_LIMITS.leftMin);
-  const [rightWidth, setRightWidth] = useState<number>(PANEL_WIDTH_LIMITS.min);
+  const [rightWidth, setRightWidth] = useState<number>(SHELL_COLUMNS.right);
   /** Демонстрируемый период — нижняя панель (BottomPanel). */
   const [timeRange, setTimeRange] = useState<TimeRangeState>(DEFAULT_TIME_RANGE);
   const {
@@ -513,7 +516,7 @@ function App() {
           </MapViewport>
         }
         right={
-          <InspectorPanel
+          <ParameterPanel
             entity={selectedDetails}
             loading={entityLoading}
             error={entityError}
