@@ -1,0 +1,459 @@
+[2m21:22:33[22m [31m[1m[vite][22m[39m [31mInternal server error: D:\projects\regional_model\frontend\src\App.tsx: Unexpected token, expected ";" (192:78)
+
+[0m [90m 190 |[31m       [36mconst[31m text [33m=[31m [36mawait[31m file[33m.[31mtext()[33m;[31m
+ [90m 191 |[31m       [36mconst[31m geo [33m=[31m [33mJSON[31m[33m.[31mparse(text) [36mas[31m {
+[31m[1m>[22m[31m[90m 192 |[31m         features[33m?[31m[33m:[31m [33mArray[31m[33m<[31m{ geometry[33m?[31m[33m:[31m { type[33m?[31m[33m:[31m string[33m;[31m coordinates[33m?[31m[33m:[31m unknown }[33m>[31m[33m;[31m
+ [90m     |[31m                                                                               [31m[1m^[22m[31m
+ [90m 193 |[31m       }[33m;[31m
+ [90m 194 |[31m       [36mconst[31m imported [33m=[31m parseLicenceAreaGeoJSON(geo)[33m;[31m
+ [90m 195 |[31m       [36mif[31m ([33m![31mimported) {[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mD:/projects/regional_model/frontend/src/App.tsx[39m:192:78
+[33m  190|        const text = await file.text();
+  191|        const geo = JSON.parse(text) as {
+  192|          features?: Array<{ geometry?: { type?: string; coordinates?: unknown }>;
+     |                                                                                ^
+  193|        };
+  194|        const imported = parseLicenceAreaGeoJSON(geo);[39m
+      at constructor (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:369:19)
+      at TypeScriptParserMixin.raise (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:6620:19)
+      at TypeScriptParserMixin.unexpected (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:6640:16)
+      at TypeScriptParserMixin.expect (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:6920:12)
+      at TypeScriptParserMixin.tsParseTypeMemberSemicolon (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8128:12)
+      at TypeScriptParserMixin.tsParsePropertyOrMethodSignature (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8207:12)
+      at TypeScriptParserMixin.tsParseTypeMember (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8242:17)
+      at TypeScriptParserMixin.tsParseList (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:7899:19)
+      at TypeScriptParserMixin.tsParseObjectTypeMembers (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8251:26)
+      at TypeScriptParserMixin.tsParseTypeLiteral (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8246:25)
+      at TypeScriptParserMixin.tsParseNonArrayType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8461:106)
+      at TypeScriptParserMixin.tsParseArrayTypeOrHigher (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8491:21)
+      at D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8547:158
+      at TypeScriptParserMixin.tsInAllowConditionalTypesContext (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8836:14)
+      at TypeScriptParserMixin.tsParseTypeOperatorOrHigher (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8547:114)
+      at TypeScriptParserMixin.tsParseUnionOrIntersectionType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8554:18)
+      at TypeScriptParserMixin.tsParseIntersectionTypeOrHigher (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8563:17)
+      at TypeScriptParserMixin.tsParseUnionOrIntersectionType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8554:18)
+      at TypeScriptParserMixin.tsParseUnionTypeOrHigher (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8566:17)
+      at TypeScriptParserMixin.tsParseNonConditionalType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8733:17)
+      at TypeScriptParserMixin.tsParseType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8708:23)
+      at TypeScriptParserMixin.tsParseDelimitedListWorker (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:7914:23)
+      at TypeScriptParserMixin.tsParseDelimitedList (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:7904:25)
+      at D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:9111:19
+      at TypeScriptParserMixin.tsInTopLevelContext (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8811:14)
+      at D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:9109:44
+      at TypeScriptParserMixin.tsInType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8818:14)
+      at TypeScriptParserMixin.tsParseTypeArguments (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:9109:24)
+      at TypeScriptParserMixin.tsParseTypeReference (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8037:34)
+      at TypeScriptParserMixin.tsParseNonArrayType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8481:25)
+      at TypeScriptParserMixin.tsParseArrayTypeOrHigher (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8491:21)
+      at D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8547:158
+      at TypeScriptParserMixin.tsInAllowConditionalTypesContext (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8836:14)
+      at TypeScriptParserMixin.tsParseTypeOperatorOrHigher (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8547:114)
+      at TypeScriptParserMixin.tsParseUnionOrIntersectionType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8554:18)
+      at TypeScriptParserMixin.tsParseIntersectionTypeOrHigher (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8563:17)
+      at TypeScriptParserMixin.tsParseUnionOrIntersectionType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8554:18)
+      at TypeScriptParserMixin.tsParseUnionTypeOrHigher (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8566:17)
+      at TypeScriptParserMixin.tsParseNonConditionalType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8733:17)
+      at TypeScriptParserMixin.tsParseType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8708:23)
+      at D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8702:31
+      at TypeScriptParserMixin.tsInType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8818:14)
+      at TypeScriptParserMixin.tsParseTypeAnnotation (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8700:10)
+      at TypeScriptParserMixin.tsTryParseTypeAnnotation (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8670:19)
+      at TypeScriptParserMixin.tsParsePropertyOrMethodSignature (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8205:25)
+      at TypeScriptParserMixin.tsParseTypeMember (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8242:17)
+      at TypeScriptParserMixin.tsParseList (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:7899:19)
+      at TypeScriptParserMixin.tsParseObjectTypeMembers (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8251:26)
+      at TypeScriptParserMixin.tsParseTypeLiteral (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8246:25)
+      at TypeScriptParserMixin.tsParseNonArrayType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8461:106)
+[2m21:22:47[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: D:\projects\regional_model\frontend\src\App.tsx: Unexpected token, expected ";" (192:78)
+
+[0m [90m 190 |[39m       [36mconst[39m text [33m=[39m [36mawait[39m file[33m.[39mtext()[33m;[39m
+ [90m 191 |[39m       [36mconst[39m geo [33m=[39m [33mJSON[39m[33m.[39mparse(text) [36mas[39m {
+[31m[1m>[22m[39m[90m 192 |[39m         features[33m?[39m[33m:[39m [33mArray[39m[33m<[39m{ geometry[33m?[39m[33m:[39m { type[33m?[39m[33m:[39m string[33m;[39m coordinates[33m?[39m[33m:[39m unknown }[33m>[39m[33m;[39m
+ [90m     |[39m                                                                               [31m[1m^[22m[39m
+ [90m 193 |[39m       }[33m;[39m
+ [90m 194 |[39m       [36mconst[39m imported [33m=[39m parseLicenceAreaGeoJSON(geo)[33m;[39m
+ [90m 195 |[39m       [36mif[39m ([33m![39mimported) {[0m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mD:/projects/regional_model/frontend/src/App.tsx[39m:192:78
+[33m  190|        const text = await file.text();
+  191|        const geo = JSON.parse(text) as {
+  192|          features?: Array<{ geometry?: { type?: string; coordinates?: unknown }>;
+     |                                                                                ^
+  193|        };
+  194|        const imported = parseLicenceAreaGeoJSON(geo);[39m
+[2m21:22:47[22m [31m[1m[vite][22m[39m [31mInternal server error: D:\projects\regional_model\frontend\src\App.tsx: Unexpected token, expected ";" (192:78)
+
+[0m [90m 190 |[31m       [36mconst[31m text [33m=[31m [36mawait[31m file[33m.[31mtext()[33m;[31m
+ [90m 191 |[31m       [36mconst[31m geo [33m=[31m [33mJSON[31m[33m.[31mparse(text) [36mas[31m {
+[31m[1m>[22m[31m[90m 192 |[31m         features[33m?[31m[33m:[31m [33mArray[31m[33m<[31m{ geometry[33m?[31m[33m:[31m { type[33m?[31m[33m:[31m string[33m;[31m coordinates[33m?[31m[33m:[31m unknown }[33m>[31m[33m;[31m
+ [90m     |[31m                                                                               [31m[1m^[22m[31m
+ [90m 193 |[31m       }[33m;[31m
+ [90m 194 |[31m       [36mconst[31m imported [33m=[31m parseLicenceAreaGeoJSON(geo)[33m;[31m
+ [90m 195 |[31m       [36mif[31m ([33m![31mimported) {[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mD:/projects/regional_model/frontend/src/App.tsx[39m:192:78
+[33m  190|        const text = await file.text();
+  191|        const geo = JSON.parse(text) as {
+  192|          features?: Array<{ geometry?: { type?: string; coordinates?: unknown }>;
+     |                                                                                ^
+  193|        };
+  194|        const imported = parseLicenceAreaGeoJSON(geo);[39m
+      at constructor (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:369:19)
+      at TypeScriptParserMixin.raise (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:6620:19)
+      at TypeScriptParserMixin.unexpected (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:6640:16)
+      at TypeScriptParserMixin.expect (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:6920:12)
+      at TypeScriptParserMixin.tsParseTypeMemberSemicolon (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8128:12)
+      at TypeScriptParserMixin.tsParsePropertyOrMethodSignature (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8207:12)
+      at TypeScriptParserMixin.tsParseTypeMember (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8242:17)
+      at TypeScriptParserMixin.tsParseList (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:7899:19)
+      at TypeScriptParserMixin.tsParseObjectTypeMembers (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8251:26)
+      at TypeScriptParserMixin.tsParseTypeLiteral (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8246:25)
+      at TypeScriptParserMixin.tsParseNonArrayType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8461:106)
+      at TypeScriptParserMixin.tsParseArrayTypeOrHigher (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8491:21)
+      at D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8547:158
+      at TypeScriptParserMixin.tsInAllowConditionalTypesContext (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8836:14)
+      at TypeScriptParserMixin.tsParseTypeOperatorOrHigher (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8547:114)
+      at TypeScriptParserMixin.tsParseUnionOrIntersectionType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8554:18)
+      at TypeScriptParserMixin.tsParseIntersectionTypeOrHigher (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8563:17)
+      at TypeScriptParserMixin.tsParseUnionOrIntersectionType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8554:18)
+      at TypeScriptParserMixin.tsParseUnionTypeOrHigher (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8566:17)
+      at TypeScriptParserMixin.tsParseNonConditionalType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8733:17)
+      at TypeScriptParserMixin.tsParseType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8708:23)
+      at TypeScriptParserMixin.tsParseDelimitedListWorker (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:7914:23)
+      at TypeScriptParserMixin.tsParseDelimitedList (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:7904:25)
+      at D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:9111:19
+      at TypeScriptParserMixin.tsInTopLevelContext (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8811:14)
+      at D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:9109:44
+      at TypeScriptParserMixin.tsInType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8818:14)
+      at TypeScriptParserMixin.tsParseTypeArguments (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:9109:24)
+      at TypeScriptParserMixin.tsParseTypeReference (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8037:34)
+      at TypeScriptParserMixin.tsParseNonArrayType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8481:25)
+      at TypeScriptParserMixin.tsParseArrayTypeOrHigher (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8491:21)
+      at D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8547:158
+      at TypeScriptParserMixin.tsInAllowConditionalTypesContext (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8836:14)
+      at TypeScriptParserMixin.tsParseTypeOperatorOrHigher (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8547:114)
+      at TypeScriptParserMixin.tsParseUnionOrIntersectionType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8554:18)
+      at TypeScriptParserMixin.tsParseIntersectionTypeOrHigher (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8563:17)
+      at TypeScriptParserMixin.tsParseUnionOrIntersectionType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8554:18)
+      at TypeScriptParserMixin.tsParseUnionTypeOrHigher (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8566:17)
+      at TypeScriptParserMixin.tsParseNonConditionalType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8733:17)
+      at TypeScriptParserMixin.tsParseType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8708:23)
+      at D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8702:31
+      at TypeScriptParserMixin.tsInType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8818:14)
+      at TypeScriptParserMixin.tsParseTypeAnnotation (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8700:10)
+      at TypeScriptParserMixin.tsTryParseTypeAnnotation (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8670:19)
+      at TypeScriptParserMixin.tsParsePropertyOrMethodSignature (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8205:25)
+      at TypeScriptParserMixin.tsParseTypeMember (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8242:17)
+      at TypeScriptParserMixin.tsParseList (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:7899:19)
+      at TypeScriptParserMixin.tsParseObjectTypeMembers (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8251:26)
+      at TypeScriptParserMixin.tsParseTypeLiteral (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8246:25)
+      at TypeScriptParserMixin.tsParseNonArrayType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8461:106)
+[2m21:23:02[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: D:\projects\regional_model\frontend\src\App.tsx: Unexpected token, expected ";" (192:78)
+
+[0m [90m 190 |[39m       [36mconst[39m text [33m=[39m [36mawait[39m file[33m.[39mtext()[33m;[39m
+ [90m 191 |[39m       [36mconst[39m geo [33m=[39m [33mJSON[39m[33m.[39mparse(text) [36mas[39m {
+[31m[1m>[22m[39m[90m 192 |[39m         features[33m?[39m[33m:[39m [33mArray[39m[33m<[39m{ geometry[33m?[39m[33m:[39m { type[33m?[39m[33m:[39m string[33m;[39m coordinates[33m?[39m[33m:[39m unknown }[33m>[39m[33m;[39m
+ [90m     |[39m                                                                               [31m[1m^[22m[39m
+ [90m 193 |[39m       }[33m;[39m
+ [90m 194 |[39m       [36mconst[39m imported [33m=[39m parseLicenceAreaGeoJSON(geo)[33m;[39m
+ [90m 195 |[39m       [36mif[39m ([33m![39mimported) {[0m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mD:/projects/regional_model/frontend/src/App.tsx[39m:192:78
+[33m  190|        const text = await file.text();
+  191|        const geo = JSON.parse(text) as {
+  192|          features?: Array<{ geometry?: { type?: string; coordinates?: unknown }>;
+     |                                                                                ^
+  193|        };
+  194|        const imported = parseLicenceAreaGeoJSON(geo);[39m
+[2m21:23:02[22m [31m[1m[vite][22m[39m [31mInternal server error: D:\projects\regional_model\frontend\src\App.tsx: Unexpected token, expected ";" (192:78)
+
+[0m [90m 190 |[31m       [36mconst[31m text [33m=[31m [36mawait[31m file[33m.[31mtext()[33m;[31m
+ [90m 191 |[31m       [36mconst[31m geo [33m=[31m [33mJSON[31m[33m.[31mparse(text) [36mas[31m {
+[31m[1m>[22m[31m[90m 192 |[31m         features[33m?[31m[33m:[31m [33mArray[31m[33m<[31m{ geometry[33m?[31m[33m:[31m { type[33m?[31m[33m:[31m string[33m;[31m coordinates[33m?[31m[33m:[31m unknown }[33m>[31m[33m;[31m
+ [90m     |[31m                                                                               [31m[1m^[22m[31m
+ [90m 193 |[31m       }[33m;[31m
+ [90m 194 |[31m       [36mconst[31m imported [33m=[31m parseLicenceAreaGeoJSON(geo)[33m;[31m
+ [90m 195 |[31m       [36mif[31m ([33m![31mimported) {[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mD:/projects/regional_model/frontend/src/App.tsx[39m:192:78
+[33m  190|        const text = await file.text();
+  191|        const geo = JSON.parse(text) as {
+  192|          features?: Array<{ geometry?: { type?: string; coordinates?: unknown }>;
+     |                                                                                ^
+  193|        };
+  194|        const imported = parseLicenceAreaGeoJSON(geo);[39m
+      at constructor (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:369:19)
+      at TypeScriptParserMixin.raise (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:6620:19)
+      at TypeScriptParserMixin.unexpected (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:6640:16)
+      at TypeScriptParserMixin.expect (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:6920:12)
+      at TypeScriptParserMixin.tsParseTypeMemberSemicolon (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8128:12)
+      at TypeScriptParserMixin.tsParsePropertyOrMethodSignature (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8207:12)
+      at TypeScriptParserMixin.tsParseTypeMember (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8242:17)
+      at TypeScriptParserMixin.tsParseList (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:7899:19)
+      at TypeScriptParserMixin.tsParseObjectTypeMembers (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8251:26)
+      at TypeScriptParserMixin.tsParseTypeLiteral (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8246:25)
+      at TypeScriptParserMixin.tsParseNonArrayType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8461:106)
+      at TypeScriptParserMixin.tsParseArrayTypeOrHigher (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8491:21)
+      at D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8547:158
+      at TypeScriptParserMixin.tsInAllowConditionalTypesContext (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8836:14)
+      at TypeScriptParserMixin.tsParseTypeOperatorOrHigher (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8547:114)
+      at TypeScriptParserMixin.tsParseUnionOrIntersectionType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8554:18)
+      at TypeScriptParserMixin.tsParseIntersectionTypeOrHigher (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8563:17)
+      at TypeScriptParserMixin.tsParseUnionOrIntersectionType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8554:18)
+      at TypeScriptParserMixin.tsParseUnionTypeOrHigher (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8566:17)
+      at TypeScriptParserMixin.tsParseNonConditionalType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8733:17)
+      at TypeScriptParserMixin.tsParseType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8708:23)
+      at TypeScriptParserMixin.tsParseDelimitedListWorker (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:7914:23)
+      at TypeScriptParserMixin.tsParseDelimitedList (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:7904:25)
+      at D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:9111:19
+      at TypeScriptParserMixin.tsInTopLevelContext (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8811:14)
+      at D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:9109:44
+      at TypeScriptParserMixin.tsInType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8818:14)
+      at TypeScriptParserMixin.tsParseTypeArguments (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:9109:24)
+      at TypeScriptParserMixin.tsParseTypeReference (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8037:34)
+      at TypeScriptParserMixin.tsParseNonArrayType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8481:25)
+      at TypeScriptParserMixin.tsParseArrayTypeOrHigher (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8491:21)
+      at D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8547:158
+      at TypeScriptParserMixin.tsInAllowConditionalTypesContext (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8836:14)
+      at TypeScriptParserMixin.tsParseTypeOperatorOrHigher (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8547:114)
+      at TypeScriptParserMixin.tsParseUnionOrIntersectionType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8554:18)
+      at TypeScriptParserMixin.tsParseIntersectionTypeOrHigher (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8563:17)
+      at TypeScriptParserMixin.tsParseUnionOrIntersectionType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8554:18)
+      at TypeScriptParserMixin.tsParseUnionTypeOrHigher (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8566:17)
+      at TypeScriptParserMixin.tsParseNonConditionalType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8733:17)
+      at TypeScriptParserMixin.tsParseType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8708:23)
+      at D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8702:31
+      at TypeScriptParserMixin.tsInType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8818:14)
+      at TypeScriptParserMixin.tsParseTypeAnnotation (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8700:10)
+      at TypeScriptParserMixin.tsTryParseTypeAnnotation (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8670:19)
+      at TypeScriptParserMixin.tsParsePropertyOrMethodSignature (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8205:25)
+      at TypeScriptParserMixin.tsParseTypeMember (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8242:17)
+      at TypeScriptParserMixin.tsParseList (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:7899:19)
+      at TypeScriptParserMixin.tsParseObjectTypeMembers (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8251:26)
+      at TypeScriptParserMixin.tsParseTypeLiteral (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8246:25)
+      at TypeScriptParserMixin.tsParseNonArrayType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8461:106)
+[2m21:23:26[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: D:\projects\regional_model\frontend\src\App.tsx: Unexpected token, expected ";" (193:78)
+
+[0m [90m 191 |[39m       [36mconst[39m text [33m=[39m [36mawait[39m file[33m.[39mtext()[33m;[39m
+ [90m 192 |[39m       [36mconst[39m geo [33m=[39m [33mJSON[39m[33m.[39mparse(text) [36mas[39m {
+[31m[1m>[22m[39m[90m 193 |[39m         features[33m?[39m[33m:[39m [33mArray[39m[33m<[39m{ geometry[33m?[39m[33m:[39m { type[33m?[39m[33m:[39m string[33m;[39m coordinates[33m?[39m[33m:[39m unknown }[33m>[39m[33m;[39m
+ [90m     |[39m                                                                               [31m[1m^[22m[39m
+ [90m 194 |[39m       }[33m;[39m
+ [90m 195 |[39m       [36mconst[39m imported [33m=[39m parseLicenceAreaGeoJSON(geo)[33m;[39m
+ [90m 196 |[39m       [36mif[39m ([33m![39mimported) {[0m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mD:/projects/regional_model/frontend/src/App.tsx[39m:193:78
+[33m  191|        const text = await file.text();
+  192|        const geo = JSON.parse(text) as {
+  193|          features?: Array<{ geometry?: { type?: string; coordinates?: unknown }>;
+     |                                                                                ^
+  194|        };
+  195|        const imported = parseLicenceAreaGeoJSON(geo);[39m
+[2m21:23:27[22m [31m[1m[vite][22m[39m [31mInternal server error: D:\projects\regional_model\frontend\src\App.tsx: Unexpected token, expected ";" (193:78)
+
+[0m [90m 191 |[31m       [36mconst[31m text [33m=[31m [36mawait[31m file[33m.[31mtext()[33m;[31m
+ [90m 192 |[31m       [36mconst[31m geo [33m=[31m [33mJSON[31m[33m.[31mparse(text) [36mas[31m {
+[31m[1m>[22m[31m[90m 193 |[31m         features[33m?[31m[33m:[31m [33mArray[31m[33m<[31m{ geometry[33m?[31m[33m:[31m { type[33m?[31m[33m:[31m string[33m;[31m coordinates[33m?[31m[33m:[31m unknown }[33m>[31m[33m;[31m
+ [90m     |[31m                                                                               [31m[1m^[22m[31m
+ [90m 194 |[31m       }[33m;[31m
+ [90m 195 |[31m       [36mconst[31m imported [33m=[31m parseLicenceAreaGeoJSON(geo)[33m;[31m
+ [90m 196 |[31m       [36mif[31m ([33m![31mimported) {[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mD:/projects/regional_model/frontend/src/App.tsx[39m:193:78
+[33m  191|        const text = await file.text();
+  192|        const geo = JSON.parse(text) as {
+  193|          features?: Array<{ geometry?: { type?: string; coordinates?: unknown }>;
+     |                                                                                ^
+  194|        };
+  195|        const imported = parseLicenceAreaGeoJSON(geo);[39m
+      at constructor (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:369:19)
+      at TypeScriptParserMixin.raise (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:6620:19)
+      at TypeScriptParserMixin.unexpected (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:6640:16)
+      at TypeScriptParserMixin.expect (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:6920:12)
+      at TypeScriptParserMixin.tsParseTypeMemberSemicolon (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8128:12)
+      at TypeScriptParserMixin.tsParsePropertyOrMethodSignature (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8207:12)
+      at TypeScriptParserMixin.tsParseTypeMember (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8242:17)
+      at TypeScriptParserMixin.tsParseList (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:7899:19)
+      at TypeScriptParserMixin.tsParseObjectTypeMembers (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8251:26)
+      at TypeScriptParserMixin.tsParseTypeLiteral (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8246:25)
+      at TypeScriptParserMixin.tsParseNonArrayType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8461:106)
+      at TypeScriptParserMixin.tsParseArrayTypeOrHigher (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8491:21)
+      at D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8547:158
+      at TypeScriptParserMixin.tsInAllowConditionalTypesContext (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8836:14)
+      at TypeScriptParserMixin.tsParseTypeOperatorOrHigher (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8547:114)
+      at TypeScriptParserMixin.tsParseUnionOrIntersectionType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8554:18)
+      at TypeScriptParserMixin.tsParseIntersectionTypeOrHigher (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8563:17)
+      at TypeScriptParserMixin.tsParseUnionOrIntersectionType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8554:18)
+      at TypeScriptParserMixin.tsParseUnionTypeOrHigher (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8566:17)
+      at TypeScriptParserMixin.tsParseNonConditionalType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8733:17)
+      at TypeScriptParserMixin.tsParseType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8708:23)
+      at TypeScriptParserMixin.tsParseDelimitedListWorker (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:7914:23)
+      at TypeScriptParserMixin.tsParseDelimitedList (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:7904:25)
+      at D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:9111:19
+      at TypeScriptParserMixin.tsInTopLevelContext (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8811:14)
+      at D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:9109:44
+      at TypeScriptParserMixin.tsInType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8818:14)
+      at TypeScriptParserMixin.tsParseTypeArguments (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:9109:24)
+      at TypeScriptParserMixin.tsParseTypeReference (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8037:34)
+      at TypeScriptParserMixin.tsParseNonArrayType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8481:25)
+      at TypeScriptParserMixin.tsParseArrayTypeOrHigher (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8491:21)
+      at D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8547:158
+      at TypeScriptParserMixin.tsInAllowConditionalTypesContext (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8836:14)
+      at TypeScriptParserMixin.tsParseTypeOperatorOrHigher (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8547:114)
+      at TypeScriptParserMixin.tsParseUnionOrIntersectionType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8554:18)
+      at TypeScriptParserMixin.tsParseIntersectionTypeOrHigher (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8563:17)
+      at TypeScriptParserMixin.tsParseUnionOrIntersectionType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8554:18)
+      at TypeScriptParserMixin.tsParseUnionTypeOrHigher (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8566:17)
+      at TypeScriptParserMixin.tsParseNonConditionalType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8733:17)
+      at TypeScriptParserMixin.tsParseType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8708:23)
+      at D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8702:31
+      at TypeScriptParserMixin.tsInType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8818:14)
+      at TypeScriptParserMixin.tsParseTypeAnnotation (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8700:10)
+      at TypeScriptParserMixin.tsTryParseTypeAnnotation (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8670:19)
+      at TypeScriptParserMixin.tsParsePropertyOrMethodSignature (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8205:25)
+      at TypeScriptParserMixin.tsParseTypeMember (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8242:17)
+      at TypeScriptParserMixin.tsParseList (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:7899:19)
+      at TypeScriptParserMixin.tsParseObjectTypeMembers (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8251:26)
+      at TypeScriptParserMixin.tsParseTypeLiteral (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8246:25)
+      at TypeScriptParserMixin.tsParseNonArrayType (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:8461:106)
+[2m22:51:46[22m [31m[1m[vite][22m[39m [31mInternal server error: D:\projects\regional_model\frontend\src\features\map\MapViewport.tsx: Unexpected keyword 'false'. (1187:16)
+
+[0m [90m 1185 |[31m                 t[33m,[31m
+ [90m 1186 |[31m                 { [36mfrom[31m[33m:[31m { x[33m:[31m seg[33m.[31m[36mfrom[31m[33m.[31mx[33m,[31m y[33m:[31m seg[33m.[31m[36mfrom[31m[33m.[31my }[33m,[31m to[33m:[31m { x[33m:[31m seg[33m.[31mto[33m.[31mx[33m,[31m y[33m:[31m seg[33m.[31mto[33m.[31my }[33m,[31m
+[31m[1m>[22m[31m[90m 1187 |[31m                 [36mfalse[31m[33m,[31m
+ [90m      |[31m                 [31m[1m^[22m[31m
+ [90m 1188 |[31m               )[33m;[31m
+ [90m 1189 |[31m             }}
+ [90m 1190 |[31m             onResize[33m=[31m{(id[33m,[31m box) [33m=>[31m setVertexBox(id[33m,[31m box)}[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mD:/projects/regional_model/frontend/src/features/map/MapViewport.tsx[39m:1187:16
+[33m  1216|              showLabels={showLabels}
+  1217|              selectedIds={selections.filter((s) => s.kind === 'vertex').map((s) => s.id)}
+  1218|              onSelect={(id, withShift) =>
+     |    ^
+  1219|                withShift
+  1220|                  ? toggleSelection({ kind: 'vertex', id })[39m
+      at constructor (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:369:19)
+      at TypeScriptParserMixin.raise (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:6620:19)
+      at TypeScriptParserMixin.checkReservedWord (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:12253:12)
+      at TypeScriptParserMixin.checkReservedWord (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:9331:13)
+      at TypeScriptParserMixin.parseObjectProperty (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:11983:12)
+      at TypeScriptParserMixin.parseObjPropValue (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:12007:100)
+      at TypeScriptParserMixin.parseObjPropValue (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:9765:18)
+      at TypeScriptParserMixin.parsePropertyDefinition (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:11944:17)
+      at TypeScriptParserMixin.parseObjectLike (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:11861:21)
+      at TypeScriptParserMixin.parseExprAtom (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:11365:23)
+      at TypeScriptParserMixin.parseExprAtom (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:4780:20)
+      at TypeScriptParserMixin.parseExprSubscripts (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:11102:23)
+      at TypeScriptParserMixin.parseUpdate (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:11087:21)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:11067:23)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:9858:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:10920:61)
+      at TypeScriptParserMixin.parseExprOps (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:10925:23)
+      at TypeScriptParserMixin.parseMaybeConditional (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:10902:23)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:10852:21)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:9807:20)
+      at D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:10821:39
+      at TypeScriptParserMixin.allowInAnd (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:12455:12)
+      at TypeScriptParserMixin.parseMaybeAssignAllowIn (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:10821:17)
+      at TypeScriptParserMixin.parseMaybeAssignAllowInOrVoidPattern (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:12522:17)
+      at TypeScriptParserMixin.parseExprListItem (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:12204:18)
+      at TypeScriptParserMixin.parseCallExpressionArguments (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:11278:22)
+      at TypeScriptParserMixin.parseCoverCallAndAsyncArrowHead (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:11212:29)
+      at TypeScriptParserMixin.parseSubscript (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:11141:19)
+      at TypeScriptParserMixin.parseSubscript (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:9293:18)
+      at TypeScriptParserMixin.parseSubscripts (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:11115:19)
+      at TypeScriptParserMixin.parseExprSubscripts (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:11106:17)
+      at TypeScriptParserMixin.parseUpdate (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:11087:21)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:11067:23)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:9858:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:10920:61)
+      at TypeScriptParserMixin.parseExprOps (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:10925:23)
+      at TypeScriptParserMixin.parseMaybeConditional (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:10902:23)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:10852:21)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:9807:20)
+      at TypeScriptParserMixin.parseExpressionBase (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:10805:23)
+      at D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:10801:39
+      at TypeScriptParserMixin.allowInAnd (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:12450:16)
+      at TypeScriptParserMixin.parseExpression (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:10801:17)
+      at TypeScriptParserMixin.parseStatementContent (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:12924:23)
+      at TypeScriptParserMixin.parseStatementContent (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:9529:18)
+      at TypeScriptParserMixin.parseStatementLike (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:12796:17)
+      at TypeScriptParserMixin.parseStatementListItem (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:12776:17)
+      at TypeScriptParserMixin.parseBlockOrModuleBlockBody (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:13345:61)
+      at TypeScriptParserMixin.parseBlockBody (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:13338:10)
+      at TypeScriptParserMixin.parseBlock (D:\projects\regional_model\frontend\node_modules\@babel\parser\lib\index.js:13326:10)
+[2m03:06:22[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "./AreaExportMenu" from "src/features/objectTree/GraphToolbar.tsx". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/projects/regional_model/frontend/src/features/objectTree/GraphToolbar.tsx[39m:4:31
+[33m  18 |  import { CollapsibleSection } from "../../components/panel/CollapsibleSection";
+  19 |  import { PipelineSettingsPanel } from "./PipelineSettingsPanel";
+  20 |  import { AreaExportMenu } from "./AreaExportMenu";
+     |                                  ^
+  21 |  import wellpadIcon from "../../assets/design/wellpad.png";
+  22 |  import facilityIcon from "../../assets/design/facility.png";[39m
+      at TransformPluginContext._formatLog (file:///D:/projects/regional_model/frontend/node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:42658:41)
+      at TransformPluginContext.error (file:///D:/projects/regional_model/frontend/node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:42655:16)
+      at normalizeUrl (file:///D:/projects/regional_model/frontend/node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:40634:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///D:/projects/regional_model/frontend/node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:40753:37
+      at async Promise.all (index 6)
+      at async TransformPluginContext.transform (file:///D:/projects/regional_model/frontend/node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:40680:7)
+      at async EnvironmentPluginContainer.transform (file:///D:/projects/regional_model/frontend/node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:42453:18)
+      at async loadAndTransform (file:///D:/projects/regional_model/frontend/node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:35845:27)
+      at async viteTransformMiddleware (file:///D:/projects/regional_model/frontend/node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:37369:24)
+[2m03:06:29[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "./AreaExportMenu" from "src/features/objectTree/GraphToolbar.tsx". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/projects/regional_model/frontend/src/features/objectTree/GraphToolbar.tsx[39m:4:31
+[33m  18 |  import { CollapsibleSection } from "../../components/panel/CollapsibleSection";
+  19 |  import { PipelineSettingsPanel } from "./PipelineSettingsPanel";
+  20 |  import { AreaExportMenu } from "./AreaExportMenu";
+     |                                  ^
+  21 |  import wellpadIcon from "../../assets/design/wellpad.png";
+  22 |  import facilityIcon from "../../assets/design/facility.png";[39m
+      at TransformPluginContext._formatLog (file:///D:/projects/regional_model/frontend/node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:42658:41)
+      at TransformPluginContext.error (file:///D:/projects/regional_model/frontend/node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:42655:16)
+      at normalizeUrl (file:///D:/projects/regional_model/frontend/node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:40634:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///D:/projects/regional_model/frontend/node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:40753:37
+      at async Promise.all (index 6)
+      at async TransformPluginContext.transform (file:///D:/projects/regional_model/frontend/node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:40680:7)
+      at async EnvironmentPluginContainer.transform (file:///D:/projects/regional_model/frontend/node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:42453:18)
+      at async loadAndTransform (file:///D:/projects/regional_model/frontend/node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:35845:27)
+[2m03:06:29[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "./AreaExportMenu" from "src/features/objectTree/GraphToolbar.tsx". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/projects/regional_model/frontend/src/features/objectTree/GraphToolbar.tsx[39m:4:31
+[33m  18 |  import { CollapsibleSection } from "../../components/panel/CollapsibleSection";
+  19 |  import { PipelineSettingsPanel } from "./PipelineSettingsPanel";
+  20 |  import { AreaExportMenu } from "./AreaExportMenu";
+     |                                  ^
+  21 |  import wellpadIcon from "../../assets/design/wellpad.png";
+  22 |  import facilityIcon from "../../assets/design/facility.png";[39m
+[2m03:06:37[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "./AreaExportMenu.css" from "src/features/objectTree/AreaExportMenu.tsx". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/projects/regional_model/frontend/src/features/objectTree/AreaExportMenu.tsx[39m:4:7
+[33m  18 |  import { useEffect, useRef, useState } from "react";
+  19 |  import { AppIcon } from "../../components/AppIcon";
+  20 |  import "./AreaExportMenu.css";
+     |          ^
+  21 |  const EXPORT_OPTIONS = [
+  22 |    { format: "geojson", label: "GeoJSON (.geojson)" },[39m
+      at TransformPluginContext._formatLog (file:///D:/projects/regional_model/frontend/node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:42658:41)
+      at TransformPluginContext.error (file:///D:/projects/regional_model/frontend/node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:42655:16)
+      at normalizeUrl (file:///D:/projects/regional_model/frontend/node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:40634:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///D:/projects/regional_model/frontend/node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:40753:37
+      at async Promise.all (index 5)
+      at async TransformPluginContext.transform (file:///D:/projects/regional_model/frontend/node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:40680:7)
+      at async EnvironmentPluginContainer.transform (file:///D:/projects/regional_model/frontend/node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:42453:18)
+      at async loadAndTransform (file:///D:/projects/regional_model/frontend/node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:35845:27)
+[2m03:06:37[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "./AreaExportMenu.css" from "src/features/objectTree/AreaExportMenu.tsx". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/projects/regional_model/frontend/src/features/objectTree/AreaExportMenu.tsx[39m:4:7
+[33m  18 |  import { useEffect, useRef, useState } from "react";
+  19 |  import { AppIcon } from "../../components/AppIcon";
+  20 |  import "./AreaExportMenu.css";
+     |          ^
+  21 |  const EXPORT_OPTIONS = [
+  22 |    { format: "geojson", label: "GeoJSON (.geojson)" },[39m

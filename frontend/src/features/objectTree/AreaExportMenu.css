@@ -1,0 +1,51 @@
+/* Компактное меню экспорта лицензионных участков (в «Проектировании»). */
+
+.area-export {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+/* Квадратная кнопка экспорта (в ряду действий «Территории»). */
+.area-export .graph-toolbar__button {
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  padding: 0;
+  justify-content: center;
+  align-items: center;
+}
+
+.area-export__list {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 168px;
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+  border: 1px solid var(--border-default, #d9e1ec);
+  border-radius: var(--radius-md, 8px);
+  background: var(--bg-panel, #ffffff);
+  box-shadow: 0 8px 24px rgba(16, 26, 48, 0.18);
+}
+
+.area-export__item {
+  padding: 7px 10px;
+  border: none;
+  border-radius: var(--radius-control-inner, 6px);
+  background: transparent;
+  color: var(--text-main, #101a30);
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.area-export__item:hover {
+  background: var(--bg-card-hover, #f1f5f9);
+}

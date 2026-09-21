@@ -1,0 +1,119 @@
+/* Панель настройки трубопровода в разделе «Проектирование». */
+
+.pipeline-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.pipeline-settings__group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pipeline-settings__group-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-eyebrow, #7c8ba1);
+}
+
+/* --- Сегментированный контрол флюида --- */
+
+.pipeline-settings__seg {
+  display: inline-flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: var(--radius-control, 8px);
+  background: var(--bg-inset, rgba(255, 255, 255, 0.04));
+}
+
+.pipeline-settings__seg-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control-inner, 6px);
+  background: transparent;
+  color: var(--text-secondary, #4a5568);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.pipeline-settings__seg-item:hover {
+  color: var(--text-primary, #101a30);
+}
+
+.pipeline-settings__seg-item.is-active {
+  background: var(--bg-card-selected, #eef5ff);
+  border-color: var(--color-primary-border, #99c2f0);
+  color: var(--text-primary, #101a30);
+  font-weight: 600;
+}
+
+.pipeline-settings__seg-line {
+  width: 22px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+/* --- Список классов трубопровода --- */
+
+.pipeline-settings__classes {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pipeline-settings__class {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border: 1px solid var(--border-default, #d9e1ec);
+  border-radius: var(--radius-md, 6px);
+  background: var(--bg-panel, #ffffff);
+  color: var(--text-main, #101a30);
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.pipeline-settings__class:hover {
+  background: var(--bg-card-hover, #f1f5f9);
+  border-color: var(--border-active, #7da7f6);
+}
+
+.pipeline-settings__class.is-active {
+  background: var(--bg-card-selected, #eef5ff);
+  border-color: var(--color-primary-border, #99c2f0);
+  font-weight: 600;
+}
+
+/* Образец линии класса: контейнер фиксированной ширины, линия по центру */
+.pipeline-settings__class-sample {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  flex: 0 0 42px;
+}
+
+.pipeline-settings__class-line {
+  width: 42px;
+  height: 0;
+  border-top: 2.5px solid #0066cc;
+}
+
+.pipeline-settings__class-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

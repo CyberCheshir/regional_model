@@ -1,0 +1,40 @@
+/* ProgressBar — линейный индикатор прогресса. */
+
+.progress-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 160px;
+}
+
+.progress-bar__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--text-main);
+}
+
+.progress-bar__label {
+  white-space: nowrap;
+}
+
+.progress-bar__percent {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+.progress-bar__track {
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--border-subtle);
+  overflow: hidden;
+}
+
+.progress-bar__fill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: var(--radius-pill);
+  transition: width 0.25s ease;
+}

@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from 'react';
+import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { PANEL_WIDTH_LIMITS, SHELL_COLUMNS, clampWidth } from './panelWidth';
 import { PanelResizer } from './PanelResizer';
 import { PanelRestoreBar } from './PanelRestoreBar';
@@ -18,6 +18,8 @@ export type AppShellProps = {
   center: ReactNode;
   /** Слот правого инспектора (380px) */
   right: ReactNode;
+  /** Необязательный слот нижней панели (например, «Демонстрируемый период») */
+  bottom?: ReactNode;
   /** Текущая ширина левой панели (контролируемая, при expanded) */
   leftWidth?: number;
   /** Текущая ширина правой панели (контролируемая, при expanded) */
@@ -34,6 +36,9 @@ export type AppShellProps = {
   onToggleRight?: () => void;
 };
 
+/** Высота зон по умолчанию для CSS-переменной, пока панель не измерена. */
+const BOTTOM_PANEL_FALLBACK_HEIGHT = 96;
+
 /**
  * Каркас лейаута: 4 колонки Activity Bar / Sidebar / Map / Inspector.
  * Ширина боковых панелей меняется перетаскиванием разделителя (sash);
@@ -44,6 +49,7 @@ export function AppShell({
   left,
   center,
   right,
+  bottom,
   leftWidth = SHELL_COLUMNS.left,
   rightWidth = SHELL_COLUMNS.right,
   onLeftWidthChange,
@@ -58,6 +64,26 @@ export function AppShell({
   const hasLeftResizer = leftExpanded && onLeftWidthChange !== undefined;
   const hasRightResizer = rightExpanded && onRightWidthChange !== undefined;
 
+  // Нижняя панель лежит в собственном ряду: её высота и боковые края
+  // прокидываются в CSS-переменные, чтобы зоны выше не заезжали под неё.
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const [bottomHeight, setBottomHeight] = useState<number | null>(null);
+
+  useLayoutEffect(() => {
+    if (!bottom) {
+      setBottomHeight(null);
+      return;
+    }
+    const node = bottomRef.current;
+    if (!node) return;
+    const measure = () => setBottomHeight(node.getBoundingClientRect().height);
+    measure();
+    if (typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [bottom]);
+
   const leftWidthPx = leftExpanded ? clampWidth(leftWidth, PANEL_WIDTH_LIMITS.leftMin) : 0;
   const rightWidthPx = rightExpanded ? clampWidth(rightWidth) : 0;
 
@@ -70,8 +96,14 @@ export function AppShell({
   // Правая панель привязана к правому краю (right: 0), ширина — переменная
   const rightPanelStyle: CSSProperties = { right: 0, width: rightWidthPx };
 
+  // Нижняя панель занимает во всю ширину отдельный ряд в самом низу,
+  // поэтому зонам выше достаточно знать только её высоту.
+  const shellStyle = {
+    '--shell-bottom-height': `${bottomHeight ?? BOTTOM_PANEL_FALLBACK_HEIGHT}px`,
+  } as CSSProperties;
+
   return (
-    <div className="app-shell">
+    <div className="app-shell" style={shellStyle}>
       {/* Слой 0: карта на весь экран (фиксированный размер контейнера) */}
       <main className="app-shell__map">{center}</main>
 
@@ -121,6 +153,13 @@ export function AppShell({
           <div className="shell-panel shell-panel--right">{right}</div>
         </aside>
       )}
+
+      {/* Слой 2: нижняя панель — отдельный ряд в самом низу рабочей области */}
+      {bottom ? (
+        <div className="app-shell__bottom" ref={bottomRef}>
+          {bottom}
+        </div>
+      ) : null}
     </div>
   );
 }

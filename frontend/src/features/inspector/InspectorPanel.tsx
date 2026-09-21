@@ -25,6 +25,8 @@ export type InspectorPanelProps = {
   onRetry?: () => void;
   /** Свернуть панель инспектора */
   onCollapse?: () => void;
+  /** Переименовать выбранный объект (правка поля «Наименование») */
+  onRename?: (nextLabel: string) => void;
 };
 
 /** Правая панель — карточка выбранного объекта. */
@@ -37,6 +39,7 @@ export function InspectorPanel({
   error = null,
   onRetry,
   onCollapse,
+  onRename,
 }: InspectorPanelProps) {
   const tabLabel =
     INSPECTOR_TABS.find((t: InspectorTab) => t.id === activeTab)?.label ?? '';
@@ -57,7 +60,7 @@ export function InspectorPanel({
           <ObjectHeader entity={entity} />
           {activeTab === 'general' ? (
             <>
-              <SectionGeneralParams entity={entity} />
+              <SectionGeneralParams entity={entity} onRename={onRename} />
               <SectionModelStatus entity={entity} />
               <SectionConnections entity={entity} onNavigateToRelation={onNavigateToRelation} />
             </>

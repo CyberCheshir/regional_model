@@ -1,9 +1,10 @@
 import type { FluidType } from '../map/mapData';
+import { DEFAULT_TIME_RANGE } from '../timeRange/types';
 
 export const FLUID_LABELS = {
   oil: 'Нефть',
   gas: 'Газ',
-  water: 'Вода',
+  product: 'Продукт',
 } as const satisfies Record<FluidType, string>;
 
 export const PERIOD_LABELS = {
@@ -31,6 +32,7 @@ export type DiagramConfig = {
 export const DEFAULT_DIAGRAM_CONFIG: DiagramConfig = {
   fluid: 'oil',
   periodMode: 'map',
-  customRange: [2030, 2035],
+  // Диапазон берём из шкалы периода — иначе при смене года он вышел бы за её границы.
+  customRange: [...DEFAULT_TIME_RANGE.range],
   placement: 'auto',
 };

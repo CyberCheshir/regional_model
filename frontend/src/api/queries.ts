@@ -6,6 +6,8 @@ import type { EntityDetails, MapGraph } from '../domain/types';
 export const queryKeys = {
   mapGraph: ['map', 'graph'] as const,
   entity: (id: string) => ['entity', id] as const,
+  /** Список сохранённых сценариев (проектов) — меню «Сценарии». */
+  scenarios: ['scenarios'] as const,
 };
 
 /** useQuery: граф карты (узлы + рёбра). */

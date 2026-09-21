@@ -28,20 +28,26 @@ npm run preview
 ```text
 frontend/
 ├── index.html              # точка входа (lang=ru, title «Региональная модель»)
-├── vite.config.ts
+├── vite.config.ts          # конфиг Vite + dev-прокси /api → backend
 ├── eslint.config.js        # flat-config, no-explicit-any: error
 ├── tsconfig*.json          # strict-конфигурации
 └── src/
-    ├── main.tsx            # подключает tokens.css + typography.css
-    ├── App.tsx             # корневая композиция (только выбор страницы)
-    ├── pages/
-    │   └── DevShowcase.tsx # витрина токенов/иконок (временно, до Этапа 2)
-    ├── components/
-    │   ├── AppIcon.tsx     # единый компонент иконок (name/size/color)
-    │   └── IconRegistry.ts # типизированный реестр 18 inline SVG (icons.md)
-    └── styles/
-        ├── tokens.css      # CSS-переменные (styles.md): палитра, радиусы, тени
-        └── typography.css  # Inter, база 13px, .eyebrow, .object-title
+    ├── main.tsx            # точка входа (tokens.css + typography.css + провайдеры)
+    ├── App.tsx             # корневая композиция (AppShell + TopBar)
+    ├── api/                # API-слой: client, queries (react-query), mapSave, useSaveGraph
+    ├── app/                # AppShell, ActivityBar, разделители панелей
+    ├── components/         # переиспользуемые UI (AppIcon, IconRegistry, ErrorBoundary, ProgressBar)
+    ├── domain/             # доменные типы и zod-схемы (schemas.ts, types.ts)
+    ├── features/
+    │   ├── map/            # карта: GeoMapOnly,GraphLayer, mapDrawing, geo, snap, healSplits,
+    │   │                   #   splitSegmentByTap, importLicenceArea + (Вариант 1) vis-слой
+    │   ├── objectTree/     # дерево объектов, GraphToolbar, LeftSidebar
+    │   ├── inspector/      # инспектор объекта
+    │   ├── diagram/        # модалка «Диаграмма на карте»
+    │   ├── displaySettings/# настройки отображения карты
+    │   └── topbar/         # верхняя панель (TopBar, сценарии, сохранение)
+    ├── state/              # глобальный UI-state (uiState.tsx)
+    └── styles/             # tokens.css, typography.css
 ```
 
 ## Конвенции
@@ -53,6 +59,15 @@ frontend/
 - Запрещено `any`; TypeScript strict включён.
 
 ## Статус
+Реализованы этапы 1–8, 11 (TopBar), 12 (Вариант 2 — ручные манипуляции графом
+поверх чистой гео-карты). Подключён backend (Django + PostgreSQL) — сохранение
+и загрузка сценариев. Актуальная дорожная карта — в [`README.md`](../README.md)
+корня репозитория; инструкция по запуску — [`instructions.md`](../instructions.md).
 
-Этап 1 (фундамент) — завершён. Следующий: Этап 2 — AppShell
-(grid `56px 340px 1fr 380px`, слоты Activity Bar / Sidebar / Map / Inspector).
+### Режимы карты
+Переключатель `MAP_ONLY` в `features/map/MapViewport.tsx`:
+- `MAP_ONLY = true` (текущий) — чистая растровая карта (`GeoMapOnly`) + оверлей графа
+  (`GeoGraphLayer`), вся логика манипуляций — вручную, гео-привязка lng/lat;
+- `MAP_ONLY = false` — Вариант 1: граф на vis-network поверх тайлов.
+
+vis-код Варианта 1 сохранён и используется при `MAP_ONLY = false`.

@@ -21,6 +21,10 @@ export type IconName =
   | 'trash'
   | 'basemap-topo'
   | 'basemap-satellite'
+  | 'basemap-none'
+  | 'licence-area'
+  | 'import'
+  | 'export'
   | 'dev-mode'
   | 'collapse-panel'
   // Inspector tabs
@@ -151,6 +155,38 @@ const ICONS: Record<IconName, IconDefinition> = {
     paths:
       '<path d="M5.5 5.5 3 8l2.5 2.5"/><path d="M10.5 5.5 13 8l-2.5 2.5"/><rect x="6" y="6" width="4" height="4" rx="0.6"/><path d="M8 1.5v1.8M8 12.7v1.8M1.5 8h1.8M12.7 8h1.8"/>',
   },
+  // Без подложки — пустой серый прямоугольник
+  'basemap-none': {
+    viewBox: '0 0 16 16',
+    stroke: true,
+    strokeWidth: 1.4,
+    paths:
+      '<rect x="1.5" y="2.5" width="13" height="11" rx="1.2"/><path d="M1.5 11 5 7.5l3 3 2.5-2.5 4 4" opacity="0.35"/>',
+  },
+  // Импорт — стрелка, входящая ВНИЗ в «коробку/папку»
+  import: {
+    viewBox: '0 0 16 16',
+    stroke: true,
+    strokeWidth: 1.4,
+    paths:
+      '<path d="M8 2.2v8.3"/><path d="M5.2 7.7 8 10.5 10.8 7.7"/><path d="M2.5 9.5v3.2a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V9.5"/>',
+  },
+  // Экспорт — стрелка, исходящая ВВЕРХ из «коробки/папки» (зеркало import)
+  export: {
+    viewBox: '0 0 16 16',
+    stroke: true,
+    strokeWidth: 1.4,
+    paths:
+      '<path d="M8 13.8V5.5"/><path d="M5.2 8.3 8 5.5 10.8 8.3"/><path d="M2.5 9.5v3.2a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V9.5"/>',
+  },
+  // Лицензионный участок — замкнутая полилиния (полигон) с вершинами
+  'licence-area': {
+    viewBox: '0 0 16 16',
+    stroke: true,
+    strokeWidth: 1.4,
+    paths:
+      '<path d="M8 1.8 13.5 5v6L8 14.2 2.5 11V5z"/><circle cx="8" cy="1.8" r="1.1" fill="currentColor" stroke="none"/><circle cx="13.5" cy="5" r="1.1" fill="currentColor" stroke="none"/><circle cx="13.5" cy="11" r="1.1" fill="currentColor" stroke="none"/><circle cx="8" cy="14.2" r="1.1" fill="currentColor" stroke="none"/><circle cx="2.5" cy="11" r="1.1" fill="currentColor" stroke="none"/><circle cx="2.5" cy="5" r="1.1" fill="currentColor" stroke="none"/>',
+  },
   trash: {
     viewBox: '0 0 16 16',
     stroke: true,
@@ -231,8 +267,6 @@ const ICONS: Record<IconName, IconDefinition> = {
     paths: '<path d="M4 4l8 8M12 4l-8 8"/>',
   },
 };
-
-export const ICON_NAMES = Object.keys(ICONS) as IconName[];
 
 export { ICONS as ICON_REGISTRY };
 export type { IconDefinition };

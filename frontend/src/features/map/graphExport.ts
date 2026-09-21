@@ -103,6 +103,7 @@ export function segmentsToGeoJSON(segments: DrawnSegment[]): GeoFeature[] {
       kind: 'pipeline-segment',
       pipelineId: s.pipelineId,
       fluid: s.fluid,
+      pipelineClass: s.pipelineClass,
       from: [s.from.x, s.from.y],
       to: [s.to.x, s.to.y],
     },

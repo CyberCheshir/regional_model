@@ -34,6 +34,47 @@
   gap: 6px;
 }
 
+/* Группа с кнопками в ОДНУ строку («Территории»:
+   Лицензионный участок + квадратные импорт / экспорт / примеры) */
+.graph-toolbar__group-buttons--inline {
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* В строке кнопки делят ширину поровну, а не 160px как в столбце */
+.graph-toolbar__group-buttons--inline .graph-toolbar__button {
+  width: auto;
+  flex: 1 1 0;
+  min-width: 0;
+  justify-content: center;
+}
+
+/* Ряд квадратных кнопок-действий (импорт / экспорт / примеры) — под основной
+   кнопкой группы, в одну строку. */
+.graph-toolbar__group-actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Квадратная кнопка (иконка по центру) — НЕ растягивается в ряду.
+   Селектор уточнён (кнопка + модификатор), чтобы перебить базовое
+   правило .graph-toolbar__button с width: 160px и padding. */
+.graph-toolbar .graph-toolbar__button.graph-toolbar__button--square {
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  padding: 0;
+  justify-content: center;
+  align-items: center;
+}
+
+
+
 /* Зона удаления — отделена разделителем от инструментов создания */
 .graph-toolbar__danger-zone {
   display: flex;

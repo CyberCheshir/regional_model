@@ -1,0 +1,70 @@
+# Полный стек «Региональная модель» одной командой:
+#   docker compose up --build
+#
+# Сервисы:
+#   db        — PostgreSQL 16 (volume db_data);
+#   backend   — Django + DRF (gunicorn), порт 8000;
+#   frontend  — собранный SPA, раздаётся nginx, порт 8080,
+#               проксирует /api/* на backend (единый origin — без CORS).
+#
+# После старта открой в браузере: http://localhost:8080
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: regional_model_db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-regional_model}
+      POSTGRES_USER: ${POSTGRES_USER:-regional_model}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-regional_model_change_me}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-regional_model}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    # Порт наружу публикуем только для отладки (DBeaver/psql).
+    # В продакшене строку ниже можно убрать.
+    ports:
+      - "5432:5432"
+
+  backend:
+    build:
+      context: ./backend
+    container_name: regional_model_backend
+    environment:
+      # Django
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-dev-only-secret-key-change-me}
+      DJANGO_DEBUG: ${DJANGO_DEBUG:-0}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1,backend}
+      # CORS: фронт отдаётся тем же origin через nginx-прокси, поэтому
+      # допускаем и localhost:8080 (для прямых запросов при отладке).
+      DJANGO_CORS_ORIGINS: ${DJANGO_CORS_ORIGINS:-http://localhost:8080,http://127.0.0.1:8080}
+      # PostgreSQL
+      POSTGRES_DB: ${POSTGRES_DB:-regional_model}
+      POSTGRES_USER: ${POSTGRES_USER:-regional_model}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-regional_model_change_me}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    # CMD образа уже делает: migrate --noinput && gunicorn config.wsgi:application
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: regional_model_frontend
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+
+volumes:
+  db_data:

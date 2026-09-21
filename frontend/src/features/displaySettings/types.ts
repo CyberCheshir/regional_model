@@ -1,5 +1,10 @@
-/** Тип подложки карты (design description/components.md — BasemapSelector) */
-export type Basemap = 'topo' | 'satellite';
+/**
+ * Тип подложки карты (design description/components.md — BasemapSelector).
+ *  - topo — OSM;
+ *  - satellite — космоснимки Esri;
+ *  - none — пустой серый фон без тайлов (чтобы видеть отрисовку графа).
+ */
+export type Basemap = 'topo' | 'satellite' | 'none';
 
 /** Настройки отображения карты (этап 5, README 5.3) */
 export type MapDisplaySettings = {
@@ -14,6 +19,10 @@ export type MapDisplaySettings = {
    * рисуются сплошной линией.
    */
   flowAnimation: boolean;
+  /** Показывать лицензионные участки на карте */
+  showLicenceAreas: boolean;
+  /** Показывать стыки трубопроводов (вершины на концах рёбер) */
+  showEdgeJoints: boolean;
   /** Активная подложка (default: topo) */
   basemap: Basemap;
 };
@@ -23,5 +32,7 @@ export const DEFAULT_MAP_DISPLAY_SETTINGS: MapDisplaySettings = {
   showWarnings: true,
   directedGraph: true,
   flowAnimation: false,
+  showLicenceAreas: true,
+  showEdgeJoints: true,
   basemap: 'topo',
 };

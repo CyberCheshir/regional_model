@@ -95,18 +95,36 @@
   color: var(--text-secondary, #000);
 }
 
-/* Быстрые действия: видны при hover/выделении узла */
+/* Inline-редактор имени (двойной клик по узлу) — занимает место подписи. */
+.object-tree__rename-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 1px 6px;
+  border: 1px solid var(--color-primary-border, #99c2f0);
+  border-radius: var(--radius-sm, 4px);
+  background: var(--bg-panel, #ffffff);
+  color: var(--text-main, #101a30);
+  font: inherit;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.18);
+}
+
+/* Быстрые действия: видны при hover/выделении узла.
+   Пока кнопки невидимы — они НЕ должны перехватывать клики (иначе клик по строке
+   попадает в невидимую кнопку «Диаграмма» и открывает модалку). */
 .object-tree__actions {
   display: flex;
   gap: 2px;
   flex: 0 0 auto;
   opacity: 0;
+  pointer-events: none;
   transition: opacity 0.12s ease;
 }
 
 .object-tree__row:hover .object-tree__actions,
 .object-tree__row--selected .object-tree__actions {
   opacity: 1;
+  pointer-events: auto;
 }
 
 .object-tree__action {

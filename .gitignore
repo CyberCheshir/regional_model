@@ -25,3 +25,10 @@ dist/
 # Локальные дампы и логи
 logs/
 *.log
+# Python backend
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+backend/.env
+backend/staticfiles/

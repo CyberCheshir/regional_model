@@ -20,8 +20,8 @@ export type BasemapTilesProps = {
   basemap: Basemap;
 };
 
-/** URL-шаблоны растровых тайлов по подложкам (XYZ). */
-const TILE_URL: Record<Basemap, string> = {
+/** URL-шаблоны растровых тайлов по подложкам (XYZ). Для `none` — тайлов нет. */
+const TILE_URL: Partial<Record<Basemap, string>> = {
   // Спутниковые снимки (реальные)
   satellite:
     'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
@@ -45,6 +45,12 @@ export function BasemapTiles({ networkRef, basemap }: BasemapTilesProps) {
 
   useEffect(() => {
     const recompute = () => {
+      // Подложка «без тайлов» — ничего не рисуем (пустой фон под графом).
+      const template = TILE_URL[basemap];
+      if (!template) {
+        setTiles([]);
+        return;
+      }
       const net = networkRef.current;
       const host = document.querySelector('.map-viewport__canvas') as HTMLElement | null;
       if (!net || !host) return;
@@ -107,7 +113,7 @@ export function BasemapTiles({ networkRef, basemap }: BasemapTilesProps) {
           const top = ty * TILE_SIZE - offsetY;
           next.push({
             key: `${zoom}/${wrappedX}/${ty}`,
-            url: TILE_URL[basemap]
+            url: template
               .replace('{z}', String(zoom))
               .replace('{x}', String(wrappedX))
               .replace('{y}', String(ty)),

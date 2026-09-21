@@ -29,10 +29,25 @@ export type GeoMapOnlyProps = {
   onCamera?: (cam: { originX: number; originY: number; zoom: number; w: number; h: number }) => void;
   /** Клик ЛКМ по карте: координаты точки (lng/lat) */
   onMapClick?: (lng: number, lat: number) => void;
+  /**
+   * Движение курсора над картой: экранная точка (px от левого-верхнего угла)
+   * или null, когда курсор ушёл с карты. Нужно для «призрака» создаваемого элемента.
+   */
+  onCursorMove?: (screen: { x: number; y: number } | null) => void;
+  /**
+   * Разрешено ли панорамирование обычной ЛКМ (перетаскиванием). Обычно — да;
+   * выключается, когда активен инструмент создания (тогда ЛКМ создаёт элемент).
+   */
+  panEnabled?: boolean;
+  /**
+   * Точка, к которой нужно перенести камеру (например, выбранный в дереве объект),
+   * если она вне поля видимости. Смена значения (по lng/lat) запускает фокусировку.
+   */
+  focus?: { lng: number; lat: number } | null;
 };
 
-/** URL-шаблоны тайлов (XYZ). */
-const TILE_URL: Record<Basemap, string> = {
+/** URL-шаблоны тайлов (XYZ). Для `none` тайлов нет — пустой серый фон. */
+const TILE_URL: Partial<Record<Basemap, string>> = {
   satellite:
     'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
   topo: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -42,8 +57,9 @@ type Tile = { key: string; url: string; left: number; top: number };
 
 /**
  * Чистая гео-карта (без vis-network): ковёр растровых тайлов с собственным
- * зумом (колесо к курсору) и панорамированием (перетаскивание).
- * Служит базой, поверх которой позже будет накладываться граф.
+ * зумом (колесо к курсору) и панорамированием ОБЫЧНОЙ ЛКМ (перетаскивание).
+ * Когда активен инструмент создания, панорамирование отключается
+ * (`panEnabled=false`) — ЛКМ тогда создаёт элемент. Служит базой для графа.
  */
 export function GeoMapOnly({
   basemap,
@@ -53,6 +69,9 @@ export function GeoMapOnly({
   children,
   onCamera,
   onMapClick,
+  onCursorMove,
+  panEnabled = true,
+  focus = null,
 }: GeoMapOnlyProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(initialZoom);
@@ -71,6 +90,9 @@ export function GeoMapOnly({
     { sx: number; sy: number; lng: number; lat: number } | null
   >(null);
   const dragRef = useRef<{ x: number; y: number; ox: number; oy: number } | null>(null);
+  // Актуальный колбэк движения курсора (без пересоздания обработчиков)
+  const onCursorMoveRef = useRef(onCursorMove);
+  onCursorMoveRef.current = onCursorMove;
 
   // Размер контейнера
   useEffect(() => {
@@ -91,8 +113,31 @@ export function GeoMapOnly({
     centeredRef.current = true;
   }, [size, zoom, center]);
 
+  // Фокусировка на точке (например, выбранный в дереве объект/трубопровод):
+  // если точка за пределами видимой области — переносим камеру так, чтобы она
+  // оказалась в центре. Если точка уже видна — камеру не трогаем.
+  const focusKey = focus ? `${focus.lng},${focus.lat}` : null;
+  useEffect(() => {
+    if (!focus || size.w === 0 || size.h === 0) return;
+    const wp = lngLatToWorldPixel(focus.lng, focus.lat, zoom);
+    const visible =
+      wp.x >= originPx.x &&
+      wp.x <= originPx.x + size.w &&
+      wp.y >= originPx.y &&
+      wp.y <= originPx.y + size.h;
+    if (visible) return;
+    setOriginPx({ x: wp.x - size.w / 2, y: wp.y - size.h / 2 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- реакция именно на смену цели
+  }, [focusKey, size.w, size.h, zoom]);
+
   // Пересборка тайлов при смене зума/смещения/размера/подложки
   useEffect(() => {
+    // Подложка «без тайлов» — пустое полотно, тайлы не грузим.
+    const template = TILE_URL[basemap];
+    if (!template) {
+      setTiles([]);
+      return;
+    }
     const { w, h } = size;
     const max = Math.pow(2, zoom);
     const x0 = Math.floor(originPx.x / TILE_SIZE);
@@ -106,7 +151,7 @@ export function GeoMapOnly({
         const wrapX = ((tx % max) + max) % max;
         next.push({
           key: `${zoom}/${wrapX}/${ty}`,
-          url: TILE_URL[basemap]
+          url: template
             .replace('{z}', String(zoom))
             .replace('{x}', String(wrapX))
             .replace('{y}', String(ty)),
@@ -159,9 +204,12 @@ export function GeoMapOnly({
   const [panning, setPanning] = useState(false);
   const onPointerDown = (e: React.PointerEvent) => {
     if (e.button !== 0) return;
-    // Панорамирование — только с Ctrl (или Cmd). Простая ЛКМ кликует, не тащит.
-    const pan = e.ctrlKey || e.metaKey;
-    if (pan) {
+    // Shift+ЛКМ зарезервировано под ЛАССО-выделение (обрабатывается в GeoGraphLayer) —
+    // панорамирование в этом случае НЕ начинаем, иначе карта перехватила бы указатель.
+    if (e.shiftKey) return;
+    // Панорамирование — обычной ЛКМ (перетаскиванием). Отключается, когда активен
+    // инструмент создания (panEnabled=false) — тогда ЛКМ создаёт элемент, а не тащит.
+    if (panEnabled) {
       e.preventDefault();
       (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
       dragRef.current = { x: e.clientX, y: e.clientY, ox: originPx.x, oy: originPx.y };
@@ -170,9 +218,11 @@ export function GeoMapOnly({
     movedRef.current = false;
   };
   const onPointerMove = (e: React.PointerEvent) => {
-    // Трекаем позицию курсора (для окна координат)
+    // Трекаем позицию курсора (для окна координат и «призрака»)
     const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    setCursor({ x: e.clientX - r.left, y: e.clientY - r.top });
+    const next = { x: e.clientX - r.left, y: e.clientY - r.top };
+    setCursor(next);
+    onCursorMoveRef.current?.(next);
     const d = dragRef.current;
     if (!d) return;
     if (Math.hypot(e.clientX - d.x, e.clientY - d.y) > 3) movedRef.current = true;
@@ -185,16 +235,28 @@ export function GeoMapOnly({
     setPanning(false);
     if (wasPanning) {
       (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-      return; // Ctrl+drag — это панорамирование, не клик-создание
+      // Панорамирование стартовало по ЛКМ, но без движения — это КЛИК по карте
+      // (например, снятие выделения). Движение было — просто завершаем пан.
+      if (wasDrag) return;
     }
-    // Если это был клик (не перетаскивание) — сообщаем координаты точки
+    // Shift-жест — это ЛАССО-выделение (обрабатывается в GeoGraphLayer):
+    // НЕ считаем его кликом по карте, иначе onMapClick снял бы только что
+    // установленное лассо-выделение.
+    if (e.shiftKey) return;
+    // ПКМ (и другие не-левые кнопки) — НЕ клик-создание: правый клик завершает
+    // режим создания (см. cancelDrawing), элемент не создаётся.
+    if (e.button !== 0) return;
+    // Клик (не перетаскивание) — сообщаем координаты точки
     if (!wasDrag) {
       const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
       const g = worldPixelToLngLat(originPx.x + (e.clientX - r.left), originPx.y + (e.clientY - r.top), zoom);
       onMapClick?.(g.lng, g.lat);
     }
   };
-  const onPointerLeave = () => setCursor(null);
+  const onPointerLeave = () => {
+    setCursor(null);
+    onCursorMoveRef.current?.(null);
+  };
 
   // ПКМ в dev-режиме — контекстное меню с координатами точки
   const onContextMenu = (e: React.MouseEvent) => {
@@ -254,6 +316,7 @@ export function GeoMapOnly({
     <div
       ref={hostRef}
       className={`geo-map-only${panning ? ' is-panning' : ''}`}
+      data-basemap={basemap}
       onWheel={onWheel}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}

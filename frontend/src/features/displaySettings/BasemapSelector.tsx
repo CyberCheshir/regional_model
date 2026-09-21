@@ -9,6 +9,7 @@ const BASEMAP_OPTIONS: ReadonlyArray<{
 }> = [
   { value: 'topo', label: 'Топографический план', icon: 'basemap-topo' },
   { value: 'satellite', label: 'Космоснимки', icon: 'basemap-satellite' },
+  { value: 'none', label: 'Без подложки', icon: 'basemap-none' },
 ];
 
 export type BasemapSelectorProps = {

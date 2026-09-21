@@ -1,0 +1,62 @@
+/* Кнопка «Сохранить» в TopBar + всплывающий прогрессбар процесса. */
+
+.save-control {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.save-control__button {
+  padding: 6px 16px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s ease;
+}
+
+.save-control__button:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}
+
+.save-control__button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.save-control__button:focus-visible {
+  outline: 2px solid var(--border-active);
+  outline-offset: 1px;
+}
+
+/* Всплывающая панель прогресса под кнопкой */
+.save-control__popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 60;
+  width: 240px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-modal);
+}
+
+.save-control__popover.is-error .progress-bar__fill {
+  background: #dc2626;
+}
+
+.save-control__summary {
+  font-size: 12px;
+  color: var(--text-muted);
+}

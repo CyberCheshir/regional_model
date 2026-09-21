@@ -1,0 +1,81 @@
+/* Меню быстрого импорта встроенных образцов участков. */
+
+.sample-areas {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+/* Квадратная кнопка «Примеры участков» (в ряду действий «Территории»). */
+.sample-areas .graph-toolbar__button {
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  padding: 0;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Список рендерится ПОРТАЛОМ в <body> с position: fixed — поэтому не
+   обрезается overflow зон-панелей (left sidebar / AppShell). Координаты
+   left/bottom(top) задаются inline от кнопки (см. SampleAreasMenu.tsx). */
+.sample-areas__list {
+  position: fixed;
+  z-index: 1000;
+  min-width: 200px;
+  /* Страховка от обрезки на низком экране — прокрутка вместо выхода вьюпорта. */
+  max-height: 70vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px;
+  border: 1px solid var(--border-default, #d9e1ec);
+  border-radius: var(--radius-md, 8px);
+  background: var(--bg-panel, #ffffff);
+  box-shadow: 0 8px 24px rgba(16, 26, 48, 0.18);
+}
+
+/* Подзаголовок «Выберите участок» — поясняет, что каждый пункт грузит один участок. */
+.sample-areas__title {
+  padding: 6px 10px 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-eyebrow, #7c8ba1);
+}
+
+.sample-areas__item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 10px;
+  border: none;
+  border-radius: var(--radius-control-inner, 6px);
+  background: transparent;
+  color: var(--text-main, #101a30);
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.sample-areas__item:hover {
+  background: var(--bg-card-hover, #f1f5f9);
+}
+
+.sample-areas__item-label {
+  font-weight: 500;
+}
+
+/* Мета: число точек — вторичный, приглушённый текст (иерархия). */
+.sample-areas__item-meta {
+  font-size: 11px;
+  color: var(--text-secondary, #64748b);
+}

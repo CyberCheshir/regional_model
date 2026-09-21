@@ -30,9 +30,11 @@ export type Facility = z.infer<typeof FacilitySchema> & { kind: 'facility' };
 export type Pipeline = z.infer<typeof PipelineSchema> & { kind: 'pipeline' };
 /** Площадной объект (лицензионный участок и т.п.). */
 export type Area = z.infer<typeof AreaSchema> & { kind: 'area' };
+/** Сегмент трубопровода (ребро полилинии). */
+export type Segment = { kind: 'segment' };
 
 /** Любая сущность доменной модели. */
-export type DomainEntity = Wellpad | Facility | Pipeline | Area;
+export type DomainEntity = Wellpad | Facility | Pipeline | Area | Segment;
 
 /** Узел графа карты. */
 export type GraphNode = z.infer<typeof GraphNodeSchema>;

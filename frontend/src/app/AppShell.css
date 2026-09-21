@@ -24,13 +24,17 @@
   flex-direction: column;
 }
 
-/* Слой 1: зоны-панели поверх карты */
+/*
+ * Слой 1: зоны-панели поверх карты. Sidebar и Inspector снизу не доходят до
+ * края ровно на высоту нижней панели (--shell-bottom-height) — над ней идёт
+ * собственный ряд. Activity Bar — исключение: тянется до самого низа.
+ */
 .app-shell__activity,
 .app-shell__left,
 .app-shell__right {
   position: absolute;
   top: 0;
-  bottom: 0;
+  bottom: var(--shell-bottom-height, 0px);
   z-index: 2;
   min-width: 0;
   min-height: 0;
@@ -39,10 +43,11 @@
   flex-direction: column;
 }
 
-/* Activity Bar прижат к левому краю */
+/* Activity Bar прижат к левому краю идёт до НИЖНЕГО края окна */
 .app-shell__activity {
   left: 0;
   width: 56px;
+  bottom: 0;
 }
 
 /* Обёртки разделителей: фиксированная ширина, позиция — из inline-стилей */
@@ -50,9 +55,24 @@
 .app-shell__right-resizer {
   position: absolute;
   top: 0;
-  bottom: 0;
+  bottom: var(--shell-bottom-height, 0px);
   width: 6px;
   z-index: 3;
+}
+
+/*
+ * Слой 2: нижняя панель — от правого края Activity Bar до правого края окна,
+ * прижата к самому низу. Activity Bar занимает левую колонку по всей высоте,
+ * поэтому панель к нему не заходит.
+ */
+.app-shell__bottom {
+  position: absolute;
+  left: 56px;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  /* Бейдж года у ручки слайдера выходит за верх панели — не обрезаем */
+  overflow: visible;
 }
 
 /* Панели-карточки (левая и правая зоны) — непрозрачны, поверх карты */

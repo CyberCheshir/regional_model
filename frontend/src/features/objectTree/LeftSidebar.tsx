@@ -6,6 +6,8 @@ import { GraphToolbar, type GraphToolActionId } from './GraphToolbar';
 import { CollapsibleSection } from '../../components/panel/CollapsibleSection';
 import { mockTreeData } from './mockData';
 import { useMapDrawing } from '../map/mapDrawing';
+import type { DrainFluid, PipelineClass } from '../map/drawingTypes';
+import type { AreaExportFormat } from '../map/importAreas';
 import type { ObjectTreeData } from './types';
 import { DisplaySettingsCard } from '../displaySettings/DisplaySettingsCard';
 import { DEFAULT_MAP_DISPLAY_SETTINGS } from '../displaySettings/types';
@@ -39,6 +41,20 @@ export type LeftSidebarProps = {
   onDelete?: () => void;
   /** Показывать панель «Проектирование» (режим редактирования) */
   showGraphTools?: boolean;
+  /** Флюид новых сегментов (панель «Трубопроводы») */
+  fluid?: DrainFluid;
+  /** Изменить флюид */
+  onFluidChange?: (fluid: DrainFluid) => void;
+  /** Класс новых сегментов (панель «Класс трубопровода») */
+  pipelineClass?: PipelineClass;
+  /** Изменить класс трубопровода */
+  onPipelineClassChange?: (pipelineClass: PipelineClass) => void;
+  /** Экспорт лицензионных участков в выбранном формате */
+  onExportAreas?: (format: AreaExportFormat) => void;
+  /** Есть участки для выгрузки */
+  canExportAreas?: boolean;
+  /** Импорт встроенного образца участков по URL */
+  onImportSample?: (url: string, areaIndex: number) => void;
 };
 
 /**
@@ -59,8 +75,26 @@ export function LeftSidebar({
   canDelete,
   onDelete,
   showGraphTools = true,
+  fluid,
+  onFluidChange,
+  pipelineClass,
+  onPipelineClassChange,
+  onExportAreas,
+  canExportAreas,
+  onImportSample,
 }: LeftSidebarProps) {
-  const { pipelines, vertices } = useMapDrawing();
+  const { pipelines, vertices, segments, renameVertex, renamePipeline, renameSegment } =
+    useMapDrawing();
+
+  /**
+   * Переименование узла дерева (двойной клик): маршрутизируем по виду сущности.
+   * Объекты — вершины; трубопроводы — записи; сегменты — рёбра (segments).
+   */
+  const handleRename = (node: TreeNodeData, nextLabel: string) => {
+    if (node.kind === 'pipeline') renamePipeline(node.id, nextLabel);
+    else if (node.kind === 'segment') renameSegment(node.id, nextLabel);
+    else renameVertex(node.id, nextLabel);
+  };
 
   // Спроектированные элементы раскладываются по группам дерева:
   // вершины-объекты (кусты/УПН/точки) и рёбра (трубопроводы).
@@ -79,7 +113,7 @@ export function LeftSidebar({
     const deliveryPoints = byKind('delivery-point');
 
     if (wellpads.length > 0) {
-      groups.push({ id: 'group-wellpads', label: 'Кусты скважин', children: wellpads });
+      groups.push({ id: 'group-wellpads', label: 'Системы сбора', children: wellpads });
     }
     if (facilities.length > 0) {
       groups.push({ id: 'group-facilities', label: 'Объекты подготовки', children: facilities });
@@ -96,11 +130,25 @@ export function LeftSidebar({
           label: p.label,
           kind: 'pipeline' as const,
           subType: segmentCountLabel(p.segmentCount),
+          // Сегменты трубопровода — дочерние узлы со СВОИМИ именами.
+          // Имя закреплено за сегментом (задано при создании/пользователем)
+          // и НЕ пересчитывается по позиции — объединение в трубопровод его не меняет.
+          // Fallback — только для старых снимков без имени.
+          children: segmentsOfPipeline(p.id).map((seg) => ({
+            id: seg.id,
+            label: seg.label || 'Сегмент',
+            kind: 'segment' as const,
+          })),
         })),
       });
     }
     return groups;
-  }, [pipelines, vertices]);
+
+    /** Сегменты, принадлежащие трубопроводу (в устойчивом порядке). */
+    function segmentsOfPipeline(pipelineId: string) {
+      return segments.filter((s) => s.pipelineId === pipelineId);
+    }
+  }, [pipelines, vertices, segments]);
   // Fallback: если видимость не контролируется извне — локальное состояние
   const [localHiddenIds, setLocalHiddenIds] = useState<ReadonlySet<string>>(new Set());
   const effectiveHidden = hiddenIds ?? localHiddenIds;
@@ -127,6 +175,13 @@ export function LeftSidebar({
           activeAction={activeGraphTool}
           canDelete={canDelete}
           onDelete={onDelete}
+          fluid={fluid}
+          onFluidChange={onFluidChange}
+          pipelineClass={pipelineClass}
+          onPipelineClassChange={onPipelineClassChange}
+          onExportAreas={onExportAreas}
+          canExportAreas={canExportAreas}
+          onImportSample={onImportSample}
         />
       )}
       <div className="left-sidebar__body">
@@ -138,6 +193,7 @@ export function LeftSidebar({
             onSelect={onSelect}
             onOpenDiagram={onOpenDiagram}
             onToggleVisibility={handleToggleVisibility}
+            onRename={handleRename}
           />
         </CollapsibleSection>
       </div>

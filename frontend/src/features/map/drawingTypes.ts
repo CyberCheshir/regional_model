@@ -139,7 +139,48 @@ export function nearestBorderPoint(
   };
 }
 
-export type DrainFluid = 'oil' | 'gas' | 'water';
+export type DrainFluid = 'oil' | 'gas' | 'product';
+
+/**
+ * Класс трубопровода — определяет стиль линии (толщина/штрих) на карте.
+ * Ортогонален флюиду: цвет задаётся флюидом, форма — классом.
+ * Соответствует панели «Класс трубопровода» в интерфейсе проектирования.
+ */
+export type PipelineClass = 'field' | 'interfield' | 'trunk' | 'logical';
+
+/** Подписи и порядок классов трубопровода (для UI-списка). */
+export const PIPELINE_CLASS_ORDER: readonly PipelineClass[] = [
+  'field',
+  'interfield',
+  'trunk',
+  'logical',
+];
+
+/** Человекочитаемые подписи классов трубопровода. */
+export const PIPELINE_CLASS_LABEL: Record<PipelineClass, string> = {
+  field: 'Промысловый',
+  interfield: 'Межпромысловый',
+  trunk: 'Магистральный',
+  logical: 'Логический поток',
+};
+
+/**
+ * Проверка/приведение значения из API/снимка к PipelineClass.
+ * Неизвестное значение → 'field' (промысловый по умолчанию).
+ */
+export function toPipelineClass(value: unknown): PipelineClass {
+  return value === 'interfield' || value === 'trunk' || value === 'logical'
+    ? value
+    : 'field';
+}
+
+/**
+ * Проверка/приведение значения из API/снимка к DrainFluid.
+ * «Вода» (старое значение) отображается на «Продукт» — модель UI их не различает.
+ */
+export function toDrainFluid(value: unknown): DrainFluid {
+  return value === 'gas' || value === 'product' ? value : 'oil';
+}
 
 /** Спроектированный сегмент трубопровода (ребро). */
 export type DrawnSegment = {
@@ -149,6 +190,10 @@ export type DrawnSegment = {
   /** Логическая принадлежность сегмента трубопроводу (полилинии) */
   pipelineId: string | null;
   fluid: DrainFluid;
+  /** Класс трубопровода (стиль линии на карте) */
+  pipelineClass: PipelineClass;
+  /** Имя сегмента (в дереве). Не задано — авто «Сегмент N» по порядку в трубе. */
+  label?: string;
 };
 
 /**
@@ -197,6 +242,12 @@ export const FITTING_RADIUS = 9;
 /** Радиус точки врезки (мировые координаты). */
 export const TAP_RADIUS = 5;
 
+/**
+ * Радиус снапа конца ребра к ТОЧЕЧНОЙ цели (врезка/тройник), в мировых метрах.
+ * Увеличен в 10 раз относительно исходного (было 24) — по требованию.
+ */
+export const POINT_CONNECT_RADIUS = 24 * 10;
+
 /** Категория создаваемой вершины-объекта (без трубопроводов). */
 export type VertexKind = 'wellpad' | 'facility' | 'delivery-point';
 
@@ -221,15 +272,15 @@ export type MapVertex = {
   h?: number;
 };
 
-/** Размеры площадных объектов по умолчанию при создании (мировые координаты), px. */
+/**
+ * Размеры площадных объектов по умолчанию при создании (мировые координаты, МЕТРЫ).
+ * Увеличены в 67 раз относительно исходных (140×100 и т.п.) — по требованию.
+ */
 export const DEFAULT_VERTEX_SIZE: Record<VertexKind, { w: number; h: number }> = {
-  wellpad: { w: 140, h: 100 },
-  facility: { w: 120, h: 90 },
-  'delivery-point': { w: 100, h: 80 },
+  wellpad: { w: 140 * 67, h: 100 * 67 },
+  facility: { w: 120 * 67, h: 90 * 67 },
+  'delivery-point': { w: 100 * 67, h: 80 * 67 },
 };
-
-/** Размер куста по умолчанию (для совместимости с существующими вызовами). */
-export const DEFAULT_WELLPAD_SIZE = DEFAULT_VERTEX_SIZE.wellpad;
 
 /** Минимальный размер прямоугольника вершины при ресайзе, px. */
 export const MIN_BOX_SIZE = 40;
@@ -240,16 +291,20 @@ export const MIN_BOX_SIZE = 40;
  * связывается с этой отдельно стоящей вершиной.
  * Радиус одинаков для всех вершин (в мировых координатах).
  */
-export const CONNECT_RADIUS = 24;
+export const CONNECT_RADIUS = 24 * 10;
 
 /** Радиус точечной вершины (маркера) в мировых координатах. */
 export const POINT_VERTEX_RADIUS = 14;
 
 /**
- * Область присоединения вершин рёбер ДРУГ К ДРУГУ (в 3 раза меньше общей
- * области соединения) — чтобы вершины сливались только при близком клике.
+ * Область присоединения вершин рёбер ДРУГ К ДРУГУ. Намеренно ОЧЕНЬ маленькая
+ * (в 30 раз меньше общей области соединения, ≈0.8 м): вершины стыкуются только
+ * при практически точном попадании — чтобы конец ребра было легко отсоединить
+ * и он не «прилипал» к соседним концам.
  */
-export const VERTEX_SNAP_RADIUS = CONNECT_RADIUS / 3;
+// Радиус стыка вершин рёбер: базовое CONNECT_RADIUS/3 (≈80 м при CONNECT_RADIUS=240),
+// уменьшено в 10 раз — теперь (CONNECT_RADIUS/3)*2 (≈160 м при CONNECT_RADIUS=240).
+export const VERTEX_SNAP_RADIUS = (CONNECT_RADIUS / 3) * 2;
 
 /**
  * Вершина — площадной (прямоугольный) объект?
@@ -260,8 +315,18 @@ export function isBoxVertex(kind: VertexKind): boolean {
   return kind === 'wellpad' || kind === 'facility' || kind === 'delivery-point';
 }
 
-/** Активный инструмент на карте: рёбра, вершины-объекты, тройник, врезка. */
-export type DrawTool = 'none' | 'segment' | 'pipeline' | 'tee' | 'tap' | VertexKind;
+/**
+ * Активный инструмент на карте: рёбра, вершины-объекты, тройник, врезка,
+ * лицензионный участок (замкнутый полигон территории).
+ */
+export type DrawTool =
+  | 'none'
+  | 'segment'
+  | 'pipeline'
+  | 'tee'
+  | 'tap'
+  | 'licence-area'
+  | VertexKind;
 
 /** Инструменты создания вершин-объектов. */
 const VERTEX_TOOLS: readonly VertexKind[] = ['wellpad', 'facility', 'delivery-point'];
@@ -273,10 +338,29 @@ export function isVertexTool(tool: DrawTool): tool is VertexKind {
 
 /** Названия для авто-имён вершин. */
 export const VERTEX_LABEL: Record<VertexKind, string> = {
-  wellpad: 'Куст',
+  wellpad: 'Система сбора',
   facility: 'Объект подготовки',
   'delivery-point': 'Точка поставки',
 };
+
+/**
+ * Лицензионный участок — замкнутый полигон территории (минимум 3 вершины).
+ * Вершины — в мировых единицах (м); для API/экспорта дублируются в lng/lat.
+ */
+export type LicenceArea = {
+  id: string;
+  label: string;
+  /** Вершины полигона (мировые координаты, м) */
+  points: { x: number; y: number }[];
+  /** Гео-координаты вершин (для API/экспорта) */
+  lngLat: { lng: number; lat: number }[];
+};
+
+/** Минимум вершин для замыкания полигона участка. */
+export const MIN_AREA_POINTS = 3;
+
+/** Радиус (м), в пределах которого клик по первой вершине замыкает полигон. */
+export const AREA_CLOSE_RADIUS = 30;
 
 /** Черновик полилинии «трубопровод» (в процессе построения). */
 export type PipelineDraft = {
@@ -286,4 +370,14 @@ export type PipelineDraft = {
   last: DrawVertex | null;
   /** Уже построенные сегменты черновика */
   segments: DrawnSegment[];
+  /** Класс трубопровода для создаваемой полилинии */
+  pipelineClass: PipelineClass;
+};
+
+/** Пустой черновик полилинии «трубопровод». */
+export const EMPTY_DRAFT: PipelineDraft = {
+  start: null,
+  last: null,
+  segments: [],
+  pipelineClass: 'field',
 };

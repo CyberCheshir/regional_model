@@ -1,0 +1,210 @@
+[2m01:49:42[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Transform failed with 1 error:
+D:/projects/regional_model/frontend/src/api/mapSave.ts:167:90: ERROR: Expected "}" but found ")"
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/projects/regional_model/frontend/src/api/mapSave.ts[39m:167:90
+[33m  
+  [33mExpected "}" but found ")"[33m
+  165|  /** GET /api/projects/ — список сохранённых сценариев. */
+  166|  export async function fetchScenarios(): Promise<ScenarioSummary[]> {
+  167|    const response = await fetch('/api/projects/', { headers: { Accept: 'application/json' });
+     |                                                                                            ^
+  168|    if (!response.ok) throw new Error(`Не удалось получить список сценариев: HTTP ${response.status}`);
+  169|    return (await response.json()) as ScenarioSummary[];
+  [39m
+[2m01:49:42[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/projects/regional_model/frontend/src/api/mapSave.ts:167:90: ERROR: Expected "}" but found ")"[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/projects/regional_model/frontend/src/api/mapSave.ts[39m:167:90
+[33m  
+  [33mExpected "}" but found ")"[33m
+  165|  /** GET /api/projects/ — список сохранённых сценариев. */
+  166|  export async function fetchScenarios(): Promise<ScenarioSummary[]> {
+  167|    const response = await fetch('/api/projects/', { headers: { Accept: 'application/json' });
+     |                                                                                            ^
+  168|    if (!response.ok) throw new Error(`Не удалось получить список сценариев: HTTP ${response.status}`);
+  169|    return (await response.json()) as ScenarioSummary[];
+  [39m
+      at failureErrorWithLog (D:\projects\regional_model\frontend\node_modules\esbuild\lib\main.js:1467:15)
+      at D:\projects\regional_model\frontend\node_modules\esbuild\lib\main.js:736:50
+      at responseCallbacks.<computed> (D:\projects\regional_model\frontend\node_modules\esbuild\lib\main.js:603:9)
+      at handleIncomingPacket (D:\projects\regional_model\frontend\node_modules\esbuild\lib\main.js:658:12)
+      at Socket.readFromStdout (D:\projects\regional_model\frontend\node_modules\esbuild\lib\main.js:581:7)
+      at Socket.emit (node:events:509:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m01:49:45[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/projects/regional_model/frontend/src/api/mapSave.ts:167:90: ERROR: Expected "}" but found ")"[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/projects/regional_model/frontend/src/api/mapSave.ts[39m:167:90
+[33m  
+  [33mExpected "}" but found ")"[33m
+  165|  /** GET /api/projects/ — список сохранённых сценариев. */
+  166|  export async function fetchScenarios(): Promise<ScenarioSummary[]> {
+  167|    const response = await fetch('/api/projects/', { headers: { Accept: 'application/json' });
+     |                                                                                            ^
+  168|    if (!response.ok) throw new Error(`Не удалось получить список сценариев: HTTP ${response.status}`);
+  169|    return (await response.json()) as ScenarioSummary[];
+  [39m
+      at failureErrorWithLog (D:\projects\regional_model\frontend\node_modules\esbuild\lib\main.js:1467:15)
+      at D:\projects\regional_model\frontend\node_modules\esbuild\lib\main.js:736:50
+      at responseCallbacks.<computed> (D:\projects\regional_model\frontend\node_modules\esbuild\lib\main.js:603:9)
+      at handleIncomingPacket (D:\projects\regional_model\frontend\node_modules\esbuild\lib\main.js:658:12)
+      at Socket.readFromStdout (D:\projects\regional_model\frontend\node_modules\esbuild\lib\main.js:581:7)
+      at Socket.emit (node:events:509:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m01:50:42[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/projects/regional_model/frontend/src/api/mapSave.ts:167:90: ERROR: Expected "}" but found ")"[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/projects/regional_model/frontend/src/api/mapSave.ts[39m:167:90
+[33m  
+  [33mExpected "}" but found ")"[33m
+  165|  /** GET /api/projects/ — список сохранённых сценариев. */
+  166|  export async function fetchScenarios(): Promise<ScenarioSummary[]> {
+  167|    const response = await fetch('/api/projects/', { headers: { Accept: 'application/json' });
+     |                                                                                            ^
+  168|    if (!response.ok) throw new Error(`Не удалось получить список сценариев: HTTP ${response.status}`);
+  169|    return (await response.json()) as ScenarioSummary[];
+  [39m
+      at failureErrorWithLog (D:\projects\regional_model\frontend\node_modules\esbuild\lib\main.js:1467:15)
+      at D:\projects\regional_model\frontend\node_modules\esbuild\lib\main.js:736:50
+      at responseCallbacks.<computed> (D:\projects\regional_model\frontend\node_modules\esbuild\lib\main.js:603:9)
+      at handleIncomingPacket (D:\projects\regional_model\frontend\node_modules\esbuild\lib\main.js:658:12)
+      at Socket.readFromStdout (D:\projects\regional_model\frontend\node_modules\esbuild\lib\main.js:581:7)
+      at Socket.emit (node:events:509:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m01:50:45[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/projects/regional_model/frontend/src/api/mapSave.ts:167:90: ERROR: Expected "}" but found ")"[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/projects/regional_model/frontend/src/api/mapSave.ts[39m:167:90
+[33m  
+  [33mExpected "}" but found ")"[33m
+  165|  /** GET /api/projects/ — список сохранённых сценариев. */
+  166|  export async function fetchScenarios(): Promise<ScenarioSummary[]> {
+  167|    const response = await fetch('/api/projects/', { headers: { Accept: 'application/json' });
+     |                                                                                            ^
+  168|    if (!response.ok) throw new Error(`Не удалось получить список сценариев: HTTP ${response.status}`);
+  169|    return (await response.json()) as ScenarioSummary[];
+  [39m
+      at failureErrorWithLog (D:\projects\regional_model\frontend\node_modules\esbuild\lib\main.js:1467:15)
+      at D:\projects\regional_model\frontend\node_modules\esbuild\lib\main.js:736:50
+      at responseCallbacks.<computed> (D:\projects\regional_model\frontend\node_modules\esbuild\lib\main.js:603:9)
+      at handleIncomingPacket (D:\projects\regional_model\frontend\node_modules\esbuild\lib\main.js:658:12)
+      at Socket.readFromStdout (D:\projects\regional_model\frontend\node_modules\esbuild\lib\main.js:581:7)
+      at Socket.emit (node:events:509:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m01:51:42[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Transform failed with 1 error:
+D:/projects/regional_model/frontend/src/api/mapSave.ts:167:90: ERROR: Expected "}" but found ")"
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/projects/regional_model/frontend/src/api/mapSave.ts[39m:167:90
+[33m  
+  [33mExpected "}" but found ")"[33m
+  165|  /** GET /api/projects/ — список сохранённых сценариев. */
+  166|  export async function fetchScenarios(): Promise<ScenarioSummary[]> {
+  167|    const response = await fetch('/api/projects/', { headers: { Accept: 'application/json' });
+     |                                                                                            ^
+  168|    if (!response.ok) {
+  169|      throw new Error(`Не удалось получить список сценариев: HTTP ${response.status}`);
+  [39m
+[2m01:51:42[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/projects/regional_model/frontend/src/api/mapSave.ts:167:90: ERROR: Expected "}" but found ")"[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/projects/regional_model/frontend/src/api/mapSave.ts[39m:167:90
+[33m  
+  [33mExpected "}" but found ")"[33m
+  165|  /** GET /api/projects/ — список сохранённых сценариев. */
+  166|  export async function fetchScenarios(): Promise<ScenarioSummary[]> {
+  167|    const response = await fetch('/api/projects/', { headers: { Accept: 'application/json' });
+     |                                                                                            ^
+  168|    if (!response.ok) {
+  169|      throw new Error(`Не удалось получить список сценариев: HTTP ${response.status}`);
+  [39m
+      at failureErrorWithLog (D:\projects\regional_model\frontend\node_modules\esbuild\lib\main.js:1467:15)
+      at D:\projects\regional_model\frontend\node_modules\esbuild\lib\main.js:736:50
+      at responseCallbacks.<computed> (D:\projects\regional_model\frontend\node_modules\esbuild\lib\main.js:603:9)
+      at handleIncomingPacket (D:\projects\regional_model\frontend\node_modules\esbuild\lib\main.js:658:12)
+      at Socket.readFromStdout (D:\projects\regional_model\frontend\node_modules\esbuild\lib\main.js:581:7)
+      at Socket.emit (node:events:509:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m01:52:42[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/projects/regional_model/frontend/src/api/mapSave.ts:167:90: ERROR: Expected "}" but found ")"[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/projects/regional_model/frontend/src/api/mapSave.ts[39m:167:90
+[33m  
+  [33mExpected "}" but found ")"[33m
+  165|  /** GET /api/projects/ — список сохранённых сценариев. */
+  166|  export async function fetchScenarios(): Promise<ScenarioSummary[]> {
+  167|    const response = await fetch('/api/projects/', { headers: { Accept: 'application/json' });
+     |                                                                                            ^
+  168|    if (!response.ok) {
+  169|      throw new Error(`Не удалось получить список сценариев: HTTP ${response.status}`);
+  [39m
+      at failureErrorWithLog (D:\projects\regional_model\frontend\node_modules\esbuild\lib\main.js:1467:15)
+      at D:\projects\regional_model\frontend\node_modules\esbuild\lib\main.js:736:50
+      at responseCallbacks.<computed> (D:\projects\regional_model\frontend\node_modules\esbuild\lib\main.js:603:9)
+      at handleIncomingPacket (D:\projects\regional_model\frontend\node_modules\esbuild\lib\main.js:658:12)
+      at Socket.readFromStdout (D:\projects\regional_model\frontend\node_modules\esbuild\lib\main.js:581:7)
+      at Socket.emit (node:events:509:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m01:53:42[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/projects/regional_model/frontend/src/api/mapSave.ts:167:90: ERROR: Expected "}" but found ")"[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/projects/regional_model/frontend/src/api/mapSave.ts[39m:167:90
+[33m  
+  [33mExpected "}" but found ")"[33m
+  165|  /** GET /api/projects/ — список сохранённых сценариев. */
+  166|  export async function fetchScenarios(): Promise<ScenarioSummary[]> {
+  167|    const response = await fetch('/api/projects/', { headers: { Accept: 'application/json' });
+     |                                                                                            ^
+  168|    if (!response.ok) {
+  169|      throw new Error(`Не удалось получить список сценариев: HTTP ${response.status}`);
+  [39m
+      at failureErrorWithLog (D:\projects\regional_model\frontend\node_modules\esbuild\lib\main.js:1467:15)
+      at D:\projects\regional_model\frontend\node_modules\esbuild\lib\main.js:736:50
+      at responseCallbacks.<computed> (D:\projects\regional_model\frontend\node_modules\esbuild\lib\main.js:603:9)
+      at handleIncomingPacket (D:\projects\regional_model\frontend\node_modules\esbuild\lib\main.js:658:12)
+      at Socket.readFromStdout (D:\projects\regional_model\frontend\node_modules\esbuild\lib\main.js:581:7)
+      at Socket.emit (node:events:509:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m01:54:42[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/projects/regional_model/frontend/src/api/mapSave.ts:167:90: ERROR: Expected "}" but found ")"[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/projects/regional_model/frontend/src/api/mapSave.ts[39m:167:90
+[33m  
+  [33mExpected "}" but found ")"[33m
+  165|  /** GET /api/projects/ — список сохранённых сценариев. */
+  166|  export async function fetchScenarios(): Promise<ScenarioSummary[]> {
+  167|    const response = await fetch('/api/projects/', { headers: { Accept: 'application/json' });
+     |                                                                                            ^
+  168|    if (!response.ok) {
+  169|      throw new Error(`Не удалось получить список сценариев: HTTP ${response.status}`);
+  [39m
+      at failureErrorWithLog (D:\projects\regional_model\frontend\node_modules\esbuild\lib\main.js:1467:15)
+      at D:\projects\regional_model\frontend\node_modules\esbuild\lib\main.js:736:50
+      at responseCallbacks.<computed> (D:\projects\regional_model\frontend\node_modules\esbuild\lib\main.js:603:9)
+      at handleIncomingPacket (D:\projects\regional_model\frontend\node_modules\esbuild\lib\main.js:658:12)
+      at Socket.readFromStdout (D:\projects\regional_model\frontend\node_modules\esbuild\lib\main.js:581:7)
+      at Socket.emit (node:events:509:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)

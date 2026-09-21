@@ -5,7 +5,13 @@
  */
 
 /** Категория объекта — определяет иконку узла дерева */
-export type TreeNodeKind = 'wellpad' | 'facility' | 'delivery-point' | 'pipeline';
+export type TreeNodeKind =
+  | 'wellpad'
+  | 'facility'
+  | 'delivery-point'
+  | 'pipeline'
+  /** Сегмент трубопровода (дочерний узел трубопровода в дереве) */
+  | 'segment';
 
 export type TreeNodeData = {
   id: string;

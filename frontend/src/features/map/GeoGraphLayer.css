@@ -4,6 +4,8 @@
   position: absolute;
   inset: 0;
   overflow: hidden;
+  /* Слой НЕ перехватывает клики — они доходят до карты (создание/снятие
+     выделения). Интерактивны только сами объекты и их ручки. */
   pointer-events: none;
   z-index: 2;
 }
@@ -14,33 +16,90 @@
   width: 100%;
   height: 100%;
   overflow: visible;
+  pointer-events: none;
+}
+
+/* Невидимая широкая полоса клика по ребру — принимает события */
+.geo-graph-layer__edge-hit {
+  pointer-events: stroke;
+  cursor: pointer;
+}
+
+/* Лассо выделения произвольной формы (Shift + ЛКМ) */
+.geo-graph-layer__lasso {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
 }
 
 .geo-graph-layer__vertex {
   position: absolute;
   transform: translate(-50%, -50%);
+  pointer-events: auto;
+  cursor: move;
   display: flex;
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
   min-width: 10px;
   min-height: 10px;
-  padding: 2px 4px;
+  padding: 0;
   border: 2px solid;
   border-radius: var(--radius-sm, 4px);
   font-size: 11px;
   font-weight: 600;
   color: #000;
   white-space: nowrap;
+  /* Подпись выносится СВЕРХУ (за границу) — её не обрезаем */
+  overflow: visible;
   box-shadow: 0 1px 3px rgba(16, 26, 48, 0.25);
+}
+
+/* Подпись наименования объекта — над объектом (zoom ≥ 14) */
+.geo-graph-layer__vertex-label {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 2px);
+  transform: translateX(-50%);
+  padding: 1px 4px;
+  border-radius: var(--radius-sm, 4px);
+  background: rgba(255, 255, 255, 0.85);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-main, #000);
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 1px 2px rgba(16, 26, 48, 0.2);
 }
 
 .geo-graph-layer__vertex.is-selected {
   box-shadow: 0 0 0 2px var(--color-primary, #0066cc), 0 1px 3px rgba(16, 26, 48, 0.3);
 }
 
+/* Объект — цель снапа ребра (подсветка при рисовании рядом) */
+.geo-graph-layer__vertex.is-snap-target {
+  box-shadow: 0 0 0 3px var(--color-primary, #0066cc);
+  border-style: dashed;
+}
+
+/* Иконка типа объекта внутри вершины — по размеру самого объекта */
+.geo-graph-layer__icon {
+  height: 100%;
+  width: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  opacity: 0.9;
+}
+
+
 .geo-graph-layer__dot {
   position: absolute;
+  pointer-events: auto;
+  cursor: move;
   width: 12px;
   height: 12px;
   border-radius: 50%;
@@ -55,4 +114,194 @@
 
 .geo-graph-layer__dot--tap {
   background: #7dd3fc;
+  /* Врезка ловит клик поверх совпадающей с ней вершины ребра.
+     Врезка НЕПЕРЕМЕЩАЕМА — курсор обычный (не move). */
+  cursor: default;
+  z-index: 6;
+}
+
+/* Неперемещаемые элементы (врезка и её вершины рёбер) */
+.geo-graph-layer__dot.is-fixed {
+  cursor: default;
+}
+
+/* Вершина на конце ребра — маленькая точка; её можно перетаскивать.
+   z-index выше тройников/врезок: вершина, стоящая НА врезке, должна ловить
+   клик первой — иначе тянется врезка, а конец ребра не отсоединить. */
+.geo-graph-layer__dot--vertex {
+  /* Цвет (фон/контур) задаётся inline — как у родительского ребра (по флюиду). */
+  background: #0066cc;
+  border-color: #0066cc;
+  box-shadow: none;
+  cursor: move;
+  z-index: 5;
+  /* Зона захвата больше визуального размера — тянуть удобно */
+  outline: 4px solid transparent;
+}
+
+/* --- Руки ресайза объектов (показываются на выделенном) --- */
+.geo-graph-layer__handle {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  box-sizing: border-box;
+  background: var(--bg-panel, #fff);
+  border: 1.5px solid var(--color-primary, #0066cc);
+  border-radius: 2px;
+  pointer-events: auto;
+}
+
+.geo-graph-layer__handle--nw {
+  top: -5px;
+  left: -5px;
+}
+
+.geo-graph-layer__handle--n {
+  top: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.geo-graph-layer__handle--ne {
+  top: -5px;
+  right: -5px;
+}
+
+.geo-graph-layer__handle--e {
+  top: 50%;
+  right: -5px;
+  transform: translateY(-50%);
+}
+
+.geo-graph-layer__handle--se {
+  bottom: -5px;
+  right: -5px;
+}
+
+.geo-graph-layer__handle--s {
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.geo-graph-layer__handle--sw {
+  bottom: -5px;
+  left: -5px;
+}
+
+.geo-graph-layer__handle--w {
+  top: 50%;
+  left: -5px;
+  transform: translateY(-50%);
+}
+/* --- Лицензионный участок (замкнутый полигон территории) — серый --- */
+.geo-graph-layer__area {
+  fill: rgba(100, 116, 139, 0.15);
+  stroke: #64748b;
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+  /* Полигон кликабелен: выделение/перетаскивание участка */
+  pointer-events: auto;
+  cursor: move;
+}
+
+/* Выделенный участок — акцентная обводка */
+.geo-graph-layer__area.is-selected {
+  fill: rgba(0, 102, 204, 0.12);
+  stroke: #0066cc;
+  stroke-dasharray: none;
+}
+
+/* Ручки вершин участка (правка формы полигона) */
+.geo-graph-layer__area-handle {
+  fill: #fff;
+  stroke: #0066cc;
+  stroke-width: 2;
+  pointer-events: auto;
+  cursor: grab;
+}
+
+/* --- Рамка трансформации выделенного участка (ресайз + поворот) --- */
+
+/* Рамка bbox — тонкий пунктир, чтобы не конкурировать с геометрией */
+.geo-graph-layer__area-frame {
+  fill: none;
+  stroke: #0066cc;
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* Угловые и срединные ручки пропорционального ресайза */
+.geo-graph-layer__area-resize {
+  fill: #ffffff;
+  stroke: #0066cc;
+  stroke-width: 1.5;
+  rx: 1;
+  pointer-events: auto;
+  /* Подсветка при наведении повышает точность попадания (Fitts' law) */
+  transition: fill 0.1s ease;
+}
+
+.geo-graph-layer__area-resize:hover {
+  fill: #dbeeff;
+}
+
+/* Соединительная линия ручки поворота (от верхней грани рамки) */
+.geo-graph-layer__area-rotate-link {
+  stroke: #0066cc;
+  stroke-width: 1;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* Ручка поворота — круг с изогнутой стрелкой (аффорданс вращения) */
+.geo-graph-layer__area-rotate {
+  fill: #ffffff;
+  stroke: #0066cc;
+  stroke-width: 1.5;
+  pointer-events: auto;
+  cursor: grab;
+  transition: fill 0.1s ease;
+}
+
+.geo-graph-layer__area-rotate:hover {
+  fill: #dbeeff;
+}
+
+.geo-graph-layer__area-rotate:active {
+  cursor: grabbing;
+}
+
+/* Глиф изогнутой стрелки внутри ручки поворота */
+.geo-graph-layer__area-rotate-glyph {
+  fill: none;
+  stroke: #0066cc;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+
+/* Черновик полигона: незамкнутая линия по поставленным точкам */
+.geo-graph-layer__area-draft {
+  fill: rgba(100, 116, 139, 0.1);
+  stroke: #64748b;
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+  pointer-events: none;
+}
+
+/* Черновик — тоже залит, но только контур без ручек */
+
+/* Вершины черновика; первая — крупнее (по ней клик замыкает полигон) */
+.geo-graph-layer__area-vertex {
+  fill: #ffffff;
+  stroke: #64748b;
+  stroke-width: 2;
+  pointer-events: none;
+}
+
+.geo-graph-layer__area-vertex.is-first {
+  fill: #64748b;
 }

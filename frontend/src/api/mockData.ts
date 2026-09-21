@@ -24,6 +24,7 @@ export const MOCK_GRAPH: MapGraph = MapGraphSchema.parse({
       from: 'node-wellpad-north',
       to: 'node-upn-2',
       fluid: 'oil',
+      pipelineClass: 'field',
       flowLabel: '2,4 тыс т/сут',
     },
     {
@@ -31,6 +32,7 @@ export const MOCK_GRAPH: MapGraph = MapGraphSchema.parse({
       from: 'node-wellpad-east',
       to: 'node-upn-2',
       fluid: 'oil',
+      pipelineClass: 'field',
       flowLabel: '1,8 тыс т/сут',
     },
     {
@@ -38,6 +40,7 @@ export const MOCK_GRAPH: MapGraph = MapGraphSchema.parse({
       from: 'node-upn-2',
       to: 'node-delivery',
       fluid: 'oil',
+      pipelineClass: 'interfield',
       flowLabel: '4,2 тыс т/сут',
     },
   ],
@@ -70,9 +73,3 @@ export const MOCK_ENTITY_DETAILS: EntityDetails = EntityDetailsSchema.parse({
   ] satisfies Flow[],
   incoming: [],
 });
-
-/** Имитация сетевой задержки мок-API. */
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-export { delay };

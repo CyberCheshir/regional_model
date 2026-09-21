@@ -3,6 +3,7 @@ import { TopBarBreadcrumbs, type TopBarCrumb } from './TopBarBreadcrumbs';
 import { ViewModeSwitch } from './ViewModeSwitch';
 import { ScenarioButton } from './ScenarioButton';
 import { CalculateButton } from './CalculateButton';
+import { SaveGraphControl } from './SaveGraphControl';
 import './TopBar.css';
 
 /** Режим работы модуля: только просмотр или редактирование графа. */
@@ -17,8 +18,12 @@ export type TopBarProps = {
   onViewModeChange: (mode: ViewMode) => void;
   /** Название выбранного сценария */
   scenarioLabel: string;
-  /** Открыть выбор сценария (заготовка — поведение уточняется) */
-  onScenarioClick?: () => void;
+  /** Открыть сохранённый сценарий (загрузка снимка из БД) */
+  onOpenScenario?: (scenarioId: string, name: string) => void;
+  /** Импорт модели из JSON-файла */
+  onImportModel?: () => void;
+  /** Экспорт модели в JSON-файл */
+  onExportModel?: () => void;
   /** Запустить расчёт */
   onCalculate?: () => void;
   /** Кнопка «Рассчитать» недоступна */
@@ -37,7 +42,9 @@ export function TopBar({
   viewMode,
   onViewModeChange,
   scenarioLabel,
-  onScenarioClick,
+  onOpenScenario,
+  onImportModel,
+  onExportModel,
   onCalculate,
   calculateDisabled,
   calculatePending,
@@ -49,7 +56,25 @@ export function TopBar({
       <span className="topbar__spacer" />
       <ViewModeSwitch value={viewMode} onChange={onViewModeChange} />
       <span className="topbar__spacer" />
-      <ScenarioButton label={scenarioLabel} onClick={onScenarioClick} />
+      <ScenarioButton label={scenarioLabel} onOpen={onOpenScenario} />
+      {/* Импорт/экспорт модели — JSON-файл (рядом со «Сценариями»). */}
+      <button
+        type="button"
+        className="topbar__button"
+        onClick={onImportModel}
+        title="Импорт модели из JSON"
+      >
+        Импорт модели
+      </button>
+      <button
+        type="button"
+        className="topbar__button"
+        onClick={onExportModel}
+        title="Экспорт модели в JSON"
+      >
+        Экспорт модели
+      </button>
+      <SaveGraphControl />
       <CalculateButton
         onClick={onCalculate}
         disabled={calculateDisabled}

@@ -1,0 +1,103 @@
+/* ScenarioButton — кнопка «Сценарии» с выпадающим списком проектов. */
+
+.scenario-menu {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.scenario-menu__list {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 70;
+  min-width: 220px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-popover);
+}
+
+.scenario-menu__item {
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  color: var(--text-main);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.scenario-menu__item:hover {
+  background: var(--bg-card-hover);
+}
+
+/* Строка сценария: название + кнопка удаления */
+.scenario-menu__row {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.scenario-menu__row:hover {
+  background: var(--bg-card-hover);
+}
+
+.scenario-menu__row .scenario-menu__item {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scenario-menu__row .scenario-menu__item:hover {
+  background: transparent;
+}
+
+/* Кнопка удаления сценария — видна при наведении на строку */
+.scenario-menu__delete {
+  flex: 0 0 auto;
+  padding: 0 10px;
+  font: inherit;
+  font-size: 12px;
+  color: #b91c1c;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s ease, background 0.12s ease;
+}
+
+.scenario-menu__row:hover .scenario-menu__delete,
+.scenario-menu__delete:focus-visible {
+  opacity: 1;
+}
+
+.scenario-menu__delete:hover:not(:disabled) {
+  background: #fee2e2;
+}
+
+.scenario-menu__delete:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.scenario-menu__hint {
+  padding: 8px 10px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.scenario-menu__hint--error {
+  color: #b91c1c;
+}

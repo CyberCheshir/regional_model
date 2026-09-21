@@ -43,6 +43,16 @@ export function DisplaySettingsCard({ settings, onChange }: DisplaySettingsCardP
           checked={settings.flowAnimation}
           onChange={(checked) => onChange({ flowAnimation: checked })}
         />
+        <ToggleSwitch
+          label="Лицензионные участки"
+          checked={settings.showLicenceAreas}
+          onChange={(checked) => onChange({ showLicenceAreas: checked })}
+        />
+        <ToggleSwitch
+          label="Стыки трубопроводов"
+          checked={settings.showEdgeJoints}
+          onChange={(checked) => onChange({ showEdgeJoints: checked })}
+        />
       </div>
       <BasemapSelector
         value={settings.basemap}

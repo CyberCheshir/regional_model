@@ -8,7 +8,8 @@
 
 .object-header__title-row {
   display: flex;
-  align-items: center;
+  /* align-items: flex-start — при переносе имени бейдж остаётся у первой строки. */
+  align-items: flex-start;
   gap: 6px;
   min-width: 0;
 }
@@ -24,9 +25,11 @@
   font-size: 15px;
   font-weight: 600;
   color: var(--text-primary, #e6ecf8);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  /* Имя показываем ПОЛНОСТЬЮ: переносим по словам, без обрезки многоточием. */
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  min-width: 0;
 }
 
 .object-header__subtitle {

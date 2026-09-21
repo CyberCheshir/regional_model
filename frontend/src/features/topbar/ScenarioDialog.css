@@ -1,0 +1,91 @@
+/* ScenarioDialog — модалка ввода имени сценария при сохранении. */
+
+.scenario-dialog__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(16, 26, 48, 0.35);
+}
+
+.scenario-dialog {
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-modal);
+  color: var(--text-main);
+}
+
+.scenario-dialog__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.scenario-dialog__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.scenario-dialog__input {
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--text-main);
+  background: var(--bg-panel);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+}
+
+.scenario-dialog__input:focus {
+  outline: 2px solid var(--border-active);
+  outline-offset: 0;
+}
+
+.scenario-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.scenario-dialog__btn {
+  padding: 7px 16px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--text-main);
+  background: var(--bg-panel);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.scenario-dialog__btn:hover {
+  background: var(--bg-card-hover);
+}
+
+.scenario-dialog__btn--primary {
+  color: #fff;
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  font-weight: 600;
+}
+
+.scenario-dialog__btn--primary:hover {
+  background: var(--color-primary-hover);
+}
+
+.scenario-dialog__btn--primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { MutableRefObject } from 'react';
 import type { Network } from 'vis-network';
 import type { MapEdgeData } from './mapData';
-import { FLUID_COLORS } from './mapColors';
+import { getFluidColor } from './mapColors';
 import './EdgeDataBadges.css';
 
 export type EdgeDataBadgesProps = {
@@ -92,7 +92,7 @@ export function EdgeDataBadges({ networkRef, edges, visible }: EdgeDataBadgesPro
         <span
           key={p.id}
           className="edge-badge"
-          style={{ left: p.left, top: p.top, borderColor: FLUID_COLORS[p.fluid] }}
+          style={{ left: p.left, top: p.top, borderColor: getFluidColor(p.fluid) }}
         >
           {p.flowLabel}
         </span>

@@ -20,10 +20,53 @@ export function getMarkerColor(kind: string): string {
 
 /** Цвета флюидов рёбер (трубопроводы) */
 export const FLUID_COLORS = {
-  oil: '#0066CC', // --pipeline-oil
-  gas: '#D97706', // --pipeline-gas
-  water: '#0EA5E9', // --pipeline-water
+  oil: '#0066CC', // --pipeline-oil — Нефть (синий)
+  gas: '#D97706', // --pipeline-gas — Газ (жёлто-оранжевый)
+  product: '#1E3A8A', // Продукт (тёмно-синий / navy)
 } as const;
+
+/** Цвет ребра по флюиду; неизвестный — нейтральный «нефть». */
+export function getFluidColor(fluid: string): string {
+  return (FLUID_COLORS as Record<string, string | undefined>)[fluid] ?? FLUID_COLORS.oil;
+}
+
+/** Цвет «Логического потока» — тёмно-серый (не зависит от флюида). */
+export const LOGICAL_FLOW_COLOR = '#4B5563';
+
+/**
+ * Итоговый цвет ребра с учётом класса и флюида:
+ * «Логический поток» — всегда тёмно-серый, остальные классы — цвет флюида.
+ */
+export function getEdgeColor(fluid: string, pipelineClass: string): string {
+  return pipelineClass === 'logical' ? LOGICAL_FLOW_COLOR : getFluidColor(fluid);
+}
+
+/**
+ * Стиль ребра по КЛАССУ трубопровода (ортогонален цвету флюида):
+ * толщина линии задаёт значимость, «логический поток» — пунктир.
+ * Значения соответствуют макету «Класс трубопровода».
+ */
+export const PIPELINE_CLASS_STYLE: Record<
+  'field' | 'interfield' | 'trunk' | 'logical',
+  { width: number; dash?: string }
+> = {
+  field: { width: 2.5 }, // Промысловый — тонкая
+  interfield: { width: 4 }, // Межпромысловый — толще
+  trunk: { width: 6 }, // Магистральный — самая толстая
+  logical: { width: 2.5, dash: '8 6' }, // Логический поток — пунктир
+};
+
+/** Стиль ребра по классу с откатом на «промысловый» для неизвестных значений. */
+export function getPipelineClassStyle(pipelineClass: string): {
+  width: number;
+  dash?: string;
+} {
+  return (
+    PIPELINE_CLASS_STYLE[
+      pipelineClass as keyof typeof PIPELINE_CLASS_STYLE
+    ] ?? PIPELINE_CLASS_STYLE.field
+  );
+}
 
 /** Цвет подписей рёбер на тёмной подложке */
 export const EDGE_LABEL_COLOR = '#C3CDE0';

@@ -20,12 +20,12 @@ export const MAP_METERS_PER_UNIT = 1;
 
 /**
  * Географический центр области (место, где находится точка (0,0) графа).
- * По умолчанию — точка 61.115171 N, 76.749737 E.
+ * По умолчанию — точка 60.009 N, 109.430 E.
  */
-export const MAP_CENTER = { lng: 76.749737, lat: 61.115171 } as const;
+export const MAP_CENTER = { lng: 109.43, lat: 60.009 } as const;
 
 /** Начальный гео-зум карты. */
-export const MAP_INITIAL_ZOOM = 12;
+export const MAP_INITIAL_ZOOM = 10;
 
 /** Границы зума для растровых тайлов. */
 export const TILE_MIN_ZOOM = 2;
@@ -90,6 +90,40 @@ export function graphPointToLngLat(
     // экранный +y направлен вниз, географический +lat — вверх
     lat: center.lat - dyMeters / metersPerDegLat,
   };
+}
+
+/**
+ * Мировая точка графа (метры) → экранные пиксели чистой карты по камере.
+ * Обратное к screenToGraphPoint — для оверлеев (призрак, анимация потока).
+ */
+export function graphPointToScreen(
+  p: { x: number; y: number },
+  camera: { originX: number; originY: number; zoom: number },
+  center = MAP_CENTER,
+  metersPerUnit = MAP_METERS_PER_UNIT,
+): { x: number; y: number } {
+  const geo = graphPointToLngLat(p.x, p.y, center, metersPerUnit);
+  const wp = lngLatToWorldPixel(geo.lng, geo.lat, camera.zoom);
+  return { x: wp.x - camera.originX, y: wp.y - camera.originY };
+}
+
+/**
+ * Экранная точка чистой карты (пиксели от левого-верхнего угла) → мировые
+ * единицы графа (метры). Камера задаётся мировым пикселем левого-верхнего угла
+ * (originX/originY) и зумом тайлов.
+ */
+export function screenToGraphPoint(
+  screen: { x: number; y: number },
+  camera: { originX: number; originY: number; zoom: number },
+  center = MAP_CENTER,
+  metersPerUnit = MAP_METERS_PER_UNIT,
+): { x: number; y: number } {
+  const geo = worldPixelToLngLat(
+    camera.originX + screen.x,
+    camera.originY + screen.y,
+    camera.zoom,
+  );
+  return lngLatToGraphPoint(geo.lng, geo.lat, center, metersPerUnit);
 }
 
 /** Обратное преобразование: lng/lat → мировые единицы графа. */

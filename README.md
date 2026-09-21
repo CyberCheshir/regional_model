@@ -127,16 +127,16 @@
 ---
 
 
-## Этап 9: Состояние, API и предметная модель — `[░░░░░░░░░░] 0%`
+## Этап 9: Состояние, API и предметная модель — 83% — `[░░░░░░░░░░] 0%`
 
 | # | Подзадача | Статус |
 |---|-----------|--------|
-| 9.1 | Типы доменной модели (discriminated unions: facility / node / pipeline / area) | ⬜ todo |
-| 9.2 | Zod-схемы валидации API-ответов | ⬜ todo |
-| 9.3 | API layer + @tanstack/react-query (граф, детали объекта, потоки) | ⬜ todo |
-| 9.4 | Глобальный UI-state (`activeModule`, `selectedEntity`, `inspectorTab`) — разделение UI- и domain-state | ⬜ todo |
-| 9.5 | Loading / error / empty состояния всех зон | ⬜ todo |
-| 9.6 | Аутентификация JWT (protected routes, 401 handling) | ⬜ todo |
+| 9.1 | Типы доменной модели (`domain/types.ts` — discriminated unions: facility / node / pipeline / area) | ✅ done |
+| 9.2 | Zod-схемы валидации API-ответов (`domain/schemas.ts` + `parseOrThrow`) | ✅ done |
+| 9.3 | API layer + @tanstack/react-query (`api/client.ts`, `api/queries.ts`) | ✅ done |
+| 9.4 | Глобальный UI-state (`state/uiState.tsx`: `activeModule`, `selectedEntity`, `inspectorTab`, `devMode`, `viewMode`) | ✅ done |
+| 9.5 | Loading / error / empty состояния (инспектор и карта; retry/error через react-query) | ✅ done |
+| 9.6 | Аутентификация JWT (protected routes, 401 handling) | todo (не реализовано) |
 
 **Прогресс этапа: ░░░░░░░░░░ 0%**
 
@@ -154,8 +154,38 @@
 
 ---
 
-## Легенда
+## Этап 11: Верхняя панель (TopBar) — 80%
 
+| # | Подзадача | Статус |
+|---|-----------|--------|
+| 11.1 | `features/topbar/` — TopBar + подкомпоненты (Logo, Breadcrumbs, ViewModeSwitch, ScenarioButton, CalculateButton) | ✅ done |
+| 11.2 | Позиционирование в потоке (`.app-root`): панель сверху, `AppShell` под ней — без наложения | ✅ done |
+| 11.3 | Режим Просмотр/Редактирование (`viewMode` в uiState), скрытие панели «Проектирование» в просмотре | ✅ done |
+| 11.4 | Токены `--text-muted`, `--bg-segment-track`, `--topbar-height` | ✅ done |
+| 11.5 | «Базовый сценарий» и «Рассчитать» — заготовки (props/колбэки), логика уточняется | 🔄 in progress |
+
+---
+
+## Этап 12: Вариант 2 — ручные манипуляции графом поверх чистой гео-карты — 100%
+
+> План: `PLAN_VARIANT_2.md`. Переключатель режима — флаг `MAP_ONLY` в `MapViewport.tsx`
+> (`true` — чистая карта без vis, `false` — Вариант 1 на vis).
+
+| # | Подзадача | Статус |
+|---|-----------|--------|
+| 12.1 | Чистая карта `GeoMapOnly` (тайлы, зум к курсору, пан Ctrl+ЛКМ) + оверлей `GeoGraphLayer` | ✅ done |
+| 12.2 | Выбор / перетаскивание / групповой перенос / ресайз объектов (`moveVertex`, `setVertexBox`) | ✅ done |
+| 12.3 | Создание объектов кликом; рисование рёбер вручную со снапом по гео (`snap.ts`) | ✅ done |
+| 12.4 | Тройники и врезки (выбор ребра, проекция `t`, перетаскивание вдоль ребра) | ✅ done |
+| 12.5 | Вершины на концах рёбер: отрисовка + перетаскивание с перепривязкой (`resolveDropVertex`) | ✅ done |
+| 12.6 | Лассо + Delete, Esc, ПКМ завершает создание | ✅ done |
+| 12.7 | Ghost-призрак (`GeoGhostPreview`) и анимация потока (`GeoFlowAnimation`) | ✅ done |
+| 12.8 | LOD: подпись (zoom ≥ 14), иконка (12–13), скрытие (< 12); точки — уменьшение и скрытие (< 13) | ✅ done |
+| 12.9 | Изоляция vis-эффектов при `MAP_ONLY` (Вариант 1 сохранён переключаемым) | ✅ done |
+
+---
+
+## Легенда
 - ✅ done — подзадача завершена
 - 🔄 in progress — в работе
 - ⬜ todo — не начата

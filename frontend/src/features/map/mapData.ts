@@ -18,7 +18,7 @@ export type MapNodeData = {
   warnings?: number;
 };
 
-export type FluidType = 'oil' | 'gas' | 'water';
+export type FluidType = 'oil' | 'gas' | 'product';
 
 export type MapEdgeData = {
   id: string;

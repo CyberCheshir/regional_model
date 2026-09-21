@@ -1,0 +1,329 @@
+/*
+ * Нижняя панель «Демонстрируемый период» (макет UI images/bottom panel.png).
+ * Все цвета/радиусы/тени — только через токены styles/tokens.css.
+ */
+
+/*
+ * Высота панели уменьшена на ~20% относительно исходной: сжаты вертикальные
+ * зазоры, отступы и высота слайдерного трека (≈112px → ≈90px при тех же шрифтах).
+ */
+.bottom-panel {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  /*
+   * Сверху 10px (а не 6): над треком должно хватить места для бейджа года,
+   * который висит НАД ручкой иначе упирался бы в верхний край панели.
+   */
+  padding: 10px 20px 9px;
+  box-sizing: border-box;
+  background: var(--bg-panel);
+  border-top: 1px solid var(--border-default);
+  box-shadow: 0 -1px 3px rgba(16, 26, 48, 0.05);
+  color: var(--text-main);
+  z-index: 30;
+  /* Бейдж года у ручки выходит вверх за пределы строки — не обрезаем */
+  overflow: visible;
+}
+
+/* Заголовок — по ЛЕВОМУ краю панели (слайдер при этом остаётся по центру) */
+.bottom-panel__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-start;
+  gap: 10px;
+  width: 100%;
+}
+
+.bottom-panel__title {
+  /* .eyebrow из typography.css — мелкий заглавный заголовок */
+  color: var(--text-eyebrow);
+}
+
+.bottom-panel__summary {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-primary);
+  white-space: nowrap;
+}
+
+/*
+ * Содержимое панели: слайдер/период центрируется по ширине панели.
+ * Переключатель режимов вынесен из потока в левый угол — иначе он сдвигал
+ * бы центр слайдера вправо.
+ *
+ * Высота ФИКСИРОВАНА: переключение режима (Год/Период/Всё время) меняет
+ * содержимое, но не должно менять высоту панели и «дёргать» карту с зонами.
+ */
+.bottom-panel__body {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  height: 34px;
+  flex: 0 0 34px;
+  /*
+   * overflow НЕ скрываем: бейдж с годом висит НАД треком и выходит за строку.
+   * Высоту панели он всё равно не меняет — она фиксирована через height выше.
+   */
+  overflow: visible;
+}
+
+/* Сегментированный переключатель режима (Год / Период / Всё время) */
+.bottom-panel__modes {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  padding: 3px;
+  background: var(--bg-segment-track);
+  border-radius: var(--radius-md);
+}
+
+.bottom-panel__mode {
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  padding: 6px 16px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.bottom-panel__mode:hover {
+  color: var(--text-main);
+}
+
+.bottom-panel__mode.is-active {
+  background: var(--bg-panel);
+  color: var(--text-main);
+  font-weight: 600;
+  box-shadow: var(--shadow-card);
+}
+
+.bottom-panel__mode:focus-visible {
+  outline: 2px solid var(--border-active);
+  outline-offset: 1px;
+}
+
+/* Режим «Всё время» — статичная подпись полного периода (по центру панели) */
+.bottom-panel__all-range {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
+  flex: 0 1 720px;
+  justify-content: center;
+}
+
+.bottom-panel__all-label {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.bottom-panel__all-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Режим «Год» — одиночный слайдер + бейдж значения (по центру панели) */
+.bottom-panel__year {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 0 1 720px;
+  max-width: 720px;
+}
+
+.bottom-panel__year-input {
+  flex: 1 1 auto;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+.bottom-panel__year-badge {
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-main);
+  background: var(--bg-panel-subtle);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-pill);
+}
+
+.bottom-panel__project {
+  position: absolute;
+  right: 20px;
+  bottom: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* --- Двойной слайдер годов (YearRangeSlider) --- */
+
+.year-range-slider {
+  /* По центру панели; растёт до 720px, но сжимается на узких экранах */
+  flex: 0 1 720px;
+  max-width: 720px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+}
+
+.year-range-slider__track {
+  position: relative;
+  height: 21px;
+}
+
+/* Базовая линия шкалы — от начала до конца (4%..96%) */
+.year-range-slider__baseline {
+  position: absolute;
+  top: 50%;
+  left: 4%;
+  right: 4%;
+  height: 2px;
+  transform: translateY(-50%);
+  background: var(--border-default);
+  border-radius: var(--radius-pill);
+}
+
+/*
+ * Штрихи-насечки по каждому году шкалы (один штрих на год, 2026…2040).
+ * Обычные — короткие и светлые; по опорным годам (is-major) — выше и темнее.
+ */
+.year-range-slider__stroke {
+  position: absolute;
+  top: 50%;
+  width: 1px;
+  height: 6px;
+  margin-left: -0.5px;
+  transform: translateY(-50%);
+  background: var(--border-default);
+  pointer-events: none;
+}
+
+.year-range-slider__stroke.is-major {
+  height: 10px;
+  background: var(--text-muted);
+}
+
+/* Выделенный (демонстрируемый) диапазон — поверх штрихов */
+.year-range-slider__filled {
+  position: absolute;
+  top: 50%;
+  height: 2px;
+  transform: translateY(-50%);
+  background: var(--color-primary);
+  border-radius: var(--radius-pill);
+}
+
+/*
+ * Ручка-коннектор (круглая, белая с синей обводкой). Это <button>, поэтому
+ * сбрасываем нативные стили и задаём круг. Зона захвата — по размеру видимой
+ * ручки (12×12) плюс небольшой допуск: тянуть нужно ровно при наведении
+ * на ручку, а не рядом с ней.
+ */
+.year-range-slider__handle {
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  margin: 0 0 0 -6px;
+  padding: 0;
+  transform: translateY(-50%);
+  background: var(--bg-panel);
+  border: 2px solid var(--color-primary);
+  border-radius: 50%;
+  box-sizing: content-box;
+  /* Прозрачная рамка расширяет зону захвата до ~20px вокруг ручки */
+  outline: 4px solid transparent;
+  appearance: none;
+  -webkit-appearance: none;
+  font: inherit;
+  cursor: grab;
+  z-index: 2;
+}
+
+.year-range-slider__handle:active {
+  cursor: grabbing;
+}
+
+.year-range-slider__handle:focus-visible {
+  outline: 2px solid var(--border-active);
+  outline-offset: 2px;
+}
+
+/* Капсульный бейдж со значением года над ручкой (тёмная капсула со стрелкой) */
+.year-range-slider__badge {
+  position: absolute;
+  bottom: calc(100% - 2px);
+  transform: translateX(-50%);
+  /* Поверх ручек и трека: бейдж рисуется над выделенным диапазоном */
+  z-index: 3;
+  min-width: 44px;
+  padding: 3px 8px;
+  box-sizing: border-box;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #fff;
+  background: var(--text-main);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* Стрелка вниз — бейдж указывает на свою ручку */
+.year-range-slider__badge::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: var(--text-main);
+}
+
+/* Подписи годов под шкалой */
+.year-range-slider__ticks {
+  position: relative;
+  height: 12px;
+}
+
+.year-range-slider__tick {
+  position: absolute;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.year-range-slider__tick.is-active {
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+/* На узких экранах подписи шкалы скрываем — остаются бейджи ручек */
+@media (max-width: 900px) {
+  .year-range-slider__ticks {
+    display: none;
+  }
+
+  .bottom-panel__project {
+    display: none;
+  }
+}

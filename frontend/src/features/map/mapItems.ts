@@ -5,8 +5,10 @@ import {
   EDGE_LABEL_COLOR,
   EDGE_SELECT_WIDTH,
   EDGE_WIDTH,
-  FLUID_COLORS,
+  getEdgeColor,
+  getFluidColor,
   getMarkerColor,
+  getPipelineClassStyle,
 } from './mapColors';
 import {
   drawVertexNodeId,
@@ -51,9 +53,9 @@ export function buildEdges(showLabels: boolean, directed: boolean): Edge[] {
     // Выделение — тем же цветом, но толще (не светлым): color.highlight = цвет,
     // selectionWidth увеличивает толщину выделенного ребра.
     color: {
-      color: FLUID_COLORS[e.fluid],
+      color: getFluidColor(e.fluid),
       width: EDGE_WIDTH,
-      highlight: FLUID_COLORS[e.fluid],
+      highlight: getFluidColor(e.fluid),
     },
     selectionWidth: EDGE_SELECT_WIDTH,
     font: { color: EDGE_LABEL_COLOR, size: 11, strokeWidth: 0, align: 'top' },
@@ -100,15 +102,15 @@ function isReferenceVertex(v: DrawVertex): boolean {
 }
 
 /** vis-узел (точка) для СВОБОДНОЙ вершины сегмента. */
-function drawVertexToNode(v: DrawVertex): Node {
+function drawVertexToNode(v: DrawVertex, color: string): Node {
   return {
     id: drawVertexVisId(v),
     x: v.x,
     y: v.y,
     shape: 'dot',
     size: 4,
-    // Заливка тем же цветом, что и контур вершины (не белая)
-    color: { background: FLUID_COLORS.oil, border: FLUID_COLORS.oil },
+    // Заливка и контур — как у родительского ребра (цвет по флюиду).
+    color: { background: color, border: color },
     borderWidth: 2,
     physics: false,
     // Любую вершину ребра можно тащить: чтобы отсоединить от куста,
@@ -120,13 +122,15 @@ function drawVertexToNode(v: DrawVertex): Node {
 /**
  * vis-узлы для вершин всех сегментов. Ссылочные вершины (объект/тройник/врезка)
  * пропускаются — их узлы создают buildVertexNodes/buildFittingNodes/buildTapNodes.
+ * Цвет вершины наследуется от ребра (флюид), чтобы совпадать с рисунком ребра.
  */
 export function buildDrawingNodes(segments: DrawnSegment[]): Node[] {
   const byId = new Map<string, Node>();
   for (const seg of segments) {
+    const color = getFluidColor(seg.fluid);
     for (const v of [seg.from, seg.to]) {
       if (isReferenceVertex(v)) continue;
-      const node = drawVertexToNode(v);
+      const node = drawVertexToNode(v, color);
       byId.set(String(node.id), node);
     }
   }
@@ -135,21 +139,29 @@ export function buildDrawingNodes(segments: DrawnSegment[]): Node[] {
 
 /** vis-рёбра для нарисованных сегментов. */
 export function buildDrawingEdges(segments: DrawnSegment[], directed: boolean): Edge[] {
-  return segments.map((seg) => ({
-    id: seg.id,
-    from: drawVertexVisId(seg.from),
-    to: drawVertexVisId(seg.to),
-    // Выделение — тем же цветом, но толще (UX: без смены цвета на светлый)
-    color: {
-      color: FLUID_COLORS[seg.fluid],
-      width: EDGE_WIDTH,
-      highlight: FLUID_COLORS[seg.fluid],
-    },
-    selectionWidth: EDGE_SELECT_WIDTH,
-    font: { color: EDGE_LABEL_COLOR, size: 11, strokeWidth: 0, align: 'top' },
-    // Ориентированный граф: стрелка направления от начала ребра к концу.
-    arrows: directed ? EDGE_ARROWS : undefined,
-  }));
+  return segments.map((seg) => {
+    const classStyle = getPipelineClassStyle(seg.pipelineClass);
+    // Логический поток — тёмно-серый, остальные классы — цвет флюида.
+    const edgeColor = getEdgeColor(seg.fluid, seg.pipelineClass);
+    return {
+      id: seg.id,
+      from: drawVertexVisId(seg.from),
+      to: drawVertexVisId(seg.to),
+      // Цвет — по классу/флюиду, толщина/штрих — по классу трубопровода.
+      // Выделение — тем же цветом, но толще (UX: без смены цвета на светлый)
+      color: {
+        color: edgeColor,
+        width: classStyle.width,
+        highlight: edgeColor,
+      },
+      selectionWidth: EDGE_SELECT_WIDTH,
+      // Логический поток — пунктир (как в макете «Класс трубопровода»).
+      dashes: classStyle.dash ? true : false,
+      font: { color: EDGE_LABEL_COLOR, size: 11, strokeWidth: 0, align: 'top' },
+      // Ориентированный граф: стрелка направления от начала ребра к концу.
+      arrows: directed ? EDGE_ARROWS : undefined,
+    };
+  });
 }
 
 /** vis-узлы для серых вершин-тройников. */

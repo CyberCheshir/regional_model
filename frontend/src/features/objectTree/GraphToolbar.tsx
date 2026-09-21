@@ -1,5 +1,10 @@
 import { AppIcon, type IconName } from '../../components/AppIcon';
 import { CollapsibleSection } from '../../components/panel/CollapsibleSection';
+import { PipelineSettingsPanel } from './PipelineSettingsPanel';
+import { AreaExportMenu } from './AreaExportMenu';
+import { SampleAreasMenu } from './SampleAreasMenu';
+import type { DrainFluid, PipelineClass } from '../map/drawingTypes';
+import type { AreaExportFormat } from '../map/importAreas';
 import wellpadIcon from '../../assets/design/wellpad.png';
 import facilityIcon from '../../assets/design/facility.png';
 import deliveryPointIcon from '../../assets/design/delivery-point.png';
@@ -17,15 +22,23 @@ export type GraphToolActionId =
   | 'create-pipeline-segment'
   | 'create-pipeline'
   | 'create-tap'
-  | 'create-tee';
+  | 'create-tee'
+  | 'create-licence-area'
+  | 'import-licence-area'
+  | 'export-areas';
 
 export type GraphToolData = {
   id: GraphToolActionId;
+  /** Подпись кнопки; пустая строка — рендерить только иконку */
   label: string;
+  /** Всплывающая подсказка (по умолчанию — label) */
+  title?: string;
   /** SVG-иконка из реестра (если нет raster-иконки) */
   icon: IconName;
   /** Растровая иконка (PNG) — имеет приоритет над SVG */
   iconSrc?: string;
+  /** Квадратная кнопка (иконка по центру, без текста) — для ряда действий */
+  square?: boolean;
 };
 
 /** Группа инструментов: подпись + набор кнопок. */
@@ -33,6 +46,8 @@ export type GraphToolGroup = {
   /** Заголовок группы (eyebrow) */
   title: string;
   tools: readonly GraphToolData[];
+  /** Кнопки группы в ОДНУ строку (иначе — столбиком) */
+  inline?: boolean;
 };
 
 /**
@@ -42,7 +57,7 @@ export const GRAPH_TOOL_GROUPS: readonly GraphToolGroup[] = [
   {
     title: 'Вершины',
     tools: [
-      { id: 'create-wellpad', label: 'Куст', icon: 'tree-wellpad', iconSrc: wellpadIcon },
+      { id: 'create-wellpad', label: 'Система сбора', icon: 'tree-wellpad', iconSrc: wellpadIcon },
       { id: 'create-facility', label: 'Объект подготовки', icon: 'tree-facility', iconSrc: facilityIcon },
       { id: 'create-delivery-point', label: 'Точка поставки', icon: 'tree-delivery-point', iconSrc: deliveryPointIcon },
     ],
@@ -61,6 +76,16 @@ export const GRAPH_TOOL_GROUPS: readonly GraphToolGroup[] = [
       { id: 'create-tap', label: 'Врезка', icon: 'flow-physical', iconSrc: tapIcon },
     ],
   },
+  {
+    title: 'Территории',
+    // Кнопки этой группы — в одну строку (участок + импорт).
+    inline: true,
+    tools: [
+      { id: 'create-licence-area', label: 'Лицензионный участок', icon: 'licence-area' },
+      // Дальше — ряд квадратных кнопок: импорт / экспорт / примеры.
+      { id: 'import-licence-area', label: '', title: 'Импортировать', icon: 'import', square: true },
+    ],
+  },
 ] as const;
 
 /** Плоский реестр всех инструментов (для внешнего использования). */
@@ -77,6 +102,20 @@ export type GraphToolbarProps = {
   canDelete?: boolean;
   /** Удалить выделенный элемент */
   onDelete?: () => void;
+  /** Флюид новых сегментов (панель «Трубопроводы») */
+  fluid?: DrainFluid;
+  /** Изменить флюид */
+  onFluidChange?: (fluid: DrainFluid) => void;
+  /** Класс новых сегментов (панель «Класс трубопровода») */
+  pipelineClass?: PipelineClass;
+  /** Изменить класс трубопровода */
+  onPipelineClassChange?: (pipelineClass: PipelineClass) => void;
+  /** Экспорт лицензионных участков в выбранном формате */
+  onExportAreas?: (format: AreaExportFormat) => void;
+  /** Есть участки для выгрузки (иначе кнопка экспорта неактивна) */
+  canExportAreas?: boolean;
+  /** Импорт встроенного образца участков по URL (`/samples/…`) */
+  onImportSample?: (url: string, areaIndex: number) => void;
 };
 
 /**
@@ -88,7 +127,15 @@ export function GraphToolbar({
   activeAction = null,
   canDelete = false,
   onDelete,
+  fluid,
+  onFluidChange,
+  pipelineClass,
+  onPipelineClassChange,
+  onExportAreas,
+  canExportAreas = false,
+  onImportSample,
 }: GraphToolbarProps) {
+  const showPipelineSettings = onFluidChange !== undefined || onPipelineClassChange !== undefined;
   return (
     <CollapsibleSection title="Проектирование" className="graph-toolbar-wrap">
       <div className="graph-toolbar" aria-label="Инструменты создания графа">
@@ -100,34 +147,90 @@ export function GraphToolbar({
             aria-label={group.title}
           >
             <span className="graph-toolbar__group-title">{group.title}</span>
-            <div className="graph-toolbar__group-buttons">
-              {group.tools.map((tool) => {
-                const isActive = tool.id === activeAction;
-                return (
-                  <button
-                    key={tool.id}
-                    type="button"
-                    className={`graph-toolbar__button${isActive ? ' is-active' : ''}`}
-                    title={tool.label}
-                    aria-pressed={isActive}
-                    onClick={() => onAction?.(tool.id)}
-                  >
-                    {tool.iconSrc ? (
-                      <img
-                        className="graph-toolbar__icon"
-                        src={tool.iconSrc}
-                        alt=""
-                        width={18}
-                        height={18}
-                      />
-                    ) : (
-                      <AppIcon name={tool.icon} size={16} />
-                    )}
-                    <span className="graph-toolbar__label">{tool.label}</span>
-                  </button>
-                );
-              })}
+            {/* Основные инструменты группы (не квадратные) — столбиком/в ряд. */}
+            <div
+              className={`graph-toolbar__group-buttons${group.inline ? ' graph-toolbar__group-buttons--inline' : ''}`}
+            >
+              {group.tools
+                .filter((tool) => !tool.square)
+                .map((tool) => {
+                  const isActive = tool.id === activeAction;
+                  return (
+                    <button
+                      key={tool.id}
+                      type="button"
+                      className={`graph-toolbar__button${isActive ? ' is-active' : ''}`}
+                      title={tool.title ?? tool.label}
+                      aria-label={tool.title ?? tool.label}
+                      aria-pressed={isActive}
+                      onClick={() => onAction?.(tool.id)}
+                    >
+                      {tool.iconSrc ? (
+                        <img
+                          className="graph-toolbar__icon"
+                          src={tool.iconSrc}
+                          alt=""
+                          width={18}
+                          height={18}
+                        />
+                      ) : (
+                        <AppIcon name={tool.icon} size={16} />
+                      )}
+                      {tool.label && (
+                        <span className="graph-toolbar__label">{tool.label}</span>
+                      )}
+                    </button>
+                  );
+                })}
             </div>
+            {/* Ряд КВАДРАТНЫХ кнопок-действий (импорт / экспорт / примеры) —
+                отдельной строкой НИЖЕ основной кнопки группы. */}
+            {(group.tools.some((tool) => tool.square) ||
+              group.title === 'Территории') && (
+              <div className="graph-toolbar__group-actions">
+                {group.tools
+                  .filter((tool) => tool.square)
+                  .map((tool) => (
+                    <button
+                      key={tool.id}
+                      type="button"
+                      className="graph-toolbar__button graph-toolbar__button--square"
+                      title={tool.title ?? tool.label}
+                      aria-label={tool.title ?? tool.label}
+                      onClick={() => onAction?.(tool.id)}
+                    >
+                      {tool.iconSrc ? (
+                        <img
+                          className="graph-toolbar__icon"
+                          src={tool.iconSrc}
+                          alt=""
+                          width={18}
+                          height={18}
+                        />
+                      ) : (
+                        <AppIcon name={tool.icon} size={16} />
+                      )}
+                    </button>
+                  ))}
+                {/* Меню экспорта и примеров — квадратные кнопки в том же ряду. */}
+                {group.title === 'Территории' && onExportAreas && (
+                  <AreaExportMenu onExport={onExportAreas} disabled={!canExportAreas} />
+                )}
+                {group.title === 'Территории' && onImportSample && (
+                  <SampleAreasMenu onImportSample={onImportSample} />
+                )}
+              </div>
+            )}
+            {/* Панель настройки трубопровода (флюид + класс) — внутри группы
+                «Трубопроводы», как в макете «проектирование__трубопровод». */}
+            {group.title === 'Трубопроводы' && showPipelineSettings && fluid !== undefined && pipelineClass !== undefined && (
+              <PipelineSettingsPanel
+                fluid={fluid}
+                onFluidChange={(value) => onFluidChange?.(value)}
+                pipelineClass={pipelineClass}
+                onPipelineClassChange={(value) => onPipelineClassChange?.(value)}
+              />
+            )}
           </div>
         ))}
 

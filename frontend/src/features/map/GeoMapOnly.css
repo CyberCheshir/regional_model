@@ -5,8 +5,14 @@
   inset: 0;
   overflow: hidden;
   background: #0d1526;
-  /* Обычная ЛКМ — клик (создание/выбор). Панорамирование — Ctrl+ЛКМ. */
-  cursor: default;
+  /* Подложка «без тайлов» — пустой светлый серый фон под графом. */
+}
+
+.geo-map-only[data-basemap='none'] {
+  background: #e9edf2;
+  /* Обычная ЛКМ — панорамирование (перетаскивание). Когда активен инструмент
+     создания, исходный ЛКМ создаёт элемент (см. panEnabled в GeoMapOnly). */
+  cursor: grab;
   touch-action: none;
 }
 

@@ -6,7 +6,10 @@ import { z } from 'zod';
  */
 
 /** Тип флюида. */
-export const FluidTypeSchema = z.enum(['oil', 'gas', 'water']);
+export const FluidTypeSchema = z.enum(['oil', 'gas', 'product']);
+
+/** Класс трубопровода: фильтр стиля линии (цвет задаётся флюидом). */
+export const PipelineClassSchema = z.enum(['field', 'interfield', 'trunk', 'logical']);
 
 /** Тип маркера на карте. */
 export const MarkerKindSchema = z.enum(['wellpad', 'processing', 'delivery']);
@@ -64,6 +67,8 @@ export const GraphEdgeSchema = z.object({
   from: z.string().min(1),
   to: z.string().min(1),
   fluid: FluidTypeSchema,
+  /** Класс трубопровода (стиль линии на карте) */
+  pipelineClass: PipelineClassSchema,
   /** Метка расхода: «1,8 млн м³/сут» */
   flowLabel: z.string().min(1),
 });
@@ -82,6 +87,7 @@ export const TreeNodeKindSchema = z.enum([
   'facility',
   'delivery-point',
   'pipeline',
+  'segment',
 ]);
 
 /** Поток-связь между объектами (без физической трубы / с трубой). */

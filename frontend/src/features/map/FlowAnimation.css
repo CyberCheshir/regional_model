@@ -1,4 +1,4 @@
-/* FlowAnimation — canvas-слой «бегущих штрихов» (dash offset) по рёбрам. */
+/* FlowAnimation — canvas-слой «бегущих точек» по рёбрам. */
 
 .flow-animation {
   position: absolute;
@@ -7,4 +7,9 @@
   height: 100%;
   pointer-events: none;
   z-index: 2;
+}
+
+/* Вариант 2 (гео-карта): точки бегут ПОВЕРХ слоя графа (z-index: 2) и его рёбер */
+.flow-animation--geo {
+  z-index: 3;
 }

@@ -7,10 +7,11 @@ import type { ConnectionItemData, EntityDetails, EntityStatus } from './types';
 import type { TreeNodeKind } from '../objectTree/types';
 
 const SUBTYPE_BY_KIND: Record<TreeNodeKind, string> = {
-  wellpad: 'Кустовая площадка',
+  wellpad: 'Система сбора',
   facility: 'Объект подготовки',
   'delivery-point': 'Точка поставки',
   pipeline: 'Трубопровод',
+  segment: 'Сегмент трубопровода',
 };
 
 const STATUS_BY_NODE: Record<string, EntityStatus> = {
