@@ -105,17 +105,14 @@ export function snapToVertex(
     }));
   }
 
-  // 4. Площадные объекты (контур — периметр прямоугольника).
+  // 4. Площадные объекты: клик ВНУТРИ объекта или рядом с его границей
+  //    присоединяет ребро к КОНТУРУ (точка фиксируется на краю объекта,
+  //    а не там, где кликнули внутри).
   for (const b of geo.boxes) {
-    const d = distanceToContour(world, {
-      kind: 'box',
-      x: b.x,
-      y: b.y,
-      w: b.w ?? 0,
-      h: b.h ?? 0,
-    });
+    const box = { x: b.x, y: b.y, w: b.w ?? 0, h: b.h ?? 0 };
+    const d = distanceToContour(world, { kind: 'box', ...box });
     consider(d, CONNECT_RADIUS, () => {
-      const bp = nearestBorderPoint(world, { x: b.x, y: b.y, w: b.w ?? 0, h: b.h ?? 0 });
+      const bp = nearestBorderPoint(world, box);
       return {
         type: 'box',
         vid: nextVertexVid(),
@@ -149,17 +146,20 @@ export function resolveDropVertex(
   let bestDist = Infinity;
 
   for (const b of geo.boxes) {
-    const d = distanceToContour(world, {
-      kind: 'box',
-      x: b.x,
-      y: b.y,
-      w: b.w ?? 0,
-      h: b.h ?? 0,
-    });
+    const box = { x: b.x, y: b.y, w: b.w ?? 0, h: b.h ?? 0 };
+    const d = distanceToContour(world, { kind: 'box', ...box });
     if (d <= CONNECT_RADIUS && d < bestDist) {
       bestDist = d;
-      const bp = nearestBorderPoint(world, { x: b.x, y: b.y, w: b.w ?? 0, h: b.h ?? 0 });
-      best = { type: 'box', vid: '', x: bp.x, y: bp.y, boxId: b.id, lx: bp.lx, ly: bp.ly };
+      const bp = nearestBorderPoint(world, box);
+      best = {
+        type: 'box',
+        vid: '',
+        x: bp.x,
+        y: bp.y,
+        boxId: b.id,
+        lx: bp.lx,
+        ly: bp.ly,
+      };
     }
   }
 

@@ -36,6 +36,8 @@ import {
   drawVertexNodeId,
   pointInPolygon,
   isBoxVertex,
+  isEdgeTool,
+  newUid,
   VERTEX_LABEL,
   type DrawTool,
   type DrawVertex,
@@ -83,8 +85,9 @@ type MapDrawingState = {
   addTee: (x: number, y: number) => void;
   /** Спроектированные врезки (светло-синие точки на рёбрах) */
   taps: MapTap[];
-  /** Добавить врезку на ребро (edgeId) в точке (x, y) */
-  addTap: (edgeId: string, x: number, y: number) => void;
+  /** Добавить врезку на ребро (edgeId) в точке (x, y).
+   *  `atVertex` — врезка на ВЕРШИНЕ (конце) ребра без разреза сегмента. */
+  addTap: (edgeId: string, x: number, y: number, atVertex?: boolean) => void;
   /**
    * Переместить врезку вдоль её ребра (t ∈ [0..1]). Привязанные к врезке
    * вершины рёбер следуют за ней (в т.ч. при перетаскивании вдоль ребра).
@@ -435,6 +438,8 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
         pipelines: pipelinesRef.current,
         areas: areasRef.current,
         taps: tapsRef.current,
+        // Тройники сохраняются как узлы kind='tee' (иначе терялись).
+        fittings: fittingsRef.current,
       }),
     [],
   );
@@ -469,29 +474,34 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
       if (target.length === 0) return null;
       pushHistory();
       const pipelineId = `pipe-${(pipelineSeqRef.current += 1)}`;
-      // 1) Переназначаем pipelineId выбранным сегментам.
-      setSegments((cur) =>
-        cur.map((s) => (ids.has(s.id) ? { ...s, pipelineId } : s)),
+
+      // Целевое состояние сегментов просчитываем СРАЗУ (а не через ref,
+      // который обновится только на следующем рендере): иначе подсчёт
+      // «оставшихся» сегментов шёл бы по устаревшему pipelineId и осиротевшие
+      // трубопроводы не удалялись — появлялись ДУБЛИ записей.
+      const nextSegments = segmentsRef.current.map((s) =>
+        ids.has(s.id) ? { ...s, pipelineId } : s,
       );
+
+      // 1) Переназначаем pipelineId выбранным сегментам.
+      setSegments(nextSegments);
+
       // 2) Какие трубопроводы могли осиротеть (их сегменты изменились).
       const touched = new Set(
         target.map((s) => s.pipelineId).filter((p): p is string => p !== null),
       );
-      // 3) Считаем, сколько сегментов осталось у каждого старого трубопровода,
-      //    удаляем записи-сироты и добавляем новую запись для объединённого.
+      // 3) По НОВОМУ состоянию считаем, у кого остались сегменты.
+      const remainingIds = new Set(
+        nextSegments
+          .filter((s) => s.pipelineId && touched.has(s.pipelineId))
+          .map((s) => s.pipelineId as string),
+      );
       setPipelines((cur) => {
-        const others = cur.filter((p) => !touched.has(p.id));
-        // Среди «осиротевших» сохраняем те, у которых есть оставшиеся сегменты.
-        const remainingIds = new Set(
-          segmentsRef.current
-            .filter((s) => !ids.has(s.id) && s.pipelineId && touched.has(s.pipelineId))
-            .map((s) => s.pipelineId as string),
-        );
+        // Сохраняем: нетронутые трубопроводы + осиротевшие, но ещё живые.
         const kept = cur.filter((p) => !touched.has(p.id) || remainingIds.has(p.id));
         return [
-          ...others,
-          ...kept.filter((p) => touched.has(p.id)),
-          { id: pipelineId, label: `Трубопровод ${others.length + 1}` },
+          ...kept,
+          { id: pipelineId, label: `Трубопровод ${kept.length + 1}` },
         ];
       });
       return pipelineId;
@@ -531,6 +541,7 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
     const geo = graphPointToLngLat(x, y);
     const fitting: MapFitting = {
       id: nextId('tee'),
+      uid: newUid(),
       label: `Тройник ${teeSeqRef.current}`,
       x,
       y,
@@ -544,11 +555,51 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
    * Добавить врезку на ребро в точке (x, y).
    * Врезка разрезает сегмент edgeId на два и привязывается к ЛЕВОМУ из них.
    */
-  const addTap = useCallback((edgeId: string, x: number, y: number) => {
+  /**
+   * Поставить врезку.
+   *
+   * @param edgeId ребро-носитель
+   * @param x,y    мировая точка врезки
+   * @param atVertex Врезка ставится на ВЕРШИНУ трубопровода (конец ребра) —
+   *                 сегмент НЕ режется: врезка просто фиксируется в этой точке
+   *                 с t = 0 (если ближе конец from) или t = 1 (конец to).
+   *                 По умолчанию false — врезка на ТЕЛЕ ребра (с разрезом).
+   */
+  const addTap = useCallback(
+    (edgeId: string, x: number, y: number, atVertex = false) => {
     pushHistory();
     tapSeqRef.current += 1;
     const geoTap = graphPointToLngLat(x, y);
     const tapId = nextId('tap');
+
+    // --- Врезка НА ВЕРШИНЕ (конце ребра): разрез НЕ нужен ---
+    if (atVertex) {
+      // Находим ребро (среди завершённых ИЛИ черновика), чтобы понять,
+      // к какому его концу ближе точка (t = 0 — from, t = 1 — to).
+      const host =
+        segmentsRef.current.find((s) => s.id === edgeId) ??
+        draftRef.current.segments.find((s) => s.id === edgeId);
+      if (host) {
+        const dFrom = Math.hypot(x - host.from.x, y - host.from.y);
+        const dTo = Math.hypot(x - host.to.x, y - host.to.y);
+        const atFrom = dFrom <= dTo;
+        const tap: MapTap = {
+          id: tapId,
+          uid: newUid(),
+          label: `Врезка ${tapSeqRef.current}`,
+          x,
+          y,
+          lng: geoTap.lng,
+          lat: geoTap.lat,
+          edgeId,
+          // Позиция строго на конце ребра — врезка «сидит» на вершине.
+          t: atFrom ? 0 : 1,
+        };
+        setTaps((cur) => [...cur, tap]);
+        return;
+      }
+      // Ребро не нашли — обычная постановка ниже (страховка).
+    }
 
     // Врезка РАЗРЕЗАЕТ сегмент на два: left (from → врезка) и right (врезка → to).
     // Врезка становится ТОЧКОЙ СОЕДИНЕНИЯ этих двух сегментов. Трубопровод при
@@ -563,6 +614,7 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
     // врезку к ЛЕВОМУ сегменту с t = 1 (конец левого = точка врезки).
     const tap: MapTap = {
       id: tapId,
+      uid: newUid(),
       label: `Врезка ${tapSeqRef.current}`,
       x,
       y,
@@ -671,6 +723,7 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
     const geoVertex = graphPointToLngLat(x, y);
     const vertex: MapVertex = {
       id: nextId(kind),
+      uid: newUid(),
       kind,
       label: `${VERTEX_LABEL[kind]} ${n}`,
       x,
@@ -823,30 +876,45 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
       const prev = draftRef.current;
       const last = prev.last;
       const selfLoop = last ? sameVertex(last, dock) : false;
+      // Черновик не начат — завершать нечего.
+      if (!prev.start || !last) return;
       // Правило 2: петлю не создаём, НО клик по последней вершине трактуем как
       // завершение полилинии — уже построенные сегменты СОХРАНЯЕМ.
-      if (prev.start && prev.segments.length > 0) {
-        const pipelineId =
-          prev.segments[0].pipelineId ?? `pipe-${(pipelineSeqRef.current += 1)}`;
-        const all: DrawnSegment[] =
-          selfLoop || !last
-            ? prev.segments
-            : [
-                ...prev.segments,
-                {
-                  id: nextId('seg'),
-                  from: last,
-                  to: dock,
-                  pipelineId,
-                  fluid: fluidRef.current,
-                  pipelineClass: pipelineClassRef.current,
-                  label: `Сегмент ${(segmentNameSeqRef.current += 1)}`,
-                },
-              ];
-        setSegments((cur) => [...cur, ...all]);
-        // Правило 3: полилиния становится одной записью в группе «Трубопроводы»
-        registerPipeline(pipelineId);
+      //
+      // ВАЖНО: сегмент строится и при ОДНОМ черновом звене (первый клик — start,
+      // второй — dock), т.е. прежнее условие `segments.length > 0` было ошибкой:
+      // трубопровод между двумя объектами не создавался.
+      const pipelineId =
+        prev.segments[0]?.pipelineId ?? `pipe-${(pipelineSeqRef.current += 1)}`;
+      // Класс берём из ЧЕРНОВИКА: он выставлен инструментом при первом клике
+      // (у «логического потока» — 'logical' → пунктир, у трубопровода —
+      // выбранный в карточке). Иначе логический поток между двумя объектами
+      // получал бы класс из карточки и рисовался бы сплошной линией.
+      const draftClass = prev.pipelineClass ?? pipelineClassRef.current;
+      const all: DrawnSegment[] =
+        selfLoop
+          ? prev.segments
+          : [
+              ...prev.segments,
+              {
+                id: nextId('seg'),
+                uid: newUid(),
+                from: last,
+                to: dock,
+                pipelineId,
+                fluid: fluidRef.current,
+                pipelineClass: draftClass,
+                label: `Сегмент ${(segmentNameSeqRef.current += 1)}`,
+              },
+            ];
+      // Если ни одного сегмента так и не набралось — выходим без записи.
+      if (all.length === 0) {
+        setDraft(EMPTY_DRAFT);
+        return;
       }
+      setSegments((cur) => [...cur, ...all]);
+      // Правило 3: полилиния становится одной записью в группе «Трубопроводы»
+      registerPipeline(pipelineId);
       setDraft(EMPTY_DRAFT);
     },
     [registerPipeline],
@@ -1061,42 +1129,11 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
 
   const placePoint = useCallback(
     (vertex: DrawVertex) => {
-      if (tool === 'segment') {
-        // Одиночный сегмент: первая точка — начало, вторая — конец.
-        const prev = draftRef.current;
-        if (!prev.start) {
-          pushHistory(); // начало действия — один шаг undo на весь сегмент
-          setDraft({
-            start: vertex,
-            last: null,
-            segments: [],
-            pipelineClass: pipelineClassRef.current,
-          });
-          return; // первая точка сегмента зафиксирована — ждём вторую
-        }
-        // Правило 2: петля из одной точки запрещена — клик игнорируем,
-        // начало остаётся, пользователь выбирает другую точку.
-        if (sameVertex(prev.start, vertex)) return;
-        // Одиночный сегмент — самостоятельный трубопровод: задаём pipelineId
-        // СРАЗУ, чтобы он совпадал с id записи в дереве (фокус камеры, связи).
-        const singlePipelineId = `pipe-${(pipelineSeqRef.current += 1)}`;
-        const segment: DrawnSegment = {
-          id: nextId('seg'),
-          from: prev.start,
-          to: vertex,
-          pipelineId: singlePipelineId,
-          fluid: fluidRef.current,
-          pipelineClass: pipelineClassRef.current,
-          label: `Сегмент ${(segmentNameSeqRef.current += 1)}`,
-        };
-        setSegments((all) => [...all, segment]);
-        // Правило 3: одиночный сегмент — тоже запись в «Трубопроводах».
-        registerPipeline(singlePipelineId);
-        setDraft(EMPTY_DRAFT);
-        return;
-      }
-      if (tool === 'pipeline') {
-        // Полилиния: каждая следующая точка продолжает цепочку.
+      // Рёбра (трубопровод / логический поток) — одинаковая полилиния,
+      // различается только класс ребра.
+      if (isEdgeTool(tool)) {
+        // Класс: у «логического потока» — logical, иначе — выбранный в карточке.
+        const edgeClass = tool === 'logical-pipeline' ? 'logical' : pipelineClassRef.current;        // Полилиния: каждая следующая точка продолжает цепочку.
         const prev = draftRef.current;
         if (!prev.start) {
           pushHistory(); // начало полилинии — один шаг undo на всю полилинию
@@ -1104,7 +1141,7 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
             start: vertex,
             last: vertex,
             segments: [],
-            pipelineClass: pipelineClassRef.current,
+            pipelineClass: edgeClass,
           });
           return;
         }
@@ -1115,22 +1152,23 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
           prev.segments[0]?.pipelineId ?? `pipe-${(pipelineSeqRef.current += 1)}`;
         const segment: DrawnSegment = {
           id: nextId('seg'),
+          uid: newUid(),
           from: last,
           to: vertex,
           pipelineId,
           fluid: fluidRef.current,
-          pipelineClass: pipelineClassRef.current,
+          pipelineClass: edgeClass,
           label: `Сегмент ${(segmentNameSeqRef.current += 1)}`,
         };
         setDraft({
           start: prev.start,
           last: vertex,
           segments: [...prev.segments, segment],
-          pipelineClass: pipelineClassRef.current,
+          pipelineClass: edgeClass,
         });
       }
     },
-    [tool, registerPipeline, pushHistory],
+    [tool, pushHistory],
   );
 
   /** Добавить точку в черновик полигона лицензионного участка. */
@@ -1150,6 +1188,7 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
     const lngLat = pts.map((p) => graphPointToLngLat(p.x, p.y));
     const area: LicenceArea = {
       id: nextId('area'),
+      uid: newUid(),
       label: `Лицензионный участок ${areaSeqRef.current}`,
       points: pts,
       lngLat,
@@ -1175,6 +1214,7 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
         ...cur,
         {
           id: nextId('area'),
+          uid: newUid(),
           label: name || `Лицензионный участок ${areaSeqRef.current}`,
           points,
           lngLat: polygon,
@@ -1197,6 +1237,7 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
         areaSeqRef.current += 1;
         return {
           id: nextId('area'),
+          uid: newUid(),
           label: area.name || `Лицензионный участок ${areaSeqRef.current}`,
           points: area.points.map((p) => lngLatToGraphPoint(p.lng, p.lat)),
           lngLat: area.points.map((p) => ({ lng: p.lng, lat: p.lat })),
@@ -1377,6 +1418,8 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
       const h = f.height_m ?? DEFAULT_VERTEX_SIZE[kind].h;
       return {
         id: f.id,
+        // uid из снимка; если файл старый (без uid) — генерируем новый.
+        uid: f.uid ?? newUid(),
         kind,
         label: f.name,
         x: 0,
@@ -1402,6 +1445,16 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
     const nextSegments: DrawnSegment[] = [];
     const fittingById = new Map<string, MapFitting>();
     const tapById = new Map<string, MapTap>();
+
+    // 2b. СНАЧАЛА восстанавливаем ВСЕ тройники и врезки из снимка — включая
+    //     те, что НЕ подключены ни к одному ребру (свободный тройник, врезка
+    //     без пристыкованных концов). Раньше они восстанавливались только
+    //     внутри nodeToDrawVertex, т.е. лишь когда были концами сегментов.
+    for (const n of snapshot.nodes) {
+      if (n.kind === 'tap' || n.kind === 'tee') {
+        nodeToDrawVertex(n, vertexById, fittingById, tapById);
+      }
+    }
     for (const s of snapshot.segments) {
       const fluid = toDrainFluid(s.fluid);
       const pipelineClass = toPipelineClass(s.pipeline_class);
@@ -1411,7 +1464,7 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
       // pipelineId проставим позже (из связок трубопроводов).
       // Имя сегмента из снимка (name) → label; пусто — сгенерируется в дереве.
       const label = s.name || undefined;
-      nextSegments.push({ id: s.id, from, to, pipelineId: null, fluid, pipelineClass, label });
+      nextSegments.push({ id: s.id, uid: s.uid ?? newUid(), from, to, pipelineId: null, fluid, pipelineClass, label });
     }
 
     // 3b. Восстановить привязку концов рёбер к врезкам/тройникам по снимку:
@@ -1436,6 +1489,7 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
     // 5. Лицензионные участки.
     const nextAreas: LicenceArea[] = snapshot.licence_areas.map((a) => ({
       id: a.id,
+      uid: a.uid ?? newUid(),
       label: a.name,
       points: a.polygon.map(([lng, lat]) => lngLatToGraphPoint(lng, lat)),
       lngLat: a.polygon.map(([lng, lat]) => ({ lng, lat })),

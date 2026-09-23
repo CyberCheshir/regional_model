@@ -1,13 +1,14 @@
 import { MAP_CENTER, graphPointToScreen } from './geo';
 import {
   DEFAULT_VERTEX_SIZE,
+  isEdgeTool,
   isVertexTool,
   type DrainFluid,
   type DrawTool,
   type PipelineClass,
   type PipelineDraft,
 } from './drawingTypes';
-import { getFluidColor, getMarkerColor, getPipelineClassStyle } from './mapColors';
+import { getEdgeColor, getMarkerColor, getPipelineClassStyle } from './mapColors';
 import './GhostPreview.css';
 
 export type GeoGhostPreviewProps = {
@@ -70,15 +71,16 @@ export function GeoGhostPreview({
     );
   }
 
-  // Ребро (сегмент / трубопровод): пунктир от последней точки к курсору.
-  // Цвет призрака — по выбранному флюиду, толщина — по классу трубопровода
-  // (чтобы пользователь видел будущий стиль ещё до клика).
-  if (tool === 'segment' || tool === 'pipeline') {
+  // Ребро (трубопровод / логический поток): пунктир от последней точки к
+  // курсору. Цвет — по флюиду, но для «логического потока» — серый (как у
+  // ребра), толщина — по выбранному классу трубопровода.
+  if (isEdgeTool(tool)) {
     const anchor = draft.last ?? draft.start;
     const a = anchor ? graphPointToScreen(anchor, camera) : null;
-    const color = getFluidColor(fluid);
-    // Класс берём из живого выбора (до первого клика черновик ещё пуст).
-    const classStyle = getPipelineClassStyle(pipelineClass ?? draft.pipelineClass);
+    // Класс: у логического потока — всегда logical, иначе — выбранный.
+    const effectiveClass = tool === 'logical-pipeline' ? 'logical' : (pipelineClass ?? draft.pipelineClass);
+    const color = getEdgeColor(fluid, effectiveClass);
+    const classStyle = getPipelineClassStyle(effectiveClass);
     return (
       <div className="ghost-preview" aria-hidden="true">
         <svg className="ghost-preview__svg">

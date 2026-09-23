@@ -1,0 +1,241 @@
+/* Двухуровневый выпадающий список настройки трубопровода
+   (раздел «Проектирование», макет «выпадающий список»). */
+
+.pipeline-dropdown {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+}
+
+/* --- Карточка-триггер: основная кнопка + мелкая кнопка раскрытия --- */
+
+.pipeline-dropdown__trigger {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--border-default, #d9e1ec);
+  border-radius: var(--radius-md, 6px);
+  background: linear-gradient(
+    180deg,
+    #ffffff 0%,
+    var(--bg-panel, #ffffff) 55%,
+    var(--bg-panel-subtle, #f8fafc) 100%
+  );
+  box-shadow:
+    0 1px 2px rgba(16, 26, 48, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.pipeline-dropdown__trigger:hover {
+  background: linear-gradient(180deg, #ffffff 0%, var(--bg-card-hover, #f1f5f9) 100%);
+  border-color: var(--border-active, #7da7f6);
+}
+
+/* Активный инструмент «Трубопровод» — голубая подложка */
+.pipeline-dropdown__trigger.is-active {
+  background: var(--bg-card-selected, #eef5ff);
+  border-color: var(--color-primary-border, #99c2f0);
+}
+
+.pipeline-dropdown__trigger.is-open {
+  border-color: var(--color-primary-border, #99c2f0);
+}
+
+/* Основная (бо́льшая) часть карточки — иконка + название/значение */
+.pipeline-dropdown__main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 8px 10px;
+  border: none;
+  border-radius: var(--radius-md, 6px) 0 0 var(--radius-md, 6px);
+  background: transparent;
+  color: var(--text-main, #101a30);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* Иконка типа в голубом квадрате (как в макете) */
+.pipeline-dropdown__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-control-inner, 6px);
+  background: var(--color-primary-light, #ebf3fc);
+}
+
+.pipeline-dropdown__icon img {
+  object-fit: contain;
+}
+
+.pipeline-dropdown__titles {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Название инструмента («Трубопровод») */
+.pipeline-dropdown__label {
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pipeline-dropdown__trigger.is-active .pipeline-dropdown__label {
+  color: var(--color-primary, #0066cc);
+  font-weight: 600;
+}
+
+/* Текущий выбор — подпись ПОД названием */
+.pipeline-dropdown__value {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-primary, #0066cc);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Мелкая кнопка раскрытия списка — узкая зона справа */
+.pipeline-dropdown__toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 26px;
+  padding: 0;
+  border: none;
+  border-left: 1px solid var(--border-subtle, #edf2f7);
+  border-radius: 0 var(--radius-md, 6px) var(--radius-md, 6px) 0;
+  background: transparent;
+  color: var(--text-muted, #8a94a6);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.pipeline-dropdown__toggle:hover {
+  background: var(--bg-card-hover, #f1f5f9);
+  color: var(--color-primary, #0066cc);
+}
+
+.pipeline-dropdown__chevron {
+  flex: 0 0 auto;
+  transition: transform 0.15s ease;
+}
+
+/* Раскрыто — стрелка смотрит вверх */
+.pipeline-dropdown__chevron.is-open {
+  transform: rotate(180deg);
+}
+
+/* --- Раскрытый список --- */
+
+.pipeline-dropdown__menu {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  border: 1px solid var(--border-default, #d9e1ec);
+  border-radius: var(--radius-md, 6px);
+  background: var(--bg-panel, #ffffff);
+  box-shadow:
+    0 6px 16px rgba(16, 26, 48, 0.16),
+    0 1px 2px rgba(16, 26, 48, 0.1);
+}
+
+.pipeline-dropdown__level {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Заголовок раздела списка (ФЛЮИД / КЛАСС ТРУБОПРОВОДА) */
+.pipeline-dropdown__level-title {
+  padding: 4px 6px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-eyebrow, #7c8ba1);
+}
+
+.pipeline-dropdown__divider {
+  height: 1px;
+  margin: 4px 0;
+  background: var(--border-subtle, #edf2f7);
+}
+
+.pipeline-dropdown__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 7px 8px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control-inner, 6px);
+  background: transparent;
+  color: var(--text-main, #101a30);
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.pipeline-dropdown__item:hover {
+  background: var(--bg-card-hover, #f1f5f9);
+}
+
+.pipeline-dropdown__item.is-active {
+  background: var(--bg-card-selected, #eef5ff);
+  border-color: var(--color-primary-border, #99c2f0);
+  font-weight: 600;
+  color: var(--color-primary, #0066cc);
+}
+
+.pipeline-dropdown__item-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* --- Радио-индикатор (как в макете) --- */
+
+.pipeline-dropdown__radio {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  box-sizing: border-box;
+  border: 1.5px solid var(--border-default, #c2cbd8);
+  border-radius: 50%;
+  background: #ffffff;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.pipeline-dropdown__item:hover .pipeline-dropdown__radio {
+  border-color: var(--border-active, #7da7f6);
+}
+
+/* Выбранный пункт — залитый центр + голубая обводка */
+.pipeline-dropdown__item.is-active .pipeline-dropdown__radio {
+  border-color: var(--color-primary, #0066cc);
+  box-shadow: inset 0 0 0 3px var(--color-primary, #0066cc);
+}
+

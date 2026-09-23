@@ -35,6 +35,8 @@
   pointer-events: none;
 }
 
+/* Объект (система сбора / УПН / точка поставки) — «плитка» по макету
+   «система сбора»: белый скруглённый квадрат с тенью, внутри — иконка типа. */
 .geo-graph-layer__vertex {
   position: absolute;
   transform: translate(-50%, -50%);
@@ -47,59 +49,90 @@
   min-width: 10px;
   min-height: 10px;
   padding: 0;
-  border: 2px solid;
-  border-radius: var(--radius-sm, 4px);
+  border: none;
+  border-radius: 8px;
+  background: #ffffff;
   font-size: 11px;
   font-weight: 600;
-  color: #000;
+  color: var(--text-main, #101a30);
   white-space: nowrap;
-  /* Подпись выносится СВЕРХУ (за границу) — её не обрезаем */
+  /* Подпись выносится ВНИЗ (за границу) — её не обрезаем */
   overflow: visible;
-  box-shadow: 0 1px 3px rgba(16, 26, 48, 0.25);
+  box-shadow: 0 1px 4px rgba(16, 26, 48, 0.28);
 }
 
-/* Подпись наименования объекта — над объектом (zoom ≥ 14) */
+/* Лёгкая цветная подложка плитки по типу объекта (светлые оттенки) */
+.geo-graph-layer__vertex--wellpad {
+  background: linear-gradient(180deg, #ffffff 0%, var(--marker-wellpad-light, #fdba74) 220%);
+}
+
+.geo-graph-layer__vertex--facility {
+  background: linear-gradient(180deg, #ffffff 0%, var(--marker-processing-light, #86efac) 220%);
+}
+
+.geo-graph-layer__vertex--delivery-point {
+  background: linear-gradient(180deg, #ffffff 0%, var(--marker-delivery-light, #93c5fd) 220%);
+}
+
+/* Подпись наименования объекта — «таблетка» ПОД плиткой (как в макете) */
 .geo-graph-layer__vertex-label {
   position: absolute;
   left: 50%;
-  bottom: calc(100% + 2px);
+  top: calc(100% + 4px);
   transform: translateX(-50%);
-  padding: 1px 4px;
-  border-radius: var(--radius-sm, 4px);
-  background: rgba(255, 255, 255, 0.85);
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-main, #000);
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #ffffff;
+  font-size: 12px;
+  font-weight: 500;
+  color: #1b3a5c;
   white-space: nowrap;
   pointer-events: none;
-  box-shadow: 0 1px 2px rgba(16, 26, 48, 0.2);
+  box-shadow: 0 1px 3px rgba(16, 26, 48, 0.22);
 }
 
+/* Выделенный объект — синяя обводка вокруг плитки */
 .geo-graph-layer__vertex.is-selected {
-  box-shadow: 0 0 0 2px var(--color-primary, #0066cc), 0 1px 3px rgba(16, 26, 48, 0.3);
+  box-shadow: 0 0 0 2px var(--color-primary, #0066cc), 0 1px 4px rgba(16, 26, 48, 0.3);
 }
 
 /* Объект — цель снапа ребра (подсветка при рисовании рядом) */
 .geo-graph-layer__vertex.is-snap-target {
-  box-shadow: 0 0 0 3px var(--color-primary, #0066cc);
-  border-style: dashed;
+  box-shadow: 0 0 0 3px var(--color-primary, #0066cc), 0 1px 4px rgba(16, 26, 48, 0.3);
 }
 
-/* Иконка типа объекта внутри вершины — по размеру самого объекта */
+/* Иконка типа объекта внутри плитки — светлый цвет по типу объекта
+   (системы сбора — оранжевый, подготовка — зелёный, поставка — синий). */
 .geo-graph-layer__icon {
-  height: 100%;
-  width: 100%;
+  height: 66%;
+  width: 66%;
   object-fit: contain;
   pointer-events: none;
   user-select: none;
-  opacity: 0.9;
 }
+
+/* Оранжевый — Системы сбора */
+.geo-graph-layer__vertex--wellpad .geo-graph-layer__icon {
+  filter: invert(52%) sepia(85%) saturate(2100%) hue-rotate(345deg) brightness(98%) contrast(95%);
+}
+
+/* Зелёный — Объекты подготовки */
+.geo-graph-layer__vertex--facility .geo-graph-layer__icon {
+  filter: invert(58%) sepia(68%) saturate(550%) hue-rotate(85deg) brightness(95%) contrast(95%);
+}
+
+/* Синий — Точки поставки */
+.geo-graph-layer__vertex--delivery-point .geo-graph-layer__icon {
+  filter: invert(30%) sepia(85%) saturate(1900%) hue-rotate(205deg) brightness(92%) contrast(95%);
+}
+
 
 
 .geo-graph-layer__dot {
   position: absolute;
   pointer-events: auto;
   cursor: move;
+  box-sizing: border-box;
   width: 12px;
   height: 12px;
   border-radius: 50%;
@@ -112,12 +145,28 @@
   background: #94a3b8;
 }
 
+/* Выделенный тройник — заметная синяя обводка (как у выделенной врезки) */
+.geo-graph-layer__dot--tee.is-selected {
+  border-color: var(--color-primary, #0066cc);
+  box-shadow:
+    0 0 0 3px rgba(0, 102, 204, 0.35),
+    0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
 .geo-graph-layer__dot--tap {
   background: #7dd3fc;
   /* Врезка ловит клик поверх совпадающей с ней вершины ребра.
      Врезка НЕПЕРЕМЕЩАЕМА — курсор обычный (не move). */
   cursor: default;
   z-index: 6;
+}
+
+/* Выделенная врезка — заметная синяя обводка (для удаления клавишей Delete) */
+.geo-graph-layer__dot--tap.is-selected {
+  border-color: var(--color-primary, #0066cc);
+  box-shadow:
+    0 0 0 3px rgba(0, 102, 204, 0.35),
+    0 1px 2px rgba(0, 0, 0, 0.35);
 }
 
 /* Неперемещаемые элементы (врезка и её вершины рёбер) */
@@ -129,9 +178,9 @@
    z-index выше тройников/врезок: вершина, стоящая НА врезке, должна ловить
    клик первой — иначе тянется врезка, а конец ребра не отсоединить. */
 .geo-graph-layer__dot--vertex {
-  /* Цвет (фон/контур) задаётся inline — как у родительского ребра (по флюиду). */
-  background: #0066cc;
-  border-color: #0066cc;
+  /* Цвет (фон/контур) задаётся inline — как у родительского ребра (флюид + класс). */
+  background: var(--pipeline-oil, #8b5a2b);
+  border-color: var(--pipeline-oil, #8b5a2b);
   box-shadow: none;
   cursor: move;
   z-index: 5;

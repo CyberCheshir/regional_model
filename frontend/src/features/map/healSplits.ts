@@ -52,6 +52,8 @@ export function healRemovedTaps(
     consumed.add(b.id);
     result.push({
       id: a.id,
+      // uid сшитого сегмента — от первого (a): сущность та же.
+      uid: a.uid,
       from: mergedFrom,
       to: mergedTo,
       pipelineId: a.pipelineId ?? b.pipelineId,

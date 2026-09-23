@@ -21,7 +21,9 @@ import {
   drawVertexNodeId,
   isBoxVertex,
   isVertexTool,
+  isEdgeTool,
   nearestBorderPoint,
+  TAP_VERTEX_RADIUS,
   VERTEX_SNAP_RADIUS,
   type DrawVertex,
   type DrawnSegment,
@@ -40,7 +42,7 @@ import { GeoGraphLayer } from './GeoGraphLayer';
 import { SelectionActionsBar } from './SelectionActionsBar';
 import { GeoGhostPreview } from './GeoGhostPreview';
 import { GeoFlowAnimation } from './GeoFlowAnimation';
-import { graphPointToLngLat, lngLatToGraphPoint, screenToGraphPoint } from './geo';
+import { lngLatToGraphPoint, screenToGraphPoint } from './geo';
 import {
   projectOnSegment as projectOnSegmentGeo,
   resolveDropVertex as resolveDropVertexGeo,
@@ -157,11 +159,13 @@ function snapToVertex(
     }));
   }
 
-  // 4. Площадные объекты (контур — периметр)
+  // 4. Площадные объекты: клик внутри объекта или рядом с границей —
+  //    контакт фиксируется на КОНТУРЕ (ближайшая точка края), не внутри.
   for (const b of geo.boxes) {
-    const d = distanceToContour(world, { kind: 'box', x: b.x, y: b.y, w: b.w ?? 0, h: b.h ?? 0 });
+    const box = { x: b.x, y: b.y, w: b.w ?? 0, h: b.h ?? 0 };
+    const d = distanceToContour(world, { kind: 'box', ...box });
     consider(d, () => {
-      const bp = nearestBorderPoint(world, { x: b.x, y: b.y, w: b.w ?? 0, h: b.h ?? 0 });
+      const bp = nearestBorderPoint(world, box);
       return {
         type: 'box' as const,
         // У каждого ребра — СВОЯ вершина на границе объекта (уникальный vid),
@@ -200,13 +204,23 @@ function resolveDropVertex(
   let best: DrawVertex | null = null;
   let bestDist = Infinity;
 
-  // 1) Границы объектов (прямоугольники) — приоритетнее стыка к ребру
+  // 1) Объекты (прямоугольники) — приоритетнее стыка к ребру.
+  //    Бросок внутрь объекта — точка всё равно встаёт на КОНТУР (край).
   for (const b of boxes) {
-    const d = distanceToContour(world, { kind: 'box', x: b.x, y: b.y, w: b.w ?? 0, h: b.h ?? 0 });
+    const box = { x: b.x, y: b.y, w: b.w ?? 0, h: b.h ?? 0 };
+    const d = distanceToContour(world, { kind: 'box', ...box });
     if (d <= CONNECT_RADIUS && d < bestDist) {
       bestDist = d;
-      const bp = nearestBorderPoint(world, { x: b.x, y: b.y, w: b.w ?? 0, h: b.h ?? 0 });
-      best = { type: 'box', vid: '', x: bp.x, y: bp.y, boxId: b.id, lx: bp.lx, ly: bp.ly };
+      const bp = nearestBorderPoint(world, box);
+      best = {
+        type: 'box',
+        vid: '',
+        x: bp.x,
+        y: bp.y,
+        boxId: b.id,
+        lx: bp.lx,
+        ly: bp.ly,
+      };
     }
   }
 
@@ -318,6 +332,9 @@ export function MapViewport({
   selectInWorldPolygonRef.current = selectInWorldPolygon;
   const setSelectionsRef = useRef(setSelections);
   setSelectionsRef.current = setSelections;
+  // onSelect — снятие выделения в дереве/инспекторе (клик по пустому месту).
+  const onSelectRef = useRef(onSelect);
+  onSelectRef.current = onSelect;
   const toggleSelectionRef = useRef(toggleSelection);
   toggleSelectionRef.current = toggleSelection;
   // Зажат ли Shift (для мультивыбора)
@@ -414,35 +431,6 @@ export function MapViewport({
     return Array.from(byId.values());
   }, [segments, draft.segments]);
   drawingSegmentsRef.current = drawingSegments;
-
-  // Выбор из дерева объектов (selectedId) → фокус камеры + подсветка на карте.
-  //  - если id — спроектированная вершина: точка = её lng/lat;
-  //  - если id — трубопровод: точка = центр bbox его сегментов.
-  const treeFocus = useMemo<{ lng: number; lat: number } | null>(() => {
-    if (!selectedId) return null;
-    const v = vertices.find((it) => it.id === selectedId);
-    if (v) return { lng: v.lng, lat: v.lat };
-    // Сегмент: фокус — середина ЭТОГО сегмента.
-    const selfSeg = drawingSegments.find((s) => s.id === selectedId);
-    if (selfSeg) {
-      const mid = {
-        x: (selfSeg.from.x + selfSeg.to.x) / 2,
-        y: (selfSeg.from.y + selfSeg.to.y) / 2,
-      };
-      return graphPointToLngLat(mid.x, mid.y);
-    }
-    // Трубопровод: ищем его сегменты по pipelineId и берём центр диапазона.
-    const segs = drawingSegments.filter((s) => s.pipelineId === selectedId);
-    if (segs.length === 0) return null;
-    let sx = 0;
-    let sy = 0;
-    for (const s of segs) {
-      sx += (s.from.x + s.to.x) / 2;
-      sy += (s.from.y + s.to.y) / 2;
-    }
-    // Мировые единицы (м) → lng/lat через обратное преобразование.
-    return graphPointToLngLat(sx / segs.length, sy / segs.length);
-  }, [selectedId, vertices, drawingSegments]);
 
   // Подсветка выбранного в дереве: объединяем с внутренним выделением.
   const highlightedVertexIds = useMemo(() => {
@@ -820,6 +808,11 @@ export function MapViewport({
 
   // --- Shift + ЛКМ: лассо-выделение произвольной формы ---
   const [lasso, setLasso] = useState<{ x: number; y: number }[] | null>(null);
+  /**
+   * Идёт лассо-жест (Shift+ЛКМ). Нужен, чтобы клик-обработчик НЕ снимал
+   * выделение на pointerup после лассо (Shift мог быть отпущен раньше).
+   */
+  const lassoGestureRef = useRef(false);
   useEffect(() => {
     if (MAP_ONLY) return; // Вариант 2: лассо — в GeoGraphLayer
     const el = containerRef.current;
@@ -871,7 +864,7 @@ export function MapViewport({
   const [ghost, setGhost] = useState<{ x: number; y: number } | null>(null);
   // Режимы, для которых показываем призрак (объекты и рёбра, кроме удаления)
   const ghostTool =
-    isVertexTool(tool) || tool === 'segment' || tool === 'pipeline' || tool === 'tee' || tool === 'tap';
+    isVertexTool(tool) || isEdgeTool(tool) || tool === 'tee' || tool === 'tap';
   useEffect(() => {
     if (MAP_ONLY) return; // Вариант 2: призрак — GeoGhostPreview
     const el = containerRef.current;
@@ -908,7 +901,7 @@ export function MapViewport({
   }, [isDrawing, cancelDrawing, containerRef]);
 
   // Подсветка куста — цели снапа — при наведении в режиме рисования рёбер.
-  const isEdgeDrawing = tool === 'segment' || tool === 'pipeline';
+  const isEdgeDrawing = isEdgeTool(tool);
   useEffect(() => {
     if (MAP_ONLY) return; // Вариант 2: подсветка снапа — в отдельном эффекте ниже
     if (!isEdgeDrawing) {
@@ -995,9 +988,17 @@ export function MapViewport({
   // в гео-координатах точки. Мировые координаты = смещение от MAP_CENTER (м).
   const handleMapClick = useCallback(
     (lng: number, lat: number) => {
+      // После лассо-жеста (Shift+ЛКМ) клик игнорируем: это был выбор,
+      // а не создание точки/снятие выделения (Shift мог быть отпущен раньше).
+      if (lassoGestureRef.current) {
+        lassoGestureRef.current = false;
+        return;
+      }
       if (tool === 'none') {
-        // Обычный режим: клик по пустому месту карты снимает выделение.
+        // Обычный режим: клик по пустому месту карты снимает выделение
+        // (и на карте — selections, и в дереве/инспекторе — selectedEntity).
         setSelectionsRef.current([]);
+        onSelectRef.current(null);
         return;
       }
       const world = lngLatToGraphPoint(lng, lat);
@@ -1026,15 +1027,15 @@ export function MapViewport({
         addAreaPointRef.current(world.x, world.y);
         return;
       }
-      // Рисование рёбер (сегмент/трубопровод): снап конца к объектам/вершинам.
-      if (tool === 'segment' || tool === 'pipeline') {
+      // Рисование рёбер (трубопровод/логический поток): снап конца к объектам/вершинам.
+      if (isEdgeTool(tool)) {
         const vertex = snapToVertexGeo(world, {
           boxes: geometryRef.current.boxes,
           segments: geometryRef.current.drawingSegments,
           fittings: geometryRef.current.fittings,
           taps: geometryRef.current.taps,
         });
-        if (tool === 'pipeline' && vertex.type !== 'free' && draftRef.current.start) {
+        if (isEdgeTool(tool) && vertex.type !== 'free' && draftRef.current.start) {
           // Стыковка последнего сегмента к вершине завершает полилинию
           finishPipelineRef.current(vertex);
           setToolRef.current('none');
@@ -1132,9 +1133,10 @@ export function MapViewport({
           onCamera={setGeoCamera}
           onMapClick={handleMapClick}
           onCursorMove={setGeoCursor}
-          panEnabled={tool === 'none'}
-          focus={treeFocus}
-        >
+            panEnabled={tool === 'none'}
+            // Камера НЕ переносится при выделении объекта (ни в дереве, ни на
+            // карте) — пользователь сам управляет видом. Проп focus не передаём.
+          >
           <GeoFlowAnimation
             segments={drawingSegments}
             camera={geoCamera}
@@ -1160,13 +1162,36 @@ export function MapViewport({
             onAreaMove={(areaId, dx, dy) => moveArea(areaId, dx, dy)}
             selectedIds={highlightedVertexIds}
             selectedSegmentIds={highlightedSegmentIds}
+            selectedTapIds={selections.filter((s) => s.kind === 'tap').map((s) => s.id)}
+            selectedFittingIds={selections.filter((s) => s.kind === 'fitting').map((s) => s.id)}
+            onSelectFitting={(id, withShift) =>
+              withShift
+                ? toggleSelection({ kind: 'fitting', id })
+                : setSelections([{ kind: 'fitting', id }])
+            }
             snapTargetId={snapBoxId}
             tapMode={tool === 'tap'}
+            // Режим СОЗДАНИЯ: клик по существующим элементам не выделяет их,
+            // а служит точкой присоединения (снапа). Сама врезка — не «создание»,
+            // её клик по ребру обрабатывается отдельно (tapMode).
+            drawingMode={isDrawing && tool !== 'tap'}
             onSegmentPress={(edgeId, world) => {
               const seg = drawingSegments.find((s) => s.id === edgeId);
               if (!seg) return;
               const a = { x: seg.from.x, y: seg.from.y };
               const b = { x: seg.to.x, y: seg.to.y };
+              // Клик РЯДОМ С КОНЦОМ ребра (в пределах TAP_VERTEX_RADIUS) —
+              // врезка ставится НА ВЕРШИНУ: сегмент не режется, врезка просто
+              // фиксируется в этой точке (t = 0 или 1).
+              const nearFrom = Math.hypot(world.x - a.x, world.y - a.y) <= TAP_VERTEX_RADIUS;
+              const nearTo = Math.hypot(world.x - b.x, world.y - b.y) <= TAP_VERTEX_RADIUS;
+              if (nearFrom || nearTo) {
+                const vx = nearFrom ? a.x : b.x;
+                const vy = nearFrom ? a.y : b.y;
+                addTap(edgeId, vx, vy, true);
+                return;
+              }
+              // Иначе — обычный разрез ребра в точке клика.
               const t = projectOnSegmentGeo(world, a, b);
               addTap(edgeId, a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t);
             }}
@@ -1192,6 +1217,9 @@ export function MapViewport({
             }}
             onClearSelection={() => setSelections([])}
             onLasso={(poly) => selectInWorldPolygon(poly)}
+            onLassoStart={() => {
+              lassoGestureRef.current = true;
+            }}
             onBeginAction={beginAction}
             onMove={(id, x, y) => moveVertex(id, x, y)}
             onMoveFitting={(id, x, y) => moveVertex(`tee-${id}`, x, y)}
@@ -1219,6 +1247,7 @@ export function MapViewport({
             }
             directed={displaySettings.directedGraph}
             showJoints={displaySettings.showEdgeJoints}
+            showLabels={showLabels}
             onResize={(id, box) => setVertexBox(id, box)}
           />
           {/* Призрак создаваемого элемента под курсором */}

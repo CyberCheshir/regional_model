@@ -1,4 +1,4 @@
-import type { DrawVertex, DrawnSegment } from './drawingTypes';
+import { newUid, type DrawVertex, type DrawnSegment } from './drawingTypes';
 
 // DrawVertex используется ниже в tapEnd (создание конца ребра, привязанного к врезке).
 
@@ -57,6 +57,8 @@ export function splitSegmentByTap(
   // (имя закреплено за сегментом и меняется только пользователем).
   const left: DrawnSegment = {
     id: leftId,
+    // Каждая половина — НОВАЯ сущность → свой uid.
+    uid: newUid(),
     from: target.from,
     to: tapEnd(newVidLeft),
     pipelineId: target.pipelineId,
@@ -66,6 +68,7 @@ export function splitSegmentByTap(
   };
   const right: DrawnSegment = {
     id: rightId,
+    uid: newUid(),
     from: tapEnd(newVidRight),
     to: target.to,
     pipelineId: target.pipelineId,

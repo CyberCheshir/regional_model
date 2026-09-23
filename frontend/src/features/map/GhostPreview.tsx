@@ -54,7 +54,7 @@ export function GhostPreview({ tool, ghost, draft, networkRef }: GhostPreviewPro
   }
 
   // Ребро (сегмент / трубопровод): пунктир от последней точки к курсору
-  if (tool === 'segment' || tool === 'pipeline') {
+  if (tool === 'pipeline') {
     const anchor = draft.last ?? draft.start;
     const c = net.canvasToDOM(ghost);
     const a = anchor ? net.canvasToDOM(anchor) : null;

@@ -42,6 +42,7 @@ export function AppIcon({
       fill={def.fill ? color : 'none'}
       stroke={def.stroke ? color : 'none'}
       strokeWidth={def.stroke ? (def.strokeWidth ?? 1.5) : undefined}
+      strokeDasharray={def.dasharray}
       strokeLinecap="round"
       strokeLinejoin="round"
       role="img"

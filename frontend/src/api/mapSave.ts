@@ -2,11 +2,13 @@ import type {
   DrawnSegment,
   DrawVertex,
   LicenceArea,
+  MapFitting,
   MapTap,
   MapVertex,
 } from '../features/map/drawingTypes';
 import type { PipelineRecord } from '../features/map/mapDrawingHelpers';
 import { graphPointToLngLat } from '../features/map/geo';
+import { newUid } from '../features/map/drawingTypes';
 
 /**
  * Сохранение нарисованного графа в backend (POST /api/map/save/).
@@ -22,6 +24,8 @@ export type MapSavePayload = {
   project_name?: string;
   facilities: Array<{
     id: string;
+    /** Уникальный id сущности (скрыт от пользователя) */
+    uid: string;
     name: string;
     kind: string;
     lat: number;
@@ -35,6 +39,8 @@ export type MapSavePayload = {
   }>;
   nodes: Array<{
     id: string;
+    /** Уникальный id сущности (скрыт от пользователя) */
+    uid: string;
     name: string;
     kind: 'vertex' | 'tee' | 'tap';
     lat: number;
@@ -52,6 +58,8 @@ export type MapSavePayload = {
   }>;
   segments: Array<{
     id: string;
+    /** Уникальный id сущности (скрыт от пользователя) */
+    uid: string;
     name: string;
     start_node_id: string;
     end_node_id: string;
@@ -68,6 +76,8 @@ export type MapSavePayload = {
   }>;
   licence_areas: Array<{
     id: string;
+    /** Уникальный id сущности (скрыт от пользователя) */
+    uid: string;
     name: string;
     polygon: Array<[number, number]>;
   }>;
@@ -80,6 +90,8 @@ export type MapSaveInput = {
   areas: LicenceArea[];
   /** Врезки: координаты + привязка к ребру (edgeId, t) */
   taps?: MapTap[];
+  /** Тройники: координаты (сохраняются как узлы kind='tee') */
+  fittings?: MapFitting[];
   /** Имя сценария (проекта): по нему бэкенд создаёт/переиспользует проект */
   projectName?: string;
 };
@@ -120,6 +132,7 @@ export function buildSavePayload(input: MapSaveInput): MapSavePayload {
 
   const facilities: MapSavePayload['facilities'] = uniqVertices.map((v) => ({
     id: v.id,
+    uid: v.uid,
     name: v.label,
     kind: v.kind,
     lat: v.lat,
@@ -147,6 +160,14 @@ export function buildSavePayload(input: MapSaveInput): MapSavePayload {
         : {};
     nodesByKey.set(key, {
       id: key,
+      // uid конца ребра: у врезки/тройника — их собственный uid;
+      // у обычного стыка — новый (узел-точка не имеет своей сущности в UI).
+      uid:
+        v.type === 'tap'
+          ? (taps.find((it) => it.id === v.tapId)?.uid ?? newUid())
+          : v.type === 'fitting'
+            ? ((input.fittings ?? []).find((it) => it.id === v.fittingId)?.uid ?? newUid())
+            : newUid(),
       name: `${kind === 'tee' ? 'Тройник' : kind === 'tap' ? 'Врезка' : 'Узел'} ${nodesByKey.size + 1}`,
       kind,
       lat: geo.lat,
@@ -165,6 +186,7 @@ export function buildSavePayload(input: MapSaveInput): MapSavePayload {
     addNode(s.to);
     saveSegments.push({
       id: s.id,
+      uid: s.uid,
       // Имя сегмента — СВОЁ (закреплено при создании/пользователем). НЕ выводим
       // имя из позиции: иначе объединение/переупорядочивание ломало бы имена.
       name: s.label || 'Сегмент',
@@ -174,6 +196,51 @@ export function buildSavePayload(input: MapSaveInput): MapSavePayload {
       pipeline_class: s.pipelineClass,
     });
   });
+
+  // СОБСТВЕННЫЕ записи тройников и врезок: каждый сохраняется как узел,
+  // даже если к нему НЕ подключён ни один конец ребра (свободный тройник,
+  // врезка «на вершине» без разреза и т.п.). Иначе такие точки терялись,
+  // т.к. выше узлы создавались только по концам сегментов.
+  const addTapNode = (t: MapTap) => {
+    const key = `tap-${t.id}`;
+    if (nodesByKey.has(key)) return;
+    nodesByKey.set(key, {
+      id: key,
+      uid: t.uid,
+      name: t.label || `Врезка ${nodesByKey.size + 1}`,
+      kind: 'tap',
+      lat: t.lat,
+      lng: t.lng,
+      facility_id: null,
+      // Ребро-носитель и позиция вдоль него (t = 0/1 — врезка на вершине).
+      tap_edge_id: t.edgeId ,
+      tap_t: t.t,
+      bound_tap_id: null,
+      bound_fitting_id: null,
+    });
+  };
+  for (const t of taps) addTapNode(t);
+
+  // Тройники хранятся как фитинги (fittings) — сохраняем их координаты.
+  const fittingsInput = input.fittings ?? [];
+  for (const f of fittingsInput) {
+    const key = `tee-${f.id}`;
+    if (nodesByKey.has(key)) continue;
+    const geo = graphPointToLngLat(f.x, f.y);
+    nodesByKey.set(key, {
+      id: key,
+      uid: f.uid,
+      name: f.label || `Тройник ${nodesByKey.size + 1}`,
+      kind: 'tee',
+      lat: geo.lat,
+      lng: geo.lng,
+      facility_id: null,
+      tap_edge_id: null,
+      tap_t: null,
+      bound_tap_id: null,
+      bound_fitting_id: null,
+    });
+  }
 
   const savePipelines: MapSavePayload['pipelines'] = pipelines.map((p) => ({
     id: p.id,
@@ -187,6 +254,7 @@ export function buildSavePayload(input: MapSaveInput): MapSavePayload {
 
   const saveAreas: MapSavePayload['licence_areas'] = areas.map((a) => ({
     id: a.id,
+    uid: a.uid,
     name: a.label,
     polygon: a.lngLat.map((g) => [g.lng, g.lat] as [number, number]),
   }));

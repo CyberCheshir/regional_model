@@ -23,6 +23,22 @@ from .models import (
 # ---------------------------------------------------------------------------
 
 
+class UidSafeMixin(serializers.Serializer):
+    """
+    Безопасное поле `uid` для CRUD-сериализаторов.
+
+    Читается через getattr: если миграция 0004 (поле `uid`) к текущей схеме ещё
+    не применена, атрибута нет — отдаём None, а не падаем с FieldError (500).
+    Поле только для чтения: uid генерирует клиент при создании объекта.
+    """
+
+    uid = serializers.SerializerMethodField()
+
+    def get_uid(self, obj):
+        value = getattr(obj, "uid", None)
+        return str(value) if value else None
+
+
 class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
@@ -30,32 +46,34 @@ class ProjectSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_at", "updated_at"]
 
 
-class FacilitySerializer(serializers.ModelSerializer):
+class FacilitySerializer(UidSafeMixin, serializers.ModelSerializer):
     class Meta:
         model = Facility
         fields = [
-            "id", "project", "external_key", "name", "kind", "lat", "lng",
+            "id", "uid", "project", "external_key", "name", "kind", "lat", "lng",
             "width_m", "height_m", "angle_deg", "status", "license_area", "owner",
             "attributes", "created_at", "updated_at",
         ]
         # project назначается во view (perform_create) по project_id из query/body.
         read_only_fields = ["id", "project", "created_at", "updated_at"]
 
-class NetworkNodeSerializer(serializers.ModelSerializer):
+class NetworkNodeSerializer(UidSafeMixin, serializers.ModelSerializer):
     class Meta:
         model = NetworkNode
         fields = [
-            "id", "project", "facility", "external_key", "name", "kind",
-            "lat", "lng", "attributes", "created_at", "updated_at",
+            "id", "uid", "project", "facility", "external_key", "name", "kind",
+            "lat", "lng", "tap_edge_external", "tap_t",
+            "bound_tap_external", "bound_fitting_external",
+            "attributes", "created_at", "updated_at",
         ]
         read_only_fields = ["id", "project", "created_at", "updated_at"]
 
 
-class NetworkSegmentSerializer(serializers.ModelSerializer):
+class NetworkSegmentSerializer(UidSafeMixin, serializers.ModelSerializer):
     class Meta:
         model = NetworkSegment
         fields = [
-            "id", "project", "external_key", "name", "start_node", "end_node",
+            "id", "uid", "project", "external_key", "name", "start_node", "end_node",
             "fluid", "pipeline_class", "length_m", "diameter_mm", "wall_thickness_mm",
             "roughness_mm", "burial_depth_m", "attributes", "created_at", "updated_at",
         ]
@@ -69,7 +87,7 @@ class NetworkSegmentSerializer(serializers.ModelSerializer):
         return attrs
 
 
-class PipelineSerializer(serializers.ModelSerializer):
+class PipelineSerializer(UidSafeMixin, serializers.ModelSerializer):
     """Трубопровод + упорядоченный список сегментов (segment_ids на запись)."""
 
     segment_ids = serializers.ListField(child=serializers.UUIDField(), write_only=True, required=False)
@@ -78,7 +96,7 @@ class PipelineSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pipeline
         fields = [
-            "id", "project", "external_key", "name", "fluid", "pipeline_class",
+            "id", "uid", "project", "external_key", "name", "fluid", "pipeline_class",
             "attributes", "segment_ids", "segments", "created_at", "updated_at",
         ]
         read_only_fields = ["id", "project", "created_at", "updated_at"]
@@ -115,10 +133,10 @@ class PipelineSerializer(serializers.ModelSerializer):
         return instance
 
 
-class LicenceAreaSerializer(serializers.ModelSerializer):
+class LicenceAreaSerializer(UidSafeMixin, serializers.ModelSerializer):
     class Meta:
         model = LicenceArea
-        fields = ["id", "project", "external_key", "name", "polygon", "attributes", "created_at", "updated_at"]
+        fields = ["id", "uid", "project", "external_key", "name", "polygon", "attributes", "created_at", "updated_at"]
         # project назначается во view (DefaultProjectViewSet.perform_create)
         # по project_id из query/body — в теле его передавать не обязательно.
         read_only_fields = ["id", "project", "created_at", "updated_at"]

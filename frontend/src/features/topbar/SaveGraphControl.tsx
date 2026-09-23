@@ -14,7 +14,7 @@ import './SaveGraphControl.css';
  * (POST /api/map/save/), показывая процесс по этапам.
  */
 export function SaveGraphControl() {
-  const { vertices, segments, pipelines, areas, taps } = useMapDrawing();
+  const { vertices, segments, pipelines, areas, taps, fittings } = useMapDrawing();
   const [progress, setProgress] = useState<SaveProgress | null>(null);
   const [summary, setSummary] = useState('');
   // Диалог ввода имени сценария при сохранении.
@@ -31,7 +31,7 @@ export function SaveGraphControl() {
     setSummary('');
     setProgress(SAVE_START_PROGRESS);
     mutation.mutate(
-      { vertices, segments, pipelines, areas, taps, projectName: name },
+      { vertices, segments, pipelines, areas, taps, fittings, projectName: name },
       {
         onSuccess: (data) => {
           const c = data.counts;

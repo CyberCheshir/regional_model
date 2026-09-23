@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { graphPointToScreen } from './geo';
+import { getFlowAnimationColor } from './mapColors';
 import type { DrawnSegment } from './drawingTypes';
 import './FlowAnimation.css';
 
@@ -18,8 +19,6 @@ export type GeoFlowAnimationProps = {
 const DOT_RADIUS = 2.5;
 /** Шаг между точками (px на экране). */
 const DOT_STEP = 18;
-/** Цвет бегущих точек (поверх рёбер) — белый. */
-const DOT_COLOR = '#ffffff';
 
 /**
  * Порог LOD анимации потока: при зуме < 8 (обзорный масштаб) анимацию НЕ
@@ -80,7 +79,7 @@ export function GeoFlowAnimation({
         return;
       }
 
-      ctx.fillStyle = DOT_COLOR;
+      // Цвет точки зависит от флюида/класса ребра (задаём для каждого сегмента).
       // Фаза движения точек вдоль ребра (смещение по шагу).
       phaseRef.current = (phaseRef.current + dt * speedPerSec * DOT_STEP) % DOT_STEP;
 
@@ -94,6 +93,7 @@ export function GeoFlowAnimation({
         const ux = dx / len;
         const uy = dy / len;
         // Точки с шагом DOT_STEP, фаза сдвигает их вдоль ребра к концу.
+        ctx.fillStyle = getFlowAnimationColor(seg.fluid, seg.pipelineClass);
         for (let s = phaseRef.current; s < len; s += DOT_STEP) {
           ctx.beginPath();
           ctx.arc(a.x + ux * s, a.y + uy * s, DOT_RADIUS, 0, Math.PI * 2);

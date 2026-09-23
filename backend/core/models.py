@@ -15,6 +15,26 @@ class TimestampedModel(models.Model):
         abstract = True
 
 
+class ExternalUidModel(models.Model):
+    """
+    Абстрактная база: сквозной внешний идентификатор сущности (`uid`).
+
+    `uid` генерируется КЛИЕНТОМ (фронтендом) при создании объекта и НЕ меняется
+    за всё время жизни сущности — в отличие от PK, который пересоздаётся при
+    сохранении снимка. Благодаря этому domain layer, backend и модули системы
+    (расчёты, аналитика, экспорт) говорят об ОДНОМ объекте по одному ключу:
+    можно взять данные из БД и знать, что uid совпадает с тем, что на карте.
+
+    uid не является PK и не показывается пользователю. Уникален в пределах
+    проекта (см. UniqueConstraint у конкретных моделей).
+    """
+
+    uid = models.UUIDField(null=True, blank=True, db_index=True)
+
+    class Meta:
+        abstract = True
+
+
 class Project(TimestampedModel):
     """
     Проект (регион/сценарий расчёта). Верхняя сущность дерева объектов.
@@ -68,7 +88,7 @@ class StatusChoices(models.TextChoices):
     STOPPED = "stopped", "Остановлен"
 
 
-class Facility(TimestampedModel):
+class Facility(TimestampedModel, ExternalUidModel):
     """
     Объект на карте: куст / объект подготовки / точка поставки.
 
@@ -99,14 +119,19 @@ class Facility(TimestampedModel):
                 fields=["project", "external_key"],
                 condition=models.Q(external_key__isnull=False),
                 name="uq_facility_project_external",
-            )
+            ),
+            models.UniqueConstraint(
+                fields=["project", "uid"],
+                condition=models.Q(uid__isnull=False),
+                name="uq_facility_project_uid",
+            ),
         ]
 
     def __str__(self) -> str:
         return self.name
 
 
-class NetworkNode(TimestampedModel):
+class NetworkNode(TimestampedModel, ExternalUidModel):
     """
     Точка сети (начало/конец сегментов, тройник, врезка).
 
@@ -148,14 +173,19 @@ class NetworkNode(TimestampedModel):
                 fields=["project", "external_key"],
                 condition=models.Q(external_key__isnull=False),
                 name="uq_node_project_external",
-            )
+            ),
+            models.UniqueConstraint(
+                fields=["project", "uid"],
+                condition=models.Q(uid__isnull=False),
+                name="uq_node_project_uid",
+            ),
         ]
 
     def __str__(self) -> str:
         return self.name
 
 
-class NetworkSegment(TimestampedModel):
+class NetworkSegment(TimestampedModel, ExternalUidModel):
     """Ребро сети (сегмент трубопровода): от узла к узлу."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -187,14 +217,19 @@ class NetworkSegment(TimestampedModel):
                 fields=["project", "external_key"],
                 condition=models.Q(external_key__isnull=False),
                 name="uq_segment_project_external",
-            )
+            ),
+            models.UniqueConstraint(
+                fields=["project", "uid"],
+                condition=models.Q(uid__isnull=False),
+                name="uq_segment_project_uid",
+            ),
         ]
 
     def __str__(self) -> str:
         return self.name
 
 
-class Pipeline(TimestampedModel):
+class Pipeline(TimestampedModel, ExternalUidModel):
     """
     Логический трубопровод — упорядоченная цепочка сегментов.
 
@@ -219,7 +254,12 @@ class Pipeline(TimestampedModel):
                 fields=["project", "external_key"],
                 condition=models.Q(external_key__isnull=False),
                 name="uq_pipeline_project_external",
-            )
+            ),
+            models.UniqueConstraint(
+                fields=["project", "uid"],
+                condition=models.Q(uid__isnull=False),
+                name="uq_pipeline_project_uid",
+            ),
         ]
 
     def __str__(self) -> str:
@@ -241,7 +281,7 @@ class PipelineSegment(models.Model):
         ]
 
 
-class LicenceArea(TimestampedModel):
+class LicenceArea(TimestampedModel, ExternalUidModel):
     """
     Лицензионный участок — замкнутый полигон территории.
 
@@ -263,7 +303,12 @@ class LicenceArea(TimestampedModel):
                 fields=["project", "external_key"],
                 condition=models.Q(external_key__isnull=False),
                 name="uq_area_project_external",
-            )
+            ),
+            models.UniqueConstraint(
+                fields=["project", "uid"],
+                condition=models.Q(uid__isnull=False),
+                name="uq_area_project_uid",
+            ),
         ]
 
     def __str__(self) -> str:

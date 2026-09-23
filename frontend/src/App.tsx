@@ -126,7 +126,6 @@ function App() {
     toggleVisibility,
     inspectorTab,
     diagramEntityId,
-    openDiagram,
     closeDiagram,
     diagramConfig,
     setDiagramConfig,
@@ -201,6 +200,15 @@ function App() {
   const selectedId = selectedEntity?.id ?? null;
 
   /**
+   * Выделили объект (дерево/карта) — автоматически раскрываем правую панель
+   * с его свойствами. Сворачивание пользователем при пустом выделении
+   * не перебиваем: реакция только на ПОЯВЛЕНИЕ выделения.
+   */
+  useEffect(() => {
+    if (selectedId !== null) setRightCollapsed(false);
+  }, [selectedId]);
+
+  /**
    * Локальная карточка выбранного объекта из domain-состояния (если это
    * нарисованный, ещё не сохранённый объект/трубопровод). Для таких id
    * запрос к backend НЕ отправляем — иначе в консоли 404.
@@ -237,8 +245,8 @@ function App() {
     'create-wellpad': 'wellpad',
     'create-facility': 'facility',
     'create-delivery-point': 'delivery-point',
-    'create-pipeline-segment': 'segment',
     'create-pipeline': 'pipeline',
+    'create-logical-pipeline': 'logical-pipeline',
     'create-tap': 'tap',
     'create-tee': 'tee',
     'create-licence-area': 'licence-area',
@@ -252,8 +260,8 @@ function App() {
     wellpad: 'create-wellpad',
     facility: 'create-facility',
     'delivery-point': 'create-delivery-point',
-    segment: 'create-pipeline-segment',
     pipeline: 'create-pipeline',
+    'logical-pipeline': 'create-logical-pipeline',
     tap: 'create-tap',
     tee: 'create-tee',
     'licence-area': 'create-licence-area',
@@ -269,7 +277,14 @@ function App() {
     }
     selectEntity(node.id, nodeKindToEntityKind(node));
   };
-  const handleOpenDiagram = (node: TreeNodeData) => openDiagram(node.id);
+  /**
+   * Кнопка «Диаграмма» в дереве — ПОКА ЗАГЛУШКА: ничего не делает.
+   * Раскрытие плавающего окна диаграммы временно отключено по требованию;
+   * сам компонент `MapDiagramModal` сохранён и готов к подключению обратно.
+   */
+  const handleOpenDiagram = () => {
+    // no-op
+  };
 
   /** Экспорт всех спроектированных участков в файл (JSON / CSV / GeoJSON). */
   const handleExportAreas = (format: AreaExportFormat) => {
@@ -293,6 +308,14 @@ function App() {
     if (nextTool === 'none') return;
     // Повторный клик по активному инструменту выключает режим создания
     setDrawTool(drawTool === nextTool ? 'none' : nextTool);
+  };
+
+  /**
+   * Настройки трубопровода → «Применить»: включаем инструмент БЕЗУСЛОВНО
+   * (не toggle) — после применения кнопка «Трубопровод» должна быть нажата.
+   */
+  const handleApplyPipelineTool = () => {
+    setDrawTool('pipeline');
   };
 
   /** Смена режима: выход из «Просмотра» сбрасывает активный инструмент. */
@@ -452,7 +475,7 @@ function App() {
         breadcrumbs={[{ label: 'Восточная Сибирь' }, { label: 'Региональный модуль' }]}
         viewMode={viewMode}
         onViewModeChange={handleViewModeChange}
-        scenarioLabel="Сценарии"
+        scenarioLabel="Базовый сценарий"
         onOpenScenario={handleOpenScenario}
         onImportModel={() => modelInputRef.current?.click()}
         onExportModel={handleExportModel}
@@ -496,6 +519,7 @@ function App() {
             onExportAreas={handleExportAreas}
             canExportAreas={drawAreas.length > 0}
             onImportSample={handleImportSample}
+            onApplyPipelineTool={handleApplyPipelineTool}
           />
         }
         center={

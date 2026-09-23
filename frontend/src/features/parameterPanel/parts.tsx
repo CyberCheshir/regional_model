@@ -49,14 +49,20 @@ export function PanelSection({
   title,
   action,
   children,
+  grow = false,
 }: {
   title: string;
   /** Кнопка/ссылка справа от заголовка (напр. «+ Добавить период») */
   action?: ReactNode;
   children: ReactNode;
+  /**
+   * Растянуть секцию на всю доступную высоту (вместо фикс. 240px) —
+   * нужно таблицам/графикам, которые должны доходить до низа панели.
+   */
+  grow?: boolean;
 }) {
   return (
-    <section className="pp-section">
+    <section className={'pp-section' + (grow ? ' pp-section--grow' : '')}>
       <div className="pp-section__head">
         <h3 className="pp-section__title">{title}</h3>
         {action}

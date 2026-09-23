@@ -16,8 +16,6 @@ import {
   type MapVertex,
 } from './drawingTypes';
 import {
-  getMarkerColor,
-  getFluidColor,
   getEdgeColor,
   getPipelineClassStyle,
 } from './mapColors';
@@ -53,6 +51,12 @@ export type GeoGraphLayerProps = {
   selectedSegmentIds?: readonly string[];
   /** id выделенных лицензионных участков (подсветка + ручки вершин) */
   selectedAreaIds?: readonly string[];
+  /** id выделенных ВРЕЗОК (визуальная подсветка) */
+  selectedTapIds?: readonly string[];
+  /** id выделенных ТРОЙНИКОВ (визуальная подсветка) */
+  selectedFittingIds?: readonly string[];
+  /** Клик по тройнику — выделить/снять выделение (как у врезки) */
+  onSelectFitting?: (id: string, withShift: boolean) => void;
   /** Выбор участка кликом (withShift — добавить к выделению) */
   onSelectArea?: (id: string, withShift: boolean) => void;
   /** Перетаскивание ВЕРШИНЫ участка: id, индекс точки, новая мировая точка */
@@ -83,12 +87,20 @@ export type GeoGraphLayerProps = {
   onSelectSegment?: (id: string, withShift: boolean) => void;
   /** Режим врезки: клик по ребру сразу создаёт врезку в точке клика */
   tapMode?: boolean;
+  /**
+   * Активен режим СОЗДАНИЯ (рисование ребра/объекта). В этом режиме клик
+   * по уже существующему элементу НЕ выделяет его для редактирования —
+   * клик пропускается на карту, чтобы сработало присоединение (снап).
+   */
+  drawingMode?: boolean;
   /** Постановка врезки на ребро: edgeId + мировая точка клика */
   onSegmentPress?: (edgeId: string, world: { x: number; y: number }) => void;
   /** Снять выделение (клик по пустому / Esc) */
   onClearSelection?: () => void;
   /** Лассо-выделение: мировой полигон → добавить всё попавшее в выделение */
   onLasso?: (poly: ReadonlyArray<{ x: number; y: number }>) => void;
+  /** Начался лассо-жест (Shift+ЛКМ) — чтобы родитель не снял выделение. */
+  onLassoStart?: () => void;
   /** Начать действие (один снимок истории undo на весь drag/resize) */
   onBeginAction?: () => void;
   /** Перетаскивание объекта: новая мировая точка центра (в единицах графа, м) */
@@ -100,13 +112,16 @@ export type GeoGraphLayerProps = {
   /** Ориентированный граф: рисовать стрелки направления на рёбрах (from → to) */
   directed?: boolean;
   /** Показывать стыки трубопроводов (вершины на концах рёбер) */
+  /** Показывать подписи объектов (тумблер «Подписи объектов») */
+  showLabels?: boolean;
+  /** Показывать стыки трубопроводов (вершины на концах рёбер) */
   showJoints?: boolean;
+  /** Ресайз объекта: новый бокс в мировых единицах (м) */
+  onResize?: (id: string, box: { x: number; y: number; w: number; h: number }) => void;
   /** Перетаскивание концов ребра (группа слипшихся) в новую мировую точку */
   onEndsMove?: (ends: ReadonlyArray<{ segId: string; side: 'from' | 'to' }>, x: number, y: number) => void;
   /** Отпускание концов: перепривязка/отсоединение по мировой точке */
   onEndsDrop?: (ends: ReadonlyArray<{ segId: string; side: 'from' | 'to' }>, x: number, y: number) => void;
-  /** Ресайз объекта: новый бокс в мировых единицах (м) */
-  onResize?: (id: string, box: { x: number; y: number; w: number; h: number }) => void;
 };
 
 /** Ось/угол ручки ресайза. */
@@ -139,6 +154,22 @@ function pxPerMeterAt(zoom: number): number {
  */
 const DOT_BASE_PX = 12;
 
+/**
+ * Порог LOD подписей объектов: при zoom ≤ 8 подписи НЕ отображаются
+ * (на обзорном масштабе они нечитаемы и зашумляют карту).
+ */
+const MIN_ZOOM_FOR_LABEL = 8;
+
+/**
+ * id SVG-маркера стрелки по КЛАССУ трубопровода. У тонких линий
+ * (промысловый, межпромысловый) стрелка крупнее — см. defs в разметке.
+ */
+function edgeArrowIdFor(pipelineClass: string): string {
+  if (pipelineClass === 'field') return 'geo-edge-arrow-field';
+  if (pipelineClass === 'interfield') return 'geo-edge-arrow-interfield';
+  return 'geo-edge-arrow';
+}
+
 /** Перевод lng/lat в экранные пиксели по текущей камере. */
 function toScreen(
   lng: number,
@@ -165,6 +196,9 @@ export function GeoGraphLayer({
   selectedIds = [],
   selectedSegmentIds = [],
   selectedAreaIds = [],
+  selectedTapIds = [],
+  selectedFittingIds = [],
+  onSelectFitting,
   onSelectArea,
   onAreaPointMove,
   onAreaMove,
@@ -175,18 +209,21 @@ export function GeoGraphLayer({
   onSelect,
   onSelectSegment,
   tapMode = false,
+  drawingMode = false,
   onSegmentPress,
   onClearSelection,
   onLasso,
+  onLassoStart,
   onBeginAction,
   onMove,
   onMoveFitting,
   onSelectTap,
   directed = false,
+  showLabels = true,
   showJoints = true,
+  onResize,
   onEndsMove,
   onEndsDrop,
-  onResize,
 }: GeoGraphLayerProps) {
   // Лассо выделения (Shift + ЛКМ): экранные точки рисуем, при отпускании —
   // конвертируем в мировые и отдаём наружу.
@@ -196,6 +233,8 @@ export function GeoGraphLayer({
   cameraRef.current = camera;
   const onLassoRef = useRef(onLasso);
   onLassoRef.current = onLasso;
+  const onLassoStartRef = useRef(onLassoStart);
+  onLassoStartRef.current = onLassoStart;
 
   // Esc — снять выделение
   useEffect(() => {
@@ -221,6 +260,7 @@ export function GeoGraphLayer({
       if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) return;
       // Гасим начало жеста, чтобы не выделялся текст под курсором.
       e.preventDefault();
+      onLassoStartRef.current?.();
       path = [{ x: e.clientX - r.left, y: e.clientY - r.top }];
       setLasso(path);
     };
@@ -464,17 +504,18 @@ export function GeoGraphLayer({
     side: 'from' | 'to';
     x: number;
     y: number;
-    /** Цвет вершины — как у родительского ребра (по флюиду) */
+    /** Цвет вершины — как у родительского ребра (флюид + класс) */
     color: string;
     /** Вершина привязана к врезке — её НЕЛЬЗЯ перетаскивать */
     fixed: boolean;
   };
   const edgeVertices: EdgeEndVertex[] = [];
   for (const s of segments) {
-    // Вершина наследует цвет ребра (флюид), поэтому визуально «принадлежит» ему.
+    // Вершина наследует цвет РЕБРА целиком (флюид + класс): у «логического
+    // потока» класс перекрывает флюид — цвет тёмно-серый, как у самого ребра.
     const segmentColor = selectedSegmentIds.includes(s.id)
       ? '#004d99'
-      : getFluidColor(s.fluid);
+      : getEdgeColor(s.fluid, s.pipelineClass);
     for (const side of ['from', 'to'] as const) {
       const v = s[side];
       if (v.type === 'node') continue;
@@ -507,15 +548,47 @@ export function GeoGraphLayer({
 
       {/* Рёбра */}
       <svg className="geo-graph-layer__svg">
-        {/* Стрелка направления рёбер (ориентированный граф) */}
+        {/* Стрелки направления рёбер (ориентированный граф).
+            Отдельный маркер на класс трубопровода: у тонких линий (промысловый,
+            межпромысловый) стрелка крупнее (markerWidth больше), чтобы быть
+            сопоставимой по размеру со стрелкой толстого магистрального.
+            markerUnits=strokeWidth — размер отсчитывается от толщины линии. */}
         <defs>
+          {/* Промысловый (тонкая линия 2.5 px) — самая крупная стрелка */}
+          <marker
+            id="geo-edge-arrow-field"
+            viewBox="0 0 10 10"
+            refX="9"
+            refY="5"
+            markerWidth="6"
+            markerHeight="6"
+            markerUnits="strokeWidth"
+            orient="auto-start-reverse"
+          >
+            <path d="M0 0 L10 5 L0 10 z" fill="context-stroke" />
+          </marker>
+          {/* Межпромысловый (линия 4 px) — крупная стрелка */}
+          <marker
+            id="geo-edge-arrow-interfield"
+            viewBox="0 0 10 10"
+            refX="9"
+            refY="5"
+            markerWidth="4.5"
+            markerHeight="4.5"
+            markerUnits="strokeWidth"
+            orient="auto-start-reverse"
+          >
+            <path d="M0 0 L10 5 L0 10 z" fill="context-stroke" />
+          </marker>
+          {/* Магистральный / логический — базовый размер */}
           <marker
             id="geo-edge-arrow"
             viewBox="0 0 10 10"
             refX="9"
             refY="5"
-            markerWidth="4"
-            markerHeight="4"
+            markerWidth="2.5"
+            markerHeight="2.5"
+            markerUnits="strokeWidth"
             orient="auto-start-reverse"
           >
             {/* context-stroke — стрелка берёт цвет ПРИВЯЗАННОГО ребра
@@ -798,6 +871,9 @@ export function GeoGraphLayer({
                 stroke="transparent"
                 strokeWidth={tapMode ? 24 : 12}
                 onPointerDown={(e) => {
+                  // Режим СОЗДАНИЯ: клик по ребру — не выделение, а обычный клик
+                  // по карте (точка присоединения / продолжение полилинии).
+                  if (drawingMode && !tapMode) return;
                   e.stopPropagation();
                   // В режиме врезки клик по ребру сразу ставит врезку в этой точке
                   if (tapMode) {
@@ -809,7 +885,10 @@ export function GeoGraphLayer({
                   }
                   onSelectSegment?.(s.id, e.shiftKey);
                 }}
-                onPointerUp={(e) => e.stopPropagation()}
+                onPointerUp={(e) => {
+                  if (drawingMode && !tapMode) return;
+                  e.stopPropagation();
+                }}
               />
               <line
                 x1={a.x}
@@ -820,7 +899,9 @@ export function GeoGraphLayer({
                 strokeWidth={classStyle.width + (selected ? 2 : 0)}
                 strokeDasharray={classStyle.dash}
                 // Ориентированный граф — стрелка направления from → to на конце.
-                markerEnd={directed ? 'url(#geo-edge-arrow)' : undefined}
+                // Маркер зависит от класса: у тонких линий (промысловый,
+                // межпромысловый) стрелка крупнее — задаётся отдельными defs.
+                markerEnd={directed ? `url(#${edgeArrowIdFor(s.pipelineClass)})` : undefined}
               />
             </g>
           );
@@ -853,36 +934,40 @@ export function GeoGraphLayer({
         </svg>
       )}
 
-      {/* Вершины на концах рёбер (стыки) — показываем по тумблеру «Стыки трубопроводов» */}
+      {/* Стыки трубопроводов (вершины на концах рёбер) — по тумблеру */}
       {showJoints &&
         edgeVertices.map((v) => {
-          const p = graphPointToScreen(v, camera);
-          // Вершины меньше, чем тройники/врезки (были size 4 в vis), но кликабельны:
-          // визуальный размер — ~1/3 точки, зона захвата — не меньше 12 px.
-          const size = Math.max(4, dotSize / 3);
-          return (
-            <span
-              key={`ev-${v.key}`}
-              className={`geo-graph-layer__dot geo-graph-layer__dot--vertex${v.fixed ? ' is-fixed' : ''}`}
-              style={{
-                left: p.x,
-                top: p.y,
-                width: size,
-                height: size,
-                // Цвет вершины — как у ребра (по флюиду): фон и контур.
-                background: v.color,
-                borderColor: v.color,
-              }}
-              // Вершины, привязанные к врезке, НЕ перетаскиваются (fixed).
-              onPointerDown={
-                v.fixed ? undefined : (e) => startEdgeVertexDrag(e, v.segId, v.side, v.x, v.y)
-              }
-              onPointerUp={(e) => e.stopPropagation()}
-            />
-          );
-        })}
-
-
+        const p = graphPointToScreen(v, camera);
+        // Вершины меньше, чем тройники/врезки (были size 4 в vis), но кликабельны:
+        // визуальный размер — ~1/3 точки, зона захвата — не меньше 12 px.
+        const size = Math.max(4, dotSize / 3);
+        return (
+          <span
+            key={`ev-${v.key}`}
+            className={`geo-graph-layer__dot geo-graph-layer__dot--vertex${v.fixed ? ' is-fixed' : ''}`}
+            style={{
+              left: p.x,
+              top: p.y,
+              width: size,
+              height: size,
+              // Цвет вершины — как у ребра (по флюиду): фон и контур.
+              background: v.color,
+              borderColor: v.color,
+            }}
+            // Вершины, привязанные к врезке, НЕ перетаскиваются (fixed).
+            // В режиме СОЗДАНИЯ не даём тянуть вершину — клик идёт на карту.
+            onPointerDown={
+              v.fixed || drawingMode
+                ? undefined
+                : (e) => startEdgeVertexDrag(e, v.segId, v.side, v.x, v.y)
+            }
+            onPointerUp={(e) => {
+              if (drawingMode) return;
+              e.stopPropagation();
+            }}
+          />
+        );
+      })}
       {/* Объекты (системы сбора / УПН / точки поставки) — на любом зуме */}
       {vertices.map((v) => {
         const p = toScreen(v.lng, v.lat, camera);
@@ -890,22 +975,23 @@ export function GeoGraphLayer({
         const h = (v.h ?? 0) * pxPerMeter;
         const selected = selectedIds.includes(v.id);
         const highlighted = snapTargetId === v.id;
-        const color = getMarkerColor(v.kind);
-        // Подпись показываем СВЕРХУ объекта (вне контейнера) — на любом зуме.
-        const showLabel = true;
+        // Подписи: по тумблеру «Подписи объектов» И при рабочем масштабе
+        // (при zoom ≤ 8 названия нечитаемы и только зашумляют карту).
+        const showLabel = showLabels && camera.zoom > MIN_ZOOM_FOR_LABEL;
         return (
           <div
             key={v.id}
-            className={`geo-graph-layer__vertex${selected ? ' is-selected' : ''}${highlighted ? ' is-snap-target' : ''}`}
+            className={`geo-graph-layer__vertex geo-graph-layer__vertex--${v.kind}${selected ? ' is-selected' : ''}${highlighted ? ' is-snap-target' : ''}`}
             style={{
               left: p.x,
               top: p.y,
               width: w || undefined,
               height: h || undefined,
-              borderColor: color,
-              background: `${color}33`,
             }}
             onPointerDown={(e) => {
+              // Режим СОЗДАНИЯ: клик по объекту — не выделение, а точка
+              // присоединения. Пропускаем событие на карту (снап сработает там).
+              if (drawingMode) return;
               // Клик по НЕвыделенному (без Shift) — выделяет только его.
               // Клик по уже выделенному — не сбрасывает группу (групповой перенос).
               if (!selectedIds.includes(v.id)) onSelect?.(v.id, e.shiftKey);
@@ -914,13 +1000,17 @@ export function GeoGraphLayer({
             }}
             // Гасим pointerup: иначе он всплывёт до карты (GeoMapOnly) и
             // её onMapClick снимет выделение сразу после клика по объекту.
-            onPointerUp={(e) => e.stopPropagation()}
+            // В режиме создания — НЕ гасим: карта должна получить клик (снап).
+            onPointerUp={(e) => {
+              if (drawingMode) return;
+              e.stopPropagation();
+            }}
           >
             {/* Внутри объекта — картинка типа, растянутая по размеру объекта */}
             {VERTEX_ICON[v.kind] && (
               <img className="geo-graph-layer__icon" src={VERTEX_ICON[v.kind]} alt="" draggable={false} />
             )}
-            {/* Подпись — СВЕРХУ над объектом (zoom ≥ 14) */}
+            {/* Подпись (LOD: скрыта при zoom ≤ MIN_ZOOM_FOR_LABEL) */}
             {showLabel && (
               <span className="geo-graph-layer__vertex-label">{v.label}</span>
             )}
@@ -942,14 +1032,27 @@ export function GeoGraphLayer({
       {/* Тройники */}
       {fittings.map((f) => {
           const p = toScreen(f.lng, f.lat, camera);
+          const teeSelected = selectedFittingIds.includes(f.id);
           return (
             <span
               key={f.id}
-              className="geo-graph-layer__dot geo-graph-layer__dot--tee"
+              className={`geo-graph-layer__dot geo-graph-layer__dot--tee${teeSelected ? ' is-selected' : ''}`}
               style={{ left: p.x, top: p.y, width: dotSize, height: dotSize }}
               title={f.label}
-              onPointerDown={(e) => startFittingDrag(e, f.id, f.x, f.y)}
-              onPointerUp={(e) => e.stopPropagation()}
+              // В режиме СОЗДАНИЯ тройник не тянем — клик идёт на карту.
+              onPointerDown={
+                drawingMode
+                  ? undefined
+                  : (e) => {
+                      // Клик — выделение (для Delete), затем перетаскивание.
+                      onSelectFitting?.(f.id, e.shiftKey);
+                      startFittingDrag(e, f.id, f.x, f.y);
+                    }
+              }
+              onPointerUp={(e) => {
+                if (drawingMode) return;
+                e.stopPropagation();
+              }}
             />
           );
         })}
@@ -957,18 +1060,24 @@ export function GeoGraphLayer({
       {/* Врезки */}
       {taps.map((t) => {
           const p = toScreen(t.lng, t.lat, camera);
+          const tapSelected = selectedTapIds.includes(t.id);
           return (
             <span
               key={t.id}
-              className="geo-graph-layer__dot geo-graph-layer__dot--tap is-fixed"
+              className={`geo-graph-layer__dot geo-graph-layer__dot--tap is-fixed${tapSelected ? ' is-selected' : ''}`}
               style={{ left: p.x, top: p.y, width: dotSize, height: dotSize }}
               title={t.label}
               // Врезка НЕ перетаскивается (fixed). Клик — только выделение для удаления.
+              // В режиме СОЗДАНИЯ не выделяем врезку — клик идёт на карту (снап).
               onPointerDown={(e) => {
+                if (drawingMode) return;
                 e.stopPropagation();
                 onSelectTap?.(t.id, e.shiftKey);
               }}
-              onPointerUp={(e) => e.stopPropagation()}
+              onPointerUp={(e) => {
+                if (drawingMode) return;
+                e.stopPropagation();
+              }}
             />
           );
         })}

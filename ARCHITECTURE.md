@@ -666,6 +666,14 @@ erDiagram
   у `Facility`/`NetworkNode`/`NetworkSegment`/`Pipeline`/`LicenceArea` (условие
   `external_key IS NOT NULL`) — по ним дедуплицируется сохранение снимка.
   `PipelineSegment`: `UK(pipeline, position)` и `UK(pipeline, segment)`.
+- **Сквозной внешний идентификатор `uid`** (`UniqueConstraint(project, uid)`,
+  условие `uid IS NOT NULL`) у тех же пяти сущностей. `uid` генерируется
+  **клиентом** при создании объекта и НЕ меняется за время жизни сущности —
+  в отличие от PK, который пересоздаётся при сохранении снимка. За счёт этого
+  domain layer, backend и расчётные модули ссылаются на ОДИН объект по общему
+  ключу: `graph_import` делает **upsert по `uid`** (совпал → UPDATE с сохранением
+  PK, новый → CREATE, пропал из снимка → DELETE), а `project_snapshot` отдаёт
+  `uid` обратно. Пользователю `uid` не показывается.
 - **Индексы:** `Flow` — по `(entity_kind, entity_id)` → `TODO`: сейчас у `Flow` индекс
   не объявлен (в исходном проекте был у `FluidBinding`); проверить при необходимости.
 - **Порядок:** у сущностей задан `Meta.ordering` (обычно `name, id`); `CalculationRun`

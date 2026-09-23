@@ -15,6 +15,17 @@ def _local_id(record) -> str:
     return record.external_key or str(record.id)
 
 
+def _uid_of(record) -> str | None:
+    """
+    Сквозной внешний идентификатор записи (или None).
+
+    Через getattr: если миграция 0004 (поле `uid`) к текущей схеме ещё не
+    применена, атрибута нет — отдаём None вместо падения с FieldError.
+    """
+    uid = getattr(record, "uid", None)
+    return str(uid) if uid else None
+
+
 def build_project_snapshot(project: Project) -> dict:
     """Снимок проекта: объекты, узлы, сегменты, трубопроводы, участки."""
     facilities = list(Facility.objects.filter(project=project).order_by("name"))
@@ -36,6 +47,8 @@ def build_project_snapshot(project: Project) -> dict:
         "facilities": [
             {
                 "id": _local_id(f),
+                # Сквозной внешний идентификатор — тот же, что на карте/в domain layer.
+                "uid": _uid_of(f),
                 "name": f.name,
                 "kind": f.kind,
                 "lat": f.lat,
@@ -53,6 +66,7 @@ def build_project_snapshot(project: Project) -> dict:
         "nodes": [
             {
                 "id": _local_id(n),
+                "uid": _uid_of(n),
                 "name": n.name,
                 "kind": n.kind,
                 "lat": n.lat,
@@ -69,6 +83,7 @@ def build_project_snapshot(project: Project) -> dict:
         "segments": [
             {
                 "id": _local_id(s),
+                "uid": _uid_of(s),
                 "name": s.name,
                 "start_node_id": _local_id(s.start_node),
                 "end_node_id": _local_id(s.end_node),
@@ -84,6 +99,7 @@ def build_project_snapshot(project: Project) -> dict:
         "pipelines": [
             {
                 "id": _local_id(p),
+                "uid": _uid_of(p),
                 "name": p.name,
                 "fluid": p.fluid,
                 "pipeline_class": p.pipeline_class,
@@ -95,7 +111,13 @@ def build_project_snapshot(project: Project) -> dict:
             for p in pipelines
         ],
         "licence_areas": [
-            {"id": _local_id(a), "name": a.name, "polygon": a.polygon} for a in areas
+            {
+                "id": _local_id(a),
+                "uid": _uid_of(a),
+                "name": a.name,
+                "polygon": a.polygon,
+            }
+            for a in areas
         ],
         "counts": {
             "facilities": len(facilities),

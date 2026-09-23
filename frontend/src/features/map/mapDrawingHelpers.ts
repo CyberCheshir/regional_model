@@ -4,6 +4,7 @@
  * кроме счётчика уникальных id (nextId).
  */
 import { lngLatToGraphPoint } from './geo';
+import { newUid } from './drawingTypes';
 import type {
   DrawVertex,
   DrawnSegment,
@@ -28,6 +29,8 @@ export type PipelineRecord = {
 export type ProjectSnapshotInput = {
   facilities: Array<{
     id: string;
+    /** Уникальный id сущности (в старых снимках может отсутствовать) */
+    uid?: string;
     name: string;
     kind: string;
     lat: number;
@@ -37,6 +40,8 @@ export type ProjectSnapshotInput = {
   }>;
   nodes: Array<{
     id: string;
+    /** Уникальный id сущности (в старых снимках может отсутствовать) */
+    uid?: string;
     name: string;
     kind: 'vertex' | 'tee' | 'tap';
     lat: number;
@@ -49,6 +54,8 @@ export type ProjectSnapshotInput = {
   }>;
   segments: Array<{
     id: string;
+    /** Уникальный id сущности (в старых снимках может отсутствовать) */
+    uid?: string;
     name: string;
     start_node_id: string;
     end_node_id: string;
@@ -62,7 +69,7 @@ export type ProjectSnapshotInput = {
     pipeline_class?: string;
     segment_ids: string[];
   }>;
-  licence_areas: Array<{ id: string; name: string; polygon: Array<[number, number]> }>;
+  licence_areas: Array<{ id: string; uid?: string; name: string; polygon: Array<[number, number]> }>;
 };
 
 /** Снимок состояния графа для undo/redo. */
@@ -134,6 +141,8 @@ export function nodeToDrawVertex(
     if (!tapsById.has(node.id)) {
       tapsById.set(node.id, {
         id: node.id,
+        // uid из снимка; старый файл без uid — генерируем новый.
+        uid: node.uid ?? newUid(),
         label: node.name,
         x: world.x,
         y: world.y,
@@ -151,6 +160,7 @@ export function nodeToDrawVertex(
     if (!fittingsById.has(node.id)) {
       fittingsById.set(node.id, {
         id: node.id,
+        uid: node.uid ?? newUid(),
         label: node.name,
         x: world.x,
         y: world.y,

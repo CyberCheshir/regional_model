@@ -20,9 +20,9 @@ export function getMarkerColor(kind: string): string {
 
 /** Цвета флюидов рёбер (трубопроводы) */
 export const FLUID_COLORS = {
-  oil: '#0066CC', // --pipeline-oil — Нефть (синий)
-  gas: '#D97706', // --pipeline-gas — Газ (жёлто-оранжевый)
-  product: '#1E3A8A', // Продукт (тёмно-синий / navy)
+  oil: '#8B5A2B', // --pipeline-oil — Нефть (коричневый)
+  gas: '#E8C11C', // --pipeline-gas — Газ (жёлтый)
+  product: '#4B5563', // --pipeline-product — Продукты (тёмно-серый)
 } as const;
 
 /** Цвет ребра по флюиду; неизвестный — нейтральный «нефть». */
@@ -31,7 +31,29 @@ export function getFluidColor(fluid: string): string {
 }
 
 /** Цвет «Логического потока» — тёмно-серый (не зависит от флюида). */
-export const LOGICAL_FLOW_COLOR = '#4B5563';
+export const LOGICAL_FLOW_COLOR = '#374151';
+
+/**
+ * Цвет БЕГУЩИХ ТОЧЕК анимации потока (отличается от цвета самого ребра):
+ *  - Нефть — тёмно-коричневый;
+ *  - Газ — тёмно-жёлтый;
+ *  - Продукты — светло-серый.
+ * Для «логического потока» — светло-серый (как продукт).
+ */
+export const FLOW_ANIMATION_COLORS = {
+  oil: '#5C3317', // тёмно-коричневый
+  gas: '#B8860B', // тёмно-жёлтый
+  product: '#D1D5DB', // светло-серый
+} as const;
+
+/** Цвет бегущей точки анимации по флюиду и классу трубопровода. */
+export function getFlowAnimationColor(fluid: string, pipelineClass: string): string {
+  if (pipelineClass === 'logical') return FLOW_ANIMATION_COLORS.product;
+  return (
+    (FLOW_ANIMATION_COLORS as Record<string, string | undefined>)[fluid] ??
+    FLOW_ANIMATION_COLORS.oil
+  );
+}
 
 /**
  * Итоговый цвет ребра с учётом класса и флюида:
@@ -53,7 +75,7 @@ export const PIPELINE_CLASS_STYLE: Record<
   field: { width: 2.5 }, // Промысловый — тонкая
   interfield: { width: 4 }, // Межпромысловый — толще
   trunk: { width: 6 }, // Магистральный — самая толстая
-  logical: { width: 2.5, dash: '8 6' }, // Логический поток — пунктир
+  logical: { width: 3.5, dash: '8 6' }, // Логический поток — пунктир
 };
 
 /** Стиль ребра по классу с откатом на «промысловый» для неизвестных значений. */

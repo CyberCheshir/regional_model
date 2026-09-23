@@ -182,9 +182,33 @@ export function toDrainFluid(value: unknown): DrainFluid {
   return value === 'gas' || value === 'product' ? value : 'oil';
 }
 
+/**
+ * Уникальный идентификатор сущности, генерируемый при СОЗДАНИИ.
+ * UUID v4 — не показывается пользователю (нет в UI: ни в дереве, ни в
+ * инспекторе, ни в подписях карты). Нужен для однозначного сопоставления
+ * объектов между сессиями, снимками и БД.
+ */
+export type EntityUid = string;
+
+/** Сгенерировать uid (UUID v4; с запасным вариантом для старых браузеров). */
+export function newUid(): EntityUid {
+  const c = globalThis.crypto as Crypto | undefined;
+  if (c && typeof c.randomUUID === 'function') return c.randomUUID();
+  // Fallback: RFC4122-подобная строка из случайных байтов.
+  const bytes = new Uint8Array(16);
+  if (c && typeof c.getRandomValues === 'function') c.getRandomValues(bytes);
+  else for (let i = 0; i < 16; i++) bytes[i] = Math.floor(Math.random() * 256);
+  bytes[6] = (bytes[6] & 0x0f) | 0x40; // версия 4
+  bytes[8] = (bytes[8] & 0x3f) | 0x80; // вариант
+  const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
 /** Спроектированный сегмент трубопровода (ребро). */
 export type DrawnSegment = {
   id: string;
+  /** Уникальный id сущности (скрыт от пользователя) */
+  uid: EntityUid;
   from: DrawVertex;
   to: DrawVertex;
   /** Логическая принадлежность сегмента трубопроводу (полилинии) */
@@ -210,6 +234,8 @@ export function drawVertexNodeId(v: DrawVertex): string {
  */
 export type MapFitting = {
   id: string;
+  /** Уникальный id сущности (скрыт от пользователя) */
+  uid: EntityUid;
   label: string;
   x: number;
   y: number;
@@ -225,6 +251,8 @@ export type MapFitting = {
  */
 export type MapTap = {
   id: string;
+  /** Уникальный id сущности (скрыт от пользователя) */
+  uid: EntityUid;
   label: string;
   x: number;
   y: number;
@@ -259,6 +287,8 @@ export type VertexKind = 'wellpad' | 'facility' | 'delivery-point';
  */
 export type MapVertex = {
   id: string;
+  /** Уникальный id сущности (скрыт от пользователя) */
+  uid: EntityUid;
   kind: VertexKind;
   label: string;
   x: number;
@@ -307,6 +337,13 @@ export const POINT_VERTEX_RADIUS = 14;
 export const VERTEX_SNAP_RADIUS = (CONNECT_RADIUS / 3) * 2;
 
 /**
+ * Радиус «врезка на вершине»: клик по ребру в пределах этого расстояния
+ * от его КОНЦА считается установкой врезки НА ВЕРШИНУ трубопровода —
+ * сегмент при этом НЕ разрезается (в отличие от врезки на теле ребра).
+ */
+export const TAP_VERTEX_RADIUS = VERTEX_SNAP_RADIUS;
+
+/**
  * Вершина — площадной (прямоугольный) объект?
  * Все спроектированные объекты (куст, объект подготовки, точка поставки)
  * рисуются прямоугольниками с ресайзом/перемещением за стороны и углы.
@@ -321,8 +358,9 @@ export function isBoxVertex(kind: VertexKind): boolean {
  */
 export type DrawTool =
   | 'none'
-  | 'segment'
   | 'pipeline'
+  /** Логический поток: ребро без физ. трубы (класс `logical`). */
+  | 'logical-pipeline'
   | 'tee'
   | 'tap'
   | 'licence-area'
@@ -330,6 +368,14 @@ export type DrawTool =
 
 /** Инструменты создания вершин-объектов. */
 const VERTEX_TOOLS: readonly VertexKind[] = ['wellpad', 'facility', 'delivery-point'];
+
+/**
+ * Инструменты рисования РЁБЕР (полилиний): обычный трубопровод и
+ * «логический поток» (то же рисование, но класс ребра — `logical`).
+ */
+export function isEdgeTool(tool: DrawTool): boolean {
+  return tool === 'pipeline' || tool === 'logical-pipeline';
+}
 
 /** Проверка: инструмент создаёт вершину-объект. */
 export function isVertexTool(tool: DrawTool): tool is VertexKind {
@@ -349,6 +395,8 @@ export const VERTEX_LABEL: Record<VertexKind, string> = {
  */
 export type LicenceArea = {
   id: string;
+  /** Уникальный id сущности (скрыт от пользователя) */
+  uid: EntityUid;
   label: string;
   /** Вершины полигона (мировые координаты, м) */
   points: { x: number; y: number }[];

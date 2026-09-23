@@ -116,19 +116,26 @@ export function GeoMapOnly({
   // Фокусировка на точке (например, выбранный в дереве объект/трубопровод):
   // если точка за пределами видимой области — переносим камеру так, чтобы она
   // оказалась в центре. Если точка уже видна — камеру не трогаем.
+  //
+  // ВАЖНО: эффект зависит ТОЛЬКО от смены цели (focusKey), а не от zoom/
+  // originPx — иначе при зуме камера каждый раз прыгала бы к выбранному
+  // объекту, мешая приближать нужное место вручную.
   const focusKey = focus ? `${focus.lng},${focus.lat}` : null;
+  const zoomRef = useRef(zoom);
+  zoomRef.current = zoom;
+  const originPxRef = useRef(originPx);
+  originPxRef.current = originPx;
   useEffect(() => {
     if (!focus || size.w === 0 || size.h === 0) return;
-    const wp = lngLatToWorldPixel(focus.lng, focus.lat, zoom);
+    const z = zoomRef.current;
+    const o = originPxRef.current;
+    const wp = lngLatToWorldPixel(focus.lng, focus.lat, z);
     const visible =
-      wp.x >= originPx.x &&
-      wp.x <= originPx.x + size.w &&
-      wp.y >= originPx.y &&
-      wp.y <= originPx.y + size.h;
+      wp.x >= o.x && wp.x <= o.x + size.w && wp.y >= o.y && wp.y <= o.y + size.h;
     if (visible) return;
     setOriginPx({ x: wp.x - size.w / 2, y: wp.y - size.h / 2 });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- реакция именно на смену цели
-  }, [focusKey, size.w, size.h, zoom]);
+  }, [focusKey, size.w, size.h]);
 
   // Пересборка тайлов при смене зума/смещения/размера/подложки
   useEffect(() => {

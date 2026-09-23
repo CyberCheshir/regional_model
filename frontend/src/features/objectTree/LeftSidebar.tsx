@@ -55,6 +55,8 @@ export type LeftSidebarProps = {
   canExportAreas?: boolean;
   /** Импорт встроенного образца участков по URL */
   onImportSample?: (url: string, areaIndex: number) => void;
+  /** «Применить» в настройках трубопровода — включить инструмент безусловно */
+  onApplyPipelineTool?: () => void;
 };
 
 /**
@@ -82,6 +84,7 @@ export function LeftSidebar({
   onExportAreas,
   canExportAreas,
   onImportSample,
+  onApplyPipelineTool,
 }: LeftSidebarProps) {
   const { pipelines, vertices, segments, renameVertex, renamePipeline, renameSegment } =
     useMapDrawing();
@@ -121,11 +124,17 @@ export function LeftSidebar({
     if (deliveryPoints.length > 0) {
       groups.push({ id: 'group-delivery', label: 'Точки поставки', children: deliveryPoints });
     }
-    if (pipelines.length > 0) {
+    // Трубопроводы БЕЗ сегментов в дерево не попадают: запись существует,
+    // только пока у неё есть хотя бы одно ребро (0 сегментов → удаляем из
+    // группы элементов).
+    const pipelinesWithSegments = pipelines.filter(
+      (p) => segmentsOfPipeline(p.id).length > 0,
+    );
+    if (pipelinesWithSegments.length > 0) {
       groups.push({
         id: 'group-pipelines',
         label: 'Трубопроводы',
-        children: pipelines.map((p) => {
+        children: pipelinesWithSegments.map((p) => {
           // Сегменты трубопровода — из domain layer (единый источник истины).
           const own = segmentsOfPipeline(p.id);
           return {
@@ -190,6 +199,7 @@ export function LeftSidebar({
             onExportAreas={onExportAreas}
             canExportAreas={canExportAreas}
             onImportSample={onImportSample}
+            onApplyPipelineTool={onApplyPipelineTool}
           />
         )}
         <div className="left-sidebar__body">

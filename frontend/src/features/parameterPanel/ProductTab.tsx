@@ -3,10 +3,55 @@
  * с единицами измерения, профиль по годам (таблица) или столбцы с линией
  * ограничения (график) + tooltip.
  */
-import { useState } from 'react';
-import type { ProductProfile, ProductType } from '../../domain/types';
+import { useRef, useState } from 'react';
+import { AppIcon } from '../../components/AppIcon';
+import type { ProductProfile, ProductSeries, ProductType } from '../../domain/types';
 import { PanelSection } from './parts';
 import { PRODUCT_COLOR, PRODUCT_LABEL } from './productMeta';
+
+/** Тип CSV/Excel-подобной строки: год;продукт1;продукт2… (разделитель ; или ,) */
+function isNumeric(s: string): boolean {
+  return s.trim() !== '' && Number.isFinite(Number(s.replace(',', '.')));
+}
+
+/**
+ * Разбор табличного файла профиля в ряды по продуктам.
+ * Формат: первая строка — заголовок (Год;Нефть;Газ;…), далее строки «год;зн;зн…».
+ * Возвращает null, если файл не похож на таблицу профиля.
+ */
+function parseProfileTable(
+  text: string,
+  products: ReadonlyArray<{ product: ProductType; unit: string }>,
+): ProductSeries[] | null {
+  const lines = text
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter((l) => l !== '');
+  if (lines.length < 2) return null;
+  const split = (line: string) => line.split(/[;,]/).map((c) => c.trim());
+  const header = split(lines[0]);
+  // Заголовок должен иметь хотя бы одну непустую колонку кроме первой.
+  if (header.length < 2) return null;
+  // Число колонок данных = продуктов (берём минимум из заголовка и списка).
+  const cols = Math.min(header.length - 1, products.length);
+  const rows: { year: number; values: number[] }[] = [];
+  for (const line of lines.slice(1)) {
+    const cells = split(line);
+    const year = Number(cells[0]);
+    if (!Number.isInteger(year)) continue;
+    const values: number[] = [];
+    for (let i = 1; i <= cols; i++) {
+      const raw = cells[i] ?? '';
+      values.push(isNumeric(raw) ? Number(raw.replace(',', '.')) : 0);
+    }
+    rows.push({ year, values });
+  }
+  if (rows.length === 0) return null;
+  return products.slice(0, cols).map((p, idx) => ({
+    product: p.product,
+    points: rows.map((r) => ({ year: r.year, value: r.values[idx] ?? 0 })),
+  }));
+}
 
 type View = 'table' | 'graph';
 
@@ -22,6 +67,10 @@ export function ProductTab({
   const [enabled, setEnabled] = useState<ProductType[]>(
     () => profile?.products.filter((p) => p.enabled).map((p) => p.product) ?? [],
   );
+  /** Ряды, загруженные из файла (перекрывают исходный профиль). null — исходные. */
+  const [importedSeries, setImportedSeries] = useState<ProductSeries[] | null>(null);
+  /** Скрытый input выбора файла для импорта профиля. */
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!profile) {
     return (
@@ -34,8 +83,64 @@ export function ProductTab({
   const toggleProduct = (p: ProductType) =>
     setEnabled((prev) => (prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]));
 
-  const activeSeries = profile.series.filter((s) => enabled.includes(s.product));
   const years = range(profile.startYear, profile.endYear);
+
+  /** Экспорт профиля в JSON-файл (все продукты, включая выключенные). */
+  const handleExport = () => {
+    const blob = new Blob([JSON.stringify(profile, null, 2)], {
+      type: 'application/json;charset=utf-8',
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `product-profile-${profile.startYear}-${profile.endYear}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    console.info('[profile] профиль продукции экспортирован');
+  };
+
+  /** Импорт профиля: JSON (полный профиль) или таблица CSV/TXT. */
+  const handleImportFile = async (file: File) => {
+    try {
+      const text = await file.text();
+      // 1. JSON — полный профиль или только массив рядов.
+      try {
+        const parsed: unknown = JSON.parse(text);
+        if (parsed && typeof parsed === 'object') {
+          const obj = parsed as { series?: unknown };
+          if (Array.isArray(obj.series)) {
+            setImportedSeries(obj.series as ProductSeries[]);
+            console.info('[profile] профиль импортирован из JSON');
+            return;
+          }
+        }
+      } catch {
+        // не JSON — пробуем таблицу
+      }
+      // 2. Таблица (год + колонки продуктов, разделитель ; или ,).
+      const series = parseProfileTable(text, profile.products);
+      if (series) {
+        setImportedSeries(series);
+        console.info('[profile] профиль импортирован из таблицы');
+        return;
+      }
+      console.warn('[profile] не удалось распознать файл профиля');
+    } catch (error) {
+      console.error('[profile] ошибка чтения файла:', error);
+    }
+  };
+
+  /** Сбросить импортированные данные (вернуться к исходному профилю). */
+  const handleReset = () => setImportedSeries(null);
+
+  // Ряды для отображения: импортированные (если есть) либо исходные.
+  const baseSeries = importedSeries ?? profile.series;
+  const shownProfile: ProductProfile = importedSeries
+    ? { ...profile, series: importedSeries }
+    : profile;
+  const shownActive = baseSeries.filter((s) => enabled.includes(s.product));
 
   return (
     <>
@@ -89,11 +194,58 @@ export function ProductTab({
         ))}
       </div>
 
-      <PanelSection title={`Профиль по датам · ${profile.startYear}–${profile.endYear}`}>
+      <PanelSection
+        title={`Профиль по датам · ${profile.startYear}–${profile.endYear}`}
+        grow
+        action={
+          <div className="pp-profile-actions">
+            {importedSeries && (
+              <button
+                type="button"
+                className="pp-add-btn pp-add-btn--ghost"
+                onClick={handleReset}
+                title="Вернуть исходный профиль"
+              >
+                Сбросить
+              </button>
+            )}
+            <button
+              type="button"
+              className="pp-add-btn"
+              onClick={() => fileInputRef.current?.click()}
+              title="Импортировать профиль (JSON или CSV)"
+            >
+              <AppIcon name="import" size={13} />
+              Импорт
+            </button>
+            <button
+              type="button"
+              className="pp-add-btn"
+              onClick={handleExport}
+              title="Экспортировать профиль в JSON"
+            >
+              <AppIcon name="export" size={13} />
+              Экспорт
+            </button>
+          </div>
+        }
+      >
+        {/* Скрытый выбор файла для импорта профиля */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".json,.csv,.txt,application/json,text/csv,text/plain"
+          style={{ display: 'none' }}
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) void handleImportFile(file);
+            e.target.value = ''; // позволить повторный выбор того же файла
+          }}
+        />
         {view === 'table' ? (
-          <ProfileTable profile={profile} series={activeSeries} years={years} />
+          <ProfileTable profile={shownProfile} series={shownActive} years={years} />
         ) : (
-          <ProfileGraph profile={profile} series={activeSeries} />
+          <ProfileGraph profile={shownProfile} series={shownActive} />
         )}
       </PanelSection>
     </>

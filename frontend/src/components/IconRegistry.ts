@@ -343,9 +343,10 @@ const ICONS: Record<IconName, IconDefinition> = {
     viewBox: '0 0 16 16',
     stroke: true,
     strokeWidth: 1.5,
-    dasharray: '2 2',
+    dasharray: '2.5 2.5',
     paths:
-      '<path d="M2 12c3-1 4-7 8-7h4"/><path d="M12 2l3 3-3 3" stroke-dasharray="none"/>',
+      // Пунктирная линия = «передача флюида без физической трубы»
+      '<path d="M1.5 8h9"/><path d="M10.5 5.5 13 8l-2.5 2.5" stroke-dasharray="none"/>',
   },
   close: {
     viewBox: '0 0 16 16',

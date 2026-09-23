@@ -8,8 +8,6 @@ import type { AreaExportFormat } from '../map/importAreas';
 import wellpadIcon from '../../assets/design/wellpad.png';
 import facilityIcon from '../../assets/design/facility.png';
 import deliveryPointIcon from '../../assets/design/delivery-point.png';
-import pipelineIcon from '../../assets/design/pipeline.png';
-import segmentIcon from '../../assets/design/segment.png';
 import teeIcon from '../../assets/design/tee.png';
 import tapIcon from '../../assets/design/tap.png';
 import './GraphToolbar.css';
@@ -19,8 +17,8 @@ export type GraphToolActionId =
   | 'create-wellpad'
   | 'create-facility'
   | 'create-delivery-point'
-  | 'create-pipeline-segment'
   | 'create-pipeline'
+  | 'create-logical-pipeline'
   | 'create-tap'
   | 'create-tee'
   | 'create-licence-area'
@@ -64,9 +62,12 @@ export const GRAPH_TOOL_GROUPS: readonly GraphToolGroup[] = [
   },
   {
     title: 'Трубопроводы',
+    // Здесь — ОТДЕЛЬНАЯ кнопка «Логический поток» (передача флюида без
+    // физического трубопровода). Карточка «Трубопровод» рендерится ОТДЕЛЬНО
+    // (PipelineSettingsPanel) — у неё свой выпадающий список флюида/класса,
+    // и она же выбирает инструмент рисования.
     tools: [
-      { id: 'create-pipeline', label: 'Трубопровод', icon: 'tree-pipeline', iconSrc: pipelineIcon },
-      { id: 'create-pipeline-segment', label: 'Сегмент', icon: 'flow-physical', iconSrc: segmentIcon },
+      { id: 'create-logical-pipeline', label: 'Логический поток', icon: 'flow-logical' },
     ],
   },
   {
@@ -116,6 +117,8 @@ export type GraphToolbarProps = {
   canExportAreas?: boolean;
   /** Импорт встроенного образца участков по URL (`/samples/…`) */
   onImportSample?: (url: string, areaIndex: number) => void;
+  /** «Применить» — включить инструмент «Трубопровод» безусловно (не toggle) */
+  onApplyPipelineTool?: () => void;
 };
 
 /**
@@ -134,6 +137,7 @@ export function GraphToolbar({
   onExportAreas,
   canExportAreas = false,
   onImportSample,
+  onApplyPipelineTool,
 }: GraphToolbarProps) {
   const showPipelineSettings = onFluidChange !== undefined || onPipelineClassChange !== undefined;
   return (
@@ -146,8 +150,22 @@ export function GraphToolbar({
             role="group"
             aria-label={group.title}
           >
-            <span className="graph-toolbar__group-title">{group.title}</span>
-            {/* Основные инструменты группы (не квадратные) — столбиком/в ряд. */}
+            {/* КАРТОЧКА «Трубопровод» (выпадающий список флюида/класса) —
+                идёт ПЕРВОЙ в группе, выше отдельной кнопки «Логический поток». */}
+            {group.title === 'Трубопроводы' && showPipelineSettings && fluid !== undefined && pipelineClass !== undefined && (
+              <PipelineSettingsPanel
+                fluid={fluid}
+                onFluidChange={(value) => onFluidChange?.(value)}
+                pipelineClass={pipelineClass}
+                onPipelineClassChange={(value) => onPipelineClassChange?.(value)}
+                onSelectTool={() => onAction?.('create-pipeline')}
+                onApplyTool={onApplyPipelineTool}
+                active={activeAction === 'create-pipeline'}
+              />
+            )}
+            {/* Основные инструменты группы (не квадратные) — столбиком/в ряд.
+                Группа без кнопок их не рисует. */}
+            {group.tools.some((tool) => !tool.square) && (
             <div
               className={`graph-toolbar__group-buttons${group.inline ? ' graph-toolbar__group-buttons--inline' : ''}`}
             >
@@ -179,10 +197,17 @@ export function GraphToolbar({
                       {tool.label && (
                         <span className="graph-toolbar__label">{tool.label}</span>
                       )}
+                      {/* Шеврон справа — как в макете выбора типа элемента */}
+                      <AppIcon
+                        name="chevron"
+                        size={12}
+                        className="graph-toolbar__chevron"
+                      />
                     </button>
                   );
                 })}
             </div>
+            )}
             {/* Ряд КВАДРАТНЫХ кнопок-действий (импорт / экспорт / примеры) —
                 отдельной строкой НИЖЕ основной кнопки группы. */}
             {(group.tools.some((tool) => tool.square) ||
@@ -220,16 +245,6 @@ export function GraphToolbar({
                   <SampleAreasMenu onImportSample={onImportSample} />
                 )}
               </div>
-            )}
-            {/* Панель настройки трубопровода (флюид + класс) — внутри группы
-                «Трубопроводы», как в макете «проектирование__трубопровод». */}
-            {group.title === 'Трубопроводы' && showPipelineSettings && fluid !== undefined && pipelineClass !== undefined && (
-              <PipelineSettingsPanel
-                fluid={fluid}
-                onFluidChange={(value) => onFluidChange?.(value)}
-                pipelineClass={pipelineClass}
-                onPipelineClassChange={(value) => onPipelineClassChange?.(value)}
-              />
             )}
           </div>
         ))}
