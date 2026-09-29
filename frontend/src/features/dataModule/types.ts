@@ -9,7 +9,7 @@ export type ObjectCategory = 'Объект добычи' | 'Площадной �
 
 export type ObjectTypeFilter = 'all' | 'wellpad' | 'facility' | 'pipeline' | 'node';
 
-export type ObjectStatus = 'Готов' | 'Проверить';
+export type ObjectStatus = 'Готов' | 'Проверить' | '';
 
 export type ModelObject = {
   id: string;
@@ -31,4 +31,22 @@ export type BatchEditParams = {
   period: string;
   condition: string;
   paramSource: string;
+};
+
+export type ProfileControlValue = {
+  year: number;
+  oil: string;
+  gas: string;
+  water: string;
+  source: string;
+};
+
+export type ConnectionItem = {
+  id: string;
+  from: string;
+  flowType: string;
+  to: string;
+  productClass: string;
+  period: string;
+  status: string;
 };

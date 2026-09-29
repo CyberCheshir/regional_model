@@ -23,11 +23,11 @@ import {
   type MapVertex,
 } from './drawingTypes';
 
-/** Счётчик уникальных vid для «висячих» концов ребёр (см. ниже). */
+/** Счётчик уникальных vid для «висячих» концов рёбер (стыков). */
 let vertexSeq = 0;
 function nextVertexVid(): string {
   vertexSeq += 1;
-  return `sv${vertexSeq}`;
+  return `joint-${vertexSeq}`;
 }
 
 /** Геометрия графа, доступная снапу (все координаты — мировые, м). */

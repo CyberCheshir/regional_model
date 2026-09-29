@@ -16,6 +16,7 @@ import {
   nodeIdFromVid,
   nodeToDrawVertex,
   sameVertex,
+  sanitizeSnapshot,
   type GraphSnapshot,
   type PipelineRecord,
   type ProjectSnapshotInput,
@@ -23,6 +24,12 @@ import {
 
 // Ре-экспорт для существующих потребителей (сохранённый публичный API модуля).
 export type { PipelineRecord, ProjectSnapshotInput };
+import {
+  matchName,
+  type PlatformImportItem,
+  type ProfileImportItem,
+  type ElevationImportItem,
+} from '../../domain';
 import { splitSegmentByTap } from './splitSegmentByTap';
 import { graphToGeoJSON, type GraphGeoJSON } from './graphExport';
 import { buildSavePayload, type MapSavePayload } from '../../api/mapSave';
@@ -42,6 +49,7 @@ import {
   type DrawTool,
   type DrawVertex,
   type DrawnSegment,
+  type DomainEntityAttributes,
   type DrainFluid,
   type PipelineClass,
   type LicenceArea,
@@ -273,6 +281,18 @@ type MapDrawingState = {
   renameArea: (id: string, label: string) => void;
   /** Переименовать сегмент трубопровода. */
   renameSegment: (id: string, label: string) => void;
+
+  /** Обновить общие параметры сущности в domain layer (владелец, состояние, период и т.д.). */
+  updateEntityParams: (id: string, params: DomainEntityAttributes) => void;
+  /** Групповое обновление параметров нескольких сущностей в domain layer. */
+  batchUpdateEntityParams: (ids: string[], params: DomainEntityAttributes) => void;
+
+  /** Применить координаты площадок («площадки.xlsx») */
+  applyPlatformCoordinates: (items: PlatformImportItem[]) => { updatedCount: number; createdCount: number };
+  /** Применить профили добычи/поставки («добыча-поставка.xlsx») */
+  applyEntityProfiles: (items: ProfileImportItem[]) => { updatedCount: number };
+  /** Применить высотные отметки и свойства трасс («параметры по длине трубопроводов.xlsx») */
+  applyPipelineElevations: (items: ElevationImportItem[]) => { updatedCount: number };
 
   /**
    * Заменить текущую модель снимком, загруженным из БД (сценарий).
@@ -1347,6 +1367,287 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
     [pushHistory],
   );
 
+  /** Обновить доменные параметры сущности (владелец, период, состояние, ЛУ). */
+  const updateEntityParams = useCallback(
+    (id: string, params: DomainEntityAttributes) => {
+      pushHistory();
+      setVertices((cur) =>
+        cur.map((v) =>
+          v.id === id
+            ? { ...v, ...params, attributes: { ...(v.attributes || {}), ...params } }
+            : v,
+        ),
+      );
+      setPipelines((cur) =>
+        cur.map((p) =>
+          p.id === id
+            ? { ...p, ...params, attributes: { ...(p.attributes || {}), ...params } }
+            : p,
+        ),
+      );
+      setSegments((cur) =>
+        cur.map((s) =>
+          s.id === id
+            ? { ...s, ...params, attributes: { ...(s.attributes || {}), ...params } }
+            : s,
+        ),
+      );
+      setTaps((cur) =>
+        cur.map((t) =>
+          t.id === id
+            ? { ...t, ...params, attributes: { ...(t.attributes || {}), ...params } }
+            : t,
+        ),
+      );
+    },
+    [pushHistory],
+  );
+
+  /** Групповое обновление параметров сущностей в доменном слое. */
+  const batchUpdateEntityParams = useCallback(
+    (ids: string[], params: DomainEntityAttributes) => {
+      if (ids.length === 0) return;
+      const idSet = new Set(ids);
+      pushHistory();
+      setVertices((cur) =>
+        cur.map((v) =>
+          idSet.has(v.id)
+            ? { ...v, ...params, attributes: { ...(v.attributes || {}), ...params } }
+            : v,
+        ),
+      );
+      setPipelines((cur) =>
+        cur.map((p) =>
+          idSet.has(p.id)
+            ? { ...p, ...params, attributes: { ...(p.attributes || {}), ...params } }
+            : p,
+        ),
+      );
+      setSegments((cur) =>
+        cur.map((s) =>
+          idSet.has(s.id)
+            ? { ...s, ...params, attributes: { ...(s.attributes || {}), ...params } }
+            : s,
+        ),
+      );
+      setTaps((cur) =>
+        cur.map((t) =>
+          idSet.has(t.id)
+            ? { ...t, ...params, attributes: { ...(t.attributes || {}), ...params } }
+            : t,
+        ),
+      );
+    },
+    [pushHistory],
+  );
+
+  /** Применить координаты площадок («площадки.xlsx») */
+  const applyPlatformCoordinates = useCallback(
+    (items: PlatformImportItem[]): { updatedCount: number; createdCount: number } => {
+      pushHistory();
+      let updatedCount = 0;
+      let createdCount = 0;
+
+      setVertices((cur) => {
+        const next = [...cur];
+        for (const item of items) {
+          const cleanName = item.name.trim().toLowerCase();
+          const p = lngLatToGraphPoint(item.lng, item.lat);
+          const idx = next.findIndex((v) => matchName(v.label, item.name));
+          if (idx >= 0) {
+            next[idx] = {
+              ...next[idx],
+              lat: item.lat,
+              lng: item.lng,
+              x: p.x,
+              y: p.y,
+            };
+            updatedCount += 1;
+          } else if (!cleanName.includes('врезк')) {
+            const kind: VertexKind =
+              cleanName.includes('куст') || cleanName.includes('сбора')
+                ? 'wellpad'
+                : cleanName.includes('нпс') || cleanName.includes('укпг-3') || cleanName.includes('сдач')
+                  ? 'delivery-point'
+                  : 'facility';
+            const isBox = kind === 'wellpad';
+            const size = DEFAULT_VERTEX_SIZE[kind];
+            next.push({
+              id: nextId(kind),
+              uid: newUid(),
+              kind,
+              label: item.name.trim(),
+              lat: item.lat,
+              lng: item.lng,
+              x: p.x,
+              y: p.y,
+              w: isBox ? size.w : undefined,
+              h: isBox ? size.h : undefined,
+            });
+            createdCount += 1;
+          }
+        }
+        return next;
+      });
+
+      setTaps((cur) => {
+        const next = [...cur];
+        for (const item of items) {
+          if (item.name.toLowerCase().includes('врезк')) {
+            const p = lngLatToGraphPoint(item.lng, item.lat);
+            if (next.length > 0) {
+              next[0] = { ...next[0], lat: item.lat, lng: item.lng, x: p.x, y: p.y };
+              updatedCount += 1;
+            }
+          }
+        }
+        return next;
+      });
+
+      return { updatedCount, createdCount };
+    },
+    [pushHistory],
+  );
+
+  /** Применить профили добычи/поставки («добыча-поставка.xlsx») */
+  const applyEntityProfiles = useCallback(
+    (items: ProfileImportItem[]): { updatedCount: number } => {
+      pushHistory();
+      let updatedCount = 0;
+
+      // 1. Обновляем вершины (кусты, площадки)
+      setVertices((cur) =>
+        cur.map((v) => {
+          const match = items.find((it) => matchName(it.entityName, v.label));
+          if (!match) return v;
+          updatedCount += 1;
+          return {
+            ...v,
+            period: match.period,
+            source: 'Импорт (добыча-поставка.xlsx)',
+            attributes: {
+              ...(v.attributes || {}),
+              productProfile: match.profile,
+              period: match.period,
+              source: 'Импорт (добыча-поставка.xlsx)',
+              supplyProfiles: match.rawRows,
+            },
+          };
+        }),
+      );
+
+      // 2. Обновляем трубопроводы
+      const pipeMatchMap = new Map<string, ProfileImportItem>();
+      const pipeFluidMap = new Map<string, DrainFluid>();
+
+      const nextPipelines = pipelinesRef.current.map((p) => {
+        const match = items.find((it) => matchName(it.entityName, p.label));
+        if (!match) return p;
+        updatedCount += 1;
+        pipeMatchMap.set(p.id, match);
+        const fluid = toDrainFluid(match.primaryFluid || 'oil');
+        pipeFluidMap.set(p.id, fluid);
+
+        return {
+          ...p,
+          fluid,
+          period: match.period,
+          source: 'Импорт (добыча-поставка.xlsx)',
+          attributes: {
+            ...(p.attributes || {}),
+            productProfile: match.profile,
+            period: match.period,
+            source: 'Импорт (добыча-поставка.xlsx)',
+            supplyProfiles: match.rawRows,
+          },
+        };
+      });
+
+      setPipelines(nextPipelines);
+      pipelinesRef.current = nextPipelines;
+
+      // 3. Обновляем сегменты: сегменты берут данные своего трубопровода или по собственному имени
+      setSegments((cur) =>
+        cur.map((s) => {
+          const match =
+            (s.pipelineId ? pipeMatchMap.get(s.pipelineId) : undefined) ||
+            items.find((it) => matchName(it.entityName, s.label));
+          if (!match) return s;
+
+          const fluid =
+            (s.pipelineId ? pipeFluidMap.get(s.pipelineId) : undefined) ||
+            toDrainFluid(match.primaryFluid || 'oil');
+
+          return {
+            ...s,
+            fluid,
+            period: match.period,
+            source: 'Импорт (добыча-поставка.xlsx)',
+            attributes: {
+              ...(s.attributes || {}),
+              productProfile: match.profile,
+              period: match.period,
+              source: 'Импорт (добыча-поставка.xlsx)',
+              supplyProfiles: match.rawRows,
+            },
+          };
+        }),
+      );
+
+      return { updatedCount };
+    },
+    [pushHistory],
+  );
+
+  /** Применить высотные отметки и параметры трасс («параметры по длине трубопроводов.xlsx») */
+  const applyPipelineElevations = useCallback(
+    (items: ElevationImportItem[]): { updatedCount: number } => {
+      pushHistory();
+      let updatedCount = 0;
+
+      const pipeMatchMap = new Map<string, ElevationImportItem>();
+
+      const nextPipelines = pipelinesRef.current.map((p) => {
+        const match = items.find((it) => matchName(it.pipelineName, p.label));
+        if (!match) return p;
+        updatedCount += 1;
+        pipeMatchMap.set(p.id, match);
+        return {
+          ...p,
+          attributes: {
+            ...(p.attributes || {}),
+            elevationProfile: match.points,
+            elevationStats: match.stats,
+            roughness_mm: match.stats.avgRoughnessMm,
+          },
+        };
+      });
+
+      setPipelines(nextPipelines);
+      pipelinesRef.current = nextPipelines;
+
+      setSegments((cur) =>
+        cur.map((s) => {
+          const match =
+            (s.pipelineId ? pipeMatchMap.get(s.pipelineId) : undefined) ||
+            items.find((it) => matchName(it.pipelineName, s.label));
+          if (!match || match.stats.avgRoughnessMm == null) return s;
+
+          return {
+            ...s,
+            attributes: {
+              ...(s.attributes || {}),
+              roughness_mm: match.stats.avgRoughnessMm,
+            },
+          };
+        }),
+      );
+
+      return { updatedCount };
+    },
+    [pushHistory],
+  );
+
   /** Переместить одну вершину участка (индекс pointIndex) в мировую точку. */
   const moveAreaPoint = useCallback((areaId: string, pointIndex: number, x: number, y: number) => {
     const geo = graphPointToLngLat(x, y);
@@ -1419,8 +1720,9 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
    * Загрузить сценарий из снимка БД в domain layer: восстановить объекты,
    * узлы (концы рёбер/тройники/врезки), сегменты, трубопроводы и участки.
    */
-  const loadSnapshot = useCallback((snapshot: ProjectSnapshotInput) => {
+  const loadSnapshot = useCallback((rawSnapshot: ProjectSnapshotInput) => {
     pushHistory();
+    const snapshot = sanitizeSnapshot(rawSnapshot);
 
     // 1. Объекты (vertices).
     const nextVertices: MapVertex[] = snapshot.facilities.map((f) => {
@@ -1575,6 +1877,11 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
       renameTap,
       renameArea,
       renameSegment,
+      updateEntityParams,
+      batchUpdateEntityParams,
+      applyPlatformCoordinates,
+      applyEntityProfiles,
+      applyPipelineElevations,
       scaleArea,
       rotateArea,
       mergeSegments,
@@ -1635,6 +1942,11 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
       renameTap,
       renameArea,
       renameSegment,
+      updateEntityParams,
+      batchUpdateEntityParams,
+      applyPlatformCoordinates,
+      applyEntityProfiles,
+      applyPipelineElevations,
       scaleArea,
       rotateArea,
       mergeSegments,

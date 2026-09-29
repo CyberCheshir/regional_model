@@ -4,7 +4,7 @@ import { PanelFooterHint } from './PanelFooterHint';
 import { ObjectTree } from './ObjectTree';
 import { GraphToolbar, type GraphToolActionId } from './GraphToolbar';
 import { CollapsibleSection } from '../../components/panel/CollapsibleSection';
-import { mockTreeData } from './mockData';
+import { buildElementGroups } from '../../domain/elementGroups';
 import { useMapDrawing } from '../map/mapDrawing';
 import type { DrainFluid, PipelineClass } from '../map/drawingTypes';
 import type { AreaExportFormat } from '../map/importAreas';
@@ -100,81 +100,12 @@ export function LeftSidebar({
     else renameVertex(node.id, nextLabel);
   };
 
-  // Спроектированные элементы раскладываются по группам дерева:
-  // вершины-объекты (кусты/УПН/точки) и рёбра (трубопроводы).
-  const treeGroups = useMemo<ObjectTreeData[]>(() => {
-    const groups: ObjectTreeData[] = [...mockTreeData];
-
-    const byKind = (kind: TreeNodeData['kind']) =>
-      vertices.filter((v) => v.kind === kind).map((v) => ({
-        id: v.id,
-        label: v.label,
-        kind: v.kind,
-      }));
-
-    const wellpads = byKind('wellpad');
-    const facilities = byKind('facility');
-    const deliveryPoints = byKind('delivery-point');
-    const tapNodes = (taps || []).map((t) => ({
-      id: t.id,
-      label: t.label,
-      kind: 'node' as const,
-      subType: 'Врезка',
-    }));
-
-    if (wellpads.length > 0) {
-      groups.push({ id: 'group-wellpads', label: 'Объекты добычи', children: wellpads });
-    }
-    if (facilities.length > 0) {
-      groups.push({ id: 'group-facilities', label: 'Объекты подготовки', children: facilities });
-    }
-    if (deliveryPoints.length > 0) {
-      groups.push({ id: 'group-delivery', label: 'Точки поставки', children: deliveryPoints });
-    }
-    if (tapNodes.length > 0) {
-      groups.push({ id: 'group-taps', label: 'Врезки', children: tapNodes });
-    }
-    // Трубопроводы БЕЗ сегментов в дерево не попадают: запись существует,
-    // только пока у неё есть хотя бы одно ребро (0 сегментов → удаляем из
-    // группы элементов).
-    const pipelinesWithSegments = pipelines.filter(
-      (p) => segmentsOfPipeline(p.id).length > 0,
-    );
-    if (pipelinesWithSegments.length > 0) {
-      groups.push({
-        id: 'group-pipelines',
-        label: 'Трубопроводы',
-        children: pipelinesWithSegments.map((p) => {
-          // Сегменты трубопровода — из domain layer (единый источник истины).
-          const own = segmentsOfPipeline(p.id);
-          return {
-            id: p.id,
-            label: p.label,
-            kind: 'pipeline' as const,
-            // Актуальное количество сегментов — считаем по факту (own.length),
-            // а НЕ по сохранённому p.segmentCount (он может устареть при
-            // удалении/разрезании сегментов).
-            subType: segmentCountLabel(own.length),
-            // Сегменты трубопровода — дочерние узлы со СВОИМИ именами.
-            // Имя закреплено за сегментом (задано при создании/пользователем)
-            // и НЕ пересчитывается по позиции — объединение в трубопровод его не меняет.
-            // Fallback — только для старых снимков без имени.
-            children: own.map((seg) => ({
-              id: seg.id,
-              label: seg.label || 'Сегмент',
-              kind: 'segment' as const,
-            })),
-          };
-        }),
-      });
-    }
-    return groups;
-
-    /** Сегменты, принадлежащие трубопроводу (в устойчивом порядке). */
-    function segmentsOfPipeline(pipelineId: string) {
-      return segments.filter((s) => s.pipelineId === pipelineId);
-    }
-  }, [pipelines, vertices, segments, taps]);
+  // Спроектированные элементы раскладываются по группам дерева единым
+  // построителем (тот же источник использует вкладка «Объекты»).
+  const treeGroups = useMemo<ObjectTreeData[]>(
+    () => buildElementGroups({ vertices, pipelines, segments, taps }),
+    [pipelines, vertices, segments, taps],
+  );
   // Fallback: если видимость не контролируется извне — локальное состояние
   const [localHiddenIds, setLocalHiddenIds] = useState<ReadonlySet<string>>(new Set());
   const effectiveHidden = hiddenIds ?? localHiddenIds;
@@ -234,12 +165,4 @@ export function LeftSidebar({
   );
 }
 
-/** Подпись количества сегментов трубопровода (с учётом склонения). */
-function segmentCountLabel(count: number): string {
-  const mod10 = count % 10;
-  const mod100 = count % 100;
-  let word = 'сегментов';
-  if (mod10 === 1 && mod100 !== 11) word = 'сегмент';
-  else if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) word = 'сегмента';
-  return `${count} ${word}`;
-}
+

@@ -22,6 +22,7 @@ import {
   type AnalyticsData,
   type AnalyticsItem,
   type NodeType,
+  type ValidationItem,
   NODE_TYPE_LABELS,
 } from './schemas';
 
@@ -40,6 +41,7 @@ export type {
   AnalyticsData,
   AnalyticsItem,
   NodeType,
+  ValidationItem,
 };
 
 export { NODE_TYPE_LABELS };

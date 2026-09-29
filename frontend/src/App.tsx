@@ -22,114 +22,9 @@ import {
   downloadAreasFile,
   type AreaExportFormat,
 } from './features/map/importAreas';
-import type { EntityDetails, SelectedEntity } from './domain/types';
-import type { DrawTool, MapTap, MapVertex } from './features/map/drawingTypes';
-import type { PipelineRecord } from './features/map/mapDrawing';
-
-/**
- * Карточка ЛОКАЛЬНОГО (ещё не сохранённого) объекта из domain-состояния.
- * Нужна, чтобы инспектор работал для нарисованных на карте объектов БЕЗ
- * запроса к backend (иначе GET /api/entities/<local-id>/ даёт 404).
- * Возвращает null, если id не найден среди локальных сущностей.
- */
-function buildLocalEntityDetails(
-  id: string,
-  vertices: MapVertex[],
-  pipelines: PipelineRecord[],
-  segments: Array<{ id: string; label?: string; pipelineId: string | null; fluid: string }> = [],
-  taps: MapTap[] = [],
-): EntityDetails | null {
-  const tap = taps.find((t) => t.id === id || `tap-${t.id}` === id);
-  if (tap) {
-    return {
-      id: tap.id,
-      label: tap.label || 'Врезка',
-      kind: 'node',
-      subType: 'Врезка',
-      status: 'running',
-      licenseArea: '—',
-      owner: '—',
-      modelStatus: [
-        { label: 'Тип узла', value: 'Врезка', ok: true },
-        { label: 'Трубопровод-носитель', value: tap.edgeId ? 'привязана' : 'не привязана', ok: !!tap.edgeId },
-        { label: 'Позиция вдоль трубы', value: `${Math.round(tap.t * 100)}%`, ok: true },
-      ],
-      outgoing: [],
-      incoming: [],
-    };
-  }
-  const segment = segments.find((s) => s.id === id);
-  if (segment) {
-    return {
-      id: segment.id,
-      label: segment.label || 'Сегмент',
-      kind: 'segment',
-      subType: 'Сегмент трубопровода',
-      status: 'running',
-      licenseArea: '—',
-      owner: '—',
-      modelStatus: [
-        { label: 'Трубопровод', value: segment.pipelineId ? 'в составе' : 'отдельный', ok: !!segment.pipelineId },
-      ],
-      outgoing: [],
-      incoming: [],
-    };
-  }
-  const vertex = vertices.find((v) => v.id === id);
-  if (vertex) {
-    return {
-      id: vertex.id,
-      label: vertex.label,
-      kind: vertex.kind,
-      status: 'running',
-      licenseArea: '—',
-      owner: '—',
-      modelStatus: [
-        { label: 'Система сбора', value: 'не сохранена', ok: false },
-        { label: 'Профиль добычи', value: 'не задан', ok: false },
-        { label: 'Результаты ГР', value: 'отсутствуют', ok: false },
-      ],
-      outgoing: [],
-      incoming: [],
-    };
-  }
-  const pipeline = pipelines.find((p) => p.id === id);
-  if (pipeline) {
-    // Кол-во сегментов — ПО ФАКТУ из domain layer (не хранится в записи).
-    const count = segments.filter((s) => s.pipelineId === pipeline.id).length;
-    return {
-      id: pipeline.id,
-      label: pipeline.label,
-      kind: 'pipeline',
-      status: 'running',
-      licenseArea: '—',
-      owner: '—',
-      modelStatus: [
-        { label: 'Топология', value: `${count} сегментов`, ok: count > 0 },
-      ],
-      outgoing: [],
-      incoming: [],
-    };
-  }
-  if (id.startsWith('drawv-') || id.startsWith('node-')) {
-    return {
-      id,
-      label: 'Стык трубопровода',
-      kind: 'node',
-      subType: 'Стык трубопровода',
-      status: 'running',
-      licenseArea: '—',
-      owner: '—',
-      modelStatus: [
-        { label: 'Тип узла', value: 'Стык трубопровода', ok: true },
-        { label: 'Состояние', value: 'подключён', ok: true },
-      ],
-      outgoing: [],
-      incoming: [],
-    };
-  }
-  return null;
-}
+import type { SelectedEntity } from './domain/types';
+import { buildEntityDetails, downloadDomainModel, parseDomainModelFile } from './domain';
+import type { DrawTool } from './features/map/drawingTypes';
 
 /** Сопоставление категории узла дерева доменному kind выбранной сущности. */
 function nodeKindToEntityKind(node: TreeNodeData): SelectedEntity['kind'] {
@@ -256,7 +151,13 @@ function App() {
    * запрос к backend НЕ отправляем — иначе в консоли 404.
    */
   const localEntity = selectedId
-    ? buildLocalEntityDetails(selectedId, drawVertices, drawPipelines, drawSegments, drawTaps)
+    ? buildEntityDetails({
+        id: selectedId,
+        vertices: drawVertices,
+        pipelines: drawPipelines,
+        segments: drawSegments,
+        taps: drawTaps,
+      })
     : null;
 
   /** Детали выбранного объекта — domain-state через react-query (Этап 9.3).
@@ -374,36 +275,20 @@ function App() {
   /** Скрытый input выбора файла — для импорта МОДЕЛИ (JSON). */
   const modelInputRef = useRef<HTMLInputElement>(null);
 
-  /** Экспорт всей модели в JSON-файл (объекты/сегменты/трубопроводы/участки). */
+  /** Экспорт всей модели в JSON-файл (объекты/сегменты/трубопроводы/участки) через domain layer. */
   const handleExportModel = () => {
-    const model = exportModel();
-    const fileName = 'regional-model.json';
-    const blob = new Blob([JSON.stringify(model, null, 2)], {
-      type: 'application/json;charset=utf-8',
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    console.info(`[model] экспортирована модель: ${fileName}`);
+    downloadDomainModel(exportModel());
+    console.info('[model] модель экспортирована через domain layer');
   };
 
   /** Импорт модели из JSON-файла (снимок проекта → domain layer). */
   const handleImportModelFile = async (file: File) => {
     try {
-      const parsed = JSON.parse(await file.text());
-      if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.facilities)) {
-        console.warn('[model] в файле нет модели (ожидается { facilities, nodes, … })');
-        return;
-      }
-      loadSnapshot(parsed);
+      const snapshot = await parseDomainModelFile(file);
+      loadSnapshot(snapshot);
       setDrawTool('none');
       selectEntity(null);
-      console.info('[model] модель импортирована');
+      console.info('[model] модель импортирована через domain layer');
     } catch (error) {
       console.error('[model] не удалось прочитать файл модели:', error);
     }
@@ -577,7 +462,14 @@ function App() {
           >
             <MapDiagramModal
               isOpen={diagramEntityId !== null}
-              entityName={findTreeNode(diagramEntityId ?? '')?.label ?? ''}
+              entityName={
+                drawVertices.find((v) => v.id === diagramEntityId)?.label ??
+                drawPipelines.find((p) => p.id === diagramEntityId)?.label ??
+                drawSegments.find((s) => s.id === diagramEntityId)?.label ??
+                drawTaps.find((t) => t.id === diagramEntityId)?.label ??
+                findTreeNode(diagramEntityId ?? '')?.label ??
+                ''
+              }
               config={diagramConfig}
               onChange={setDiagramConfig}
               onClose={closeDiagram}

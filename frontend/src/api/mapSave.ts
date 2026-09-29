@@ -6,7 +6,7 @@ import type {
   MapTap,
   MapVertex,
 } from '../features/map/drawingTypes';
-import type { PipelineRecord } from '../features/map/mapDrawingHelpers';
+import { cleanNodeId, type PipelineRecord } from '../features/map/mapDrawingHelpers';
 import { graphPointToLngLat } from '../features/map/geo';
 import { newUid } from '../features/map/drawingTypes';
 
@@ -100,9 +100,10 @@ export type MapSaveInput = {
   projectName?: string;
 };
 
-/** Локальный id узла для конца ребра — стабилен для одного снимка. */
+/** Локальный id узла для конца ребра — стабилен для одного снимка, очищен от временных snap-префиксов и sv-нотаций. */
 function nodeKey(v: DrawVertex): string {
-  return v.vid || `anon-${v.x.toFixed(3)}-${v.y.toFixed(3)}`;
+  const raw = v.vid || `anon-${v.x.toFixed(3)}-${v.y.toFixed(3)}`;
+  return cleanNodeId(raw);
 }
 
 /**
@@ -214,7 +215,7 @@ export function buildSavePayload(input: MapSaveInput): MapSavePayload {
   // врезка «на вершине» без разреза и т.п.). Иначе такие точки терялись,
   // т.к. выше узлы создавались только по концам сегментов.
   const addTapNode = (t: MapTap) => {
-    const key = `tap-${t.id}`;
+    const key = cleanNodeId(t.id.startsWith('tap-') ? t.id : `tap-${t.id}`);
     if (nodesByKey.has(key)) return;
     nodesByKey.set(key, {
       id: key,
@@ -243,7 +244,7 @@ export function buildSavePayload(input: MapSaveInput): MapSavePayload {
   // Тройники хранятся как фитинги (fittings) — сохраняем их координаты.
   const fittingsInput = input.fittings ?? [];
   for (const f of fittingsInput) {
-    const key = `tee-${f.id}`;
+    const key = cleanNodeId(f.id.startsWith('tee-') ? f.id : `tee-${f.id}`);
     if (nodesByKey.has(key)) continue;
     const geo = graphPointToLngLat(f.x, f.y);
     nodesByKey.set(key, {

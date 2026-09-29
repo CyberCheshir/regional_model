@@ -1,11 +1,22 @@
-import { useState } from 'react';
-import { CONNECTIONS_DATA } from './mockData';
+import { useMemo, useState } from 'react';
+import { useMapDrawing } from '../map/mapDrawing';
+import { buildModelConnections } from '../../domain/elementGroups';
 import './ConnectionsTab.css';
 
 export function ConnectionsTab() {
+  const { vertices, pipelines, segments, taps } = useMapDrawing();
   const [filterType, setFilterType] = useState<'all' | 'physical' | 'logical' | 'check'>('all');
 
-  const filteredConnections = CONNECTIONS_DATA.filter((conn) => {
+  const connections = useMemo(
+    () => buildModelConnections({ vertices, pipelines, segments, taps }),
+    [vertices, pipelines, segments, taps],
+  );
+
+  const physicalCount = connections.filter((c) => c.flowType !== 'Логический поток').length;
+  const logicalCount = connections.filter((c) => c.flowType === 'Логический поток').length;
+  const checkCount = connections.filter((c) => c.status === 'Проверить').length;
+
+  const filteredConnections = connections.filter((conn) => {
     if (filterType === 'physical' && conn.flowType === 'Логический поток') return false;
     if (filterType === 'logical' && conn.flowType !== 'Логический поток') return false;
     if (filterType === 'check' && conn.status !== 'Проверить') return false;
@@ -22,28 +33,28 @@ export function ConnectionsTab() {
             className={`connections-tab__pill${filterType === 'all' ? ' is-active' : ''}`}
             onClick={() => setFilterType('all')}
           >
-            Все связи ({CONNECTIONS_DATA.length})
+            Все связи ({connections.length})
           </button>
           <button
             type="button"
             className={`connections-tab__pill${filterType === 'physical' ? ' is-active' : ''}`}
             onClick={() => setFilterType('physical')}
           >
-            Физические трубы (3)
+            Физические трубы ({physicalCount})
           </button>
           <button
             type="button"
             className={`connections-tab__pill${filterType === 'logical' ? ' is-active' : ''}`}
             onClick={() => setFilterType('logical')}
           >
-            Логические потоки (1)
+            Логические потоки ({logicalCount})
           </button>
           <button
             type="button"
             className={`connections-tab__pill${filterType === 'check' ? ' is-active' : ''}`}
             onClick={() => setFilterType('check')}
           >
-            Требуют проверки (1)
+            Требуют проверки ({checkCount})
           </button>
         </div>
       </div>
@@ -66,25 +77,34 @@ export function ConnectionsTab() {
                 </tr>
               </thead>
               <tbody>
-                {filteredConnections.map((conn) => (
-                  <tr key={conn.id}>
-                    <td className="connections-tab__name">{conn.from}</td>
-                    <td>{conn.flowType}</td>
-                    <td className="connections-tab__name">{conn.to}</td>
-                    <td>{conn.productClass}</td>
-                    <td>{conn.period}</td>
-                    <td>
-                      <span
-                        className={`connections-tab__status-badge${conn.status === 'Проверить'
-                            ? ' connections-tab__status-badge--check'
-                            : ''
+                {filteredConnections.length > 0 ? (
+                  filteredConnections.map((conn) => (
+                    <tr key={conn.id}>
+                      <td className="connections-tab__name">{conn.from}</td>
+                      <td>{conn.flowType}</td>
+                      <td className="connections-tab__name">{conn.to}</td>
+                      <td>{conn.productClass}</td>
+                      <td>{conn.period}</td>
+                      <td>
+                        <span
+                          className={`connections-tab__status-badge${
+                            conn.status === 'Проверить'
+                              ? ' connections-tab__status-badge--check'
+                              : ''
                           }`}
-                      >
-                        {conn.status}
-                      </span>
+                        >
+                          {conn.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} style={{ textAlign: 'center', padding: '32px 16px', color: '#64748b' }}>
+                      Связи отсутствуют в модели
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
@@ -95,40 +115,45 @@ export function ConnectionsTab() {
           <div className="connections-tab__eyebrow">КОНТРОЛЬ ТОПОЛОГИИ</div>
           <h2 className="connections-tab__heading">Проверка связанности графа</h2>
 
-          <div className="connections-tab__check-list">
-            <div className="connections-tab__check-item">
-              <span className="connections-tab__check-icon">✓</span>
-              <div>
-                <h4 className="connections-tab__check-title">Привязка концов труб к объектам</h4>
-                <p className="connections-tab__check-desc">
-                  Все 3 физических сегмента имеют чёткую привязку к кустам и площадкам подготовки.
-                </p>
+          {connections.length > 0 ? (
+            <div className="connections-tab__check-list">
+              <div className="connections-tab__check-item">
+                <span className="connections-tab__check-icon">✓</span>
+                <div>
+                  <h4 className="connections-tab__check-title">Привязка концов труб к объектам</h4>
+                  <p className="connections-tab__check-desc">
+                    Все физические сегменты имеют чёткую привязку к кустам и площадкам подготовки.
+                  </p>
+                </div>
               </div>
-            </div>
 
-            <div className="connections-tab__check-item">
-              <span className="connections-tab__check-icon connections-tab__check-icon--warn">
-                !
-              </span>
-              <div>
-                <h4 className="connections-tab__check-title">Согласованность периодов действия</h4>
-                <p className="connections-tab__check-desc">
-                  Для <strong>Газопровод 03</strong> начало эксплуатации (2028 г.) не совпадает со
-                  стартом целевого объекта (2026 г.). Рекомендуется проверить даты.
-                </p>
+              <div className="connections-tab__check-item">
+                <span className="connections-tab__check-icon connections-tab__check-icon--warn">
+                  !
+                </span>
+                <div>
+                  <h4 className="connections-tab__check-title">Согласованность периодов действия</h4>
+                  <p className="connections-tab__check-desc">
+                    Рекомендуется проверить даты начала эксплуатации смежных объектов.
+                  </p>
+                </div>
               </div>
-            </div>
 
-            <div className="connections-tab__check-item">
-              <span className="connections-tab__check-icon">✓</span>
-              <div>
-                <h4 className="connections-tab__check-title">Логические потоки без труб</h4>
-                <p className="connections-tab__check-desc">
-                  Конфликтов направления движения сырья не обнаружено.
-                </p>
+              <div className="connections-tab__check-item">
+                <span className="connections-tab__check-icon">✓</span>
+                <div>
+                  <h4 className="connections-tab__check-title">Логические потоки без труб</h4>
+                  <p className="connections-tab__check-desc">
+                    Конфликтов направления движения сырья не обнаружено.
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <p style={{ color: '#64748b', fontSize: '13px', margin: '16px 0' }}>
+              Топологические связи ещё не сформированы в модели.
+            </p>
+          )}
         </div>
       </div>
     </div>

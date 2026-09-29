@@ -204,6 +204,17 @@ export function newUid(): EntityUid {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
+/** Общие доменные атрибуты сущностей графа (владелец, период, состояние). */
+export type DomainEntityAttributes = {
+  owner?: string;
+  condition?: string;
+  period?: string;
+  source?: string;
+  status?: 'running' | 'warning' | 'stopped';
+  licenseArea?: string;
+  attributes?: Record<string, unknown>;
+};
+
 /** Спроектированный сегмент трубопровода (ребро). */
 export type DrawnSegment = {
   id: string;
@@ -218,6 +229,13 @@ export type DrawnSegment = {
   pipelineClass: PipelineClass;
   /** Имя сегмента (в дереве). Не задано — авто «Сегмент N» по порядку в трубе. */
   label?: string;
+  owner?: string;
+  condition?: string;
+  period?: string;
+  source?: string;
+  status?: 'running' | 'warning' | 'stopped';
+  licenseArea?: string;
+  attributes?: Record<string, unknown>;
 };
 
 /**
@@ -274,6 +292,12 @@ export type MapTap = {
   edgeId: string;
   /** Позиция вдоль ребра от from (0) к to (1) */
   t: number;
+  owner?: string;
+  condition?: string;
+  period?: string;
+  source?: string;
+  status?: 'running' | 'warning' | 'stopped';
+  licenseArea?: string;
 };
 
 /** Радиус серой вершины-тройника (мировые координаты). */
@@ -312,6 +336,13 @@ export type MapVertex = {
   w?: number;
   /** Высота прямоугольника (только для wellpad) */
   h?: number;
+  owner?: string;
+  condition?: string;
+  period?: string;
+  source?: string;
+  status?: 'running' | 'warning' | 'stopped';
+  licenseArea?: string;
+  attributes?: Record<string, unknown>;
 };
 
 /**

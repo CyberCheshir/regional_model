@@ -23,6 +23,13 @@ import type {
 export type PipelineRecord = {
   id: string;
   label: string;
+  owner?: string;
+  condition?: string;
+  period?: string;
+  source?: string;
+  status?: 'running' | 'warning' | 'stopped';
+  licenseArea?: string;
+  attributes?: Record<string, unknown>;
 };
 
 /** Входной снимок сценария для loadSnapshot (согласован с backend ProjectSnapshot). */
@@ -98,9 +105,59 @@ export function sameVertex(a: DrawVertex, b: DrawVertex): boolean {
   return Math.hypot(a.x - b.x, a.y - b.y) < 1e-6;
 }
 
-/** Извлечь id узла из vid вида `snap-<nodeId>` (или null). */
+/**
+ * Очистить id узла:
+ *  1. Убирает цепочки префиксов `snap-` (например `snap-snap-snap-...` -> чистый ID);
+ *  2. Убирает цепочки `tap-tap-tap-...` и `tee-tee-tee-...`, оставляя ровно один префикс;
+ *  3. Заменяет технический префикс `sv123` на понятный `joint-123`.
+ */
+export function cleanNodeId(rawId?: string | null): string {
+  if (!rawId) return '';
+  let s = rawId.trim();
+  s = s.replace(/^(snap-)+/, '');
+  s = s.replace(/^(tap-)+/, 'tap-');
+  s = s.replace(/^(tee-)+/, 'tee-');
+  s = s.replace(/^sv(\d+)$/, 'joint-$1');
+  return s;
+}
+
+/**
+ * Нормализовать весь снимок проекта (snapshot), чтобы устранить
+ * накопленные префиксы `snap-snap-...` и устаревшие технические имена `sv...`
+ * как в узлах, так и в сегментах.
+ */
+export function sanitizeSnapshot(snapshot: ProjectSnapshotInput): ProjectSnapshotInput {
+  const nodes = (snapshot.nodes || []).map((n) => {
+    const cid = cleanNodeId(n.id);
+    const numMatch = cid.match(/(\d+)$/);
+    const fallbackName = numMatch ? `Стык трубопровода ${numMatch[1]}` : 'Стык трубопровода';
+    const isCleanName = n.name && !n.name.includes('snap-') && !n.name.startsWith('sv');
+    return {
+      ...n,
+      id: cid,
+      name: isCleanName ? n.name : fallbackName,
+      bound_tap_id: n.bound_tap_id ? cleanNodeId(n.bound_tap_id) : n.bound_tap_id,
+      bound_fitting_id: n.bound_fitting_id ? cleanNodeId(n.bound_fitting_id) : n.bound_fitting_id,
+    };
+  });
+
+  const segments = (snapshot.segments || []).map((s) => ({
+    ...s,
+    start_node_id: cleanNodeId(s.start_node_id),
+    end_node_id: cleanNodeId(s.end_node_id),
+  }));
+
+  return {
+    ...snapshot,
+    nodes,
+    segments,
+  };
+}
+
+/** Извлечь id узла из vid вида `snap-<nodeId>` (или null), полностью очищая от накопившихся префиксов. */
 export function nodeIdFromVid(v: DrawVertex): string | null {
-  return v.vid.startsWith('snap-') ? v.vid.slice('snap-'.length) : null;
+  if (!v.vid) return null;
+  return cleanNodeId(v.vid);
 }
 
 /**
@@ -113,10 +170,10 @@ export function bindEndByNode(
 ): DrawVertex {
   if (!node) return v;
   if (node.bound_tap_id) {
-    return { type: 'tap', vid: v.vid, x: v.x, y: v.y, tapId: node.bound_tap_id };
+    return { type: 'tap', vid: v.vid, x: v.x, y: v.y, tapId: cleanNodeId(node.bound_tap_id) };
   }
   if (node.bound_fitting_id) {
-    return { type: 'fitting', vid: v.vid, x: v.x, y: v.y, fittingId: node.bound_fitting_id };
+    return { type: 'fitting', vid: v.vid, x: v.x, y: v.y, fittingId: cleanNodeId(node.bound_fitting_id) };
   }
   return v;
 }
@@ -137,13 +194,15 @@ export function nodeToDrawVertex(
 ): DrawVertex | null {
   if (!node) return null;
   const world = lngLatToGraphPoint(node.lng, node.lat);
-  const vid = `snap-${node.id}`;
+  // Нормализуем id, чтобы префикс snap- и sv- не накапливались при повторных сохранениях/загрузках
+  const cleanId = cleanNodeId(node.id);
+  const vid = `snap-${cleanId}`;
 
   const isTap = node.kind === 'tap' || node.node_type === 'tap';
   if (isTap) {
-    if (!tapsById.has(node.id)) {
-      tapsById.set(node.id, {
-        id: node.id,
+    if (!tapsById.has(cleanId)) {
+      tapsById.set(cleanId, {
+        id: cleanId,
         // uid из снимка; старый файл без uid — генерируем новый.
         uid: node.uid ?? newUid(),
         nodeType: 'tap',
@@ -163,13 +222,13 @@ export function nodeToDrawVertex(
         t: node.tap_t ?? 0.5,
       });
     }
-    return { type: 'tap', vid, x: world.x, y: world.y, tapId: node.id };
+    return { type: 'tap', vid, x: world.x, y: world.y, tapId: cleanId };
   }
 
   if (node.kind === 'tee') {
-    if (!fittingsById.has(node.id)) {
-      fittingsById.set(node.id, {
-        id: node.id,
+    if (!fittingsById.has(cleanId)) {
+      fittingsById.set(cleanId, {
+        id: cleanId,
         uid: node.uid ?? newUid(),
         label: node.name,
         x: world.x,
@@ -178,7 +237,7 @@ export function nodeToDrawVertex(
         lat: node.lat,
       });
     }
-    return { type: 'fitting', vid, x: world.x, y: world.y, fittingId: node.id };
+    return { type: 'fitting', vid, x: world.x, y: world.y, fittingId: cleanId };
   }
 
   // Обычная вершина: если привязана к объекту — как стык к его границе.

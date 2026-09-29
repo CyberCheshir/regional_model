@@ -3,55 +3,10 @@
  * с единицами измерения, профиль по годам (таблица) или столбцы с линией
  * ограничения (график) + tooltip.
  */
-import { useRef, useState } from 'react';
-import { AppIcon } from '../../components/AppIcon';
+import { useEffect, useMemo, useState } from 'react';
 import type { ProductProfile, ProductSeries, ProductType } from '../../domain/types';
 import { PanelSection } from './parts';
 import { PRODUCT_COLOR, PRODUCT_LABEL } from './productMeta';
-
-/** Тип CSV/Excel-подобной строки: год;продукт1;продукт2… (разделитель ; или ,) */
-function isNumeric(s: string): boolean {
-  return s.trim() !== '' && Number.isFinite(Number(s.replace(',', '.')));
-}
-
-/**
- * Разбор табличного файла профиля в ряды по продуктам.
- * Формат: первая строка — заголовок (Год;Нефть;Газ;…), далее строки «год;зн;зн…».
- * Возвращает null, если файл не похож на таблицу профиля.
- */
-function parseProfileTable(
-  text: string,
-  products: ReadonlyArray<{ product: ProductType; unit: string }>,
-): ProductSeries[] | null {
-  const lines = text
-    .split(/\r?\n/)
-    .map((l) => l.trim())
-    .filter((l) => l !== '');
-  if (lines.length < 2) return null;
-  const split = (line: string) => line.split(/[;,]/).map((c) => c.trim());
-  const header = split(lines[0]);
-  // Заголовок должен иметь хотя бы одну непустую колонку кроме первой.
-  if (header.length < 2) return null;
-  // Число колонок данных = продуктов (берём минимум из заголовка и списка).
-  const cols = Math.min(header.length - 1, products.length);
-  const rows: { year: number; values: number[] }[] = [];
-  for (const line of lines.slice(1)) {
-    const cells = split(line);
-    const year = Number(cells[0]);
-    if (!Number.isInteger(year)) continue;
-    const values: number[] = [];
-    for (let i = 1; i <= cols; i++) {
-      const raw = cells[i] ?? '';
-      values.push(isNumeric(raw) ? Number(raw.replace(',', '.')) : 0);
-    }
-    rows.push({ year, values });
-  }
-  if (rows.length === 0) return null;
-  return products.slice(0, cols).map((p, idx) => ({
-    product: p.product,
-    points: rows.map((r) => ({ year: r.year, value: r.values[idx] ?? 0 })),
-  }));
-}
 
 type View = 'table' | 'graph';
 
@@ -64,13 +19,23 @@ export function ProductTab({
   showSideAxis?: boolean;
 }) {
   const [view, setView] = useState<View>('table');
-  const [enabled, setEnabled] = useState<ProductType[]>(
-    () => profile?.products.filter((p) => p.enabled).map((p) => p.product) ?? [],
-  );
-  /** Ряды, загруженные из файла (перекрывают исходный профиль). null — исходные. */
-  const [importedSeries, setImportedSeries] = useState<ProductSeries[] | null>(null);
-  /** Скрытый input выбора файла для импорта профиля. */
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [enabled, setEnabled] = useState<ProductType[]>(() => {
+    if (!profile) return [];
+    if (profile.series.length > 0) {
+      return profile.series.map((s) => s.product);
+    }
+    return profile.products.filter((p) => p.enabled).map((p) => p.product);
+  });
+
+  // Синхронизируем включённые продукты при изменении/появлении профиля из domain layer
+  useEffect(() => {
+    if (!profile) return;
+    if (profile.series.length > 0) {
+      setEnabled(profile.series.map((s) => s.product));
+    } else {
+      setEnabled(profile.products.filter((p) => p.enabled).map((p) => p.product));
+    }
+  }, [profile]);
 
   if (!profile) {
     return (
@@ -83,64 +48,9 @@ export function ProductTab({
   const toggleProduct = (p: ProductType) =>
     setEnabled((prev) => (prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]));
 
-  const years = range(profile.startYear, profile.endYear);
-
-  /** Экспорт профиля в JSON-файл (все продукты, включая выключенные). */
-  const handleExport = () => {
-    const blob = new Blob([JSON.stringify(profile, null, 2)], {
-      type: 'application/json;charset=utf-8',
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `product-profile-${profile.startYear}-${profile.endYear}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    console.info('[profile] профиль продукции экспортирован');
-  };
-
-  /** Импорт профиля: JSON (полный профиль) или таблица CSV/TXT. */
-  const handleImportFile = async (file: File) => {
-    try {
-      const text = await file.text();
-      // 1. JSON — полный профиль или только массив рядов.
-      try {
-        const parsed: unknown = JSON.parse(text);
-        if (parsed && typeof parsed === 'object') {
-          const obj = parsed as { series?: unknown };
-          if (Array.isArray(obj.series)) {
-            setImportedSeries(obj.series as ProductSeries[]);
-            console.info('[profile] профиль импортирован из JSON');
-            return;
-          }
-        }
-      } catch {
-        // не JSON — пробуем таблицу
-      }
-      // 2. Таблица (год + колонки продуктов, разделитель ; или ,).
-      const series = parseProfileTable(text, profile.products);
-      if (series) {
-        setImportedSeries(series);
-        console.info('[profile] профиль импортирован из таблицы');
-        return;
-      }
-      console.warn('[profile] не удалось распознать файл профиля');
-    } catch (error) {
-      console.error('[profile] ошибка чтения файла:', error);
-    }
-  };
-
-  /** Сбросить импортированные данные (вернуться к исходному профилю). */
-  const handleReset = () => setImportedSeries(null);
-
-  // Ряды для отображения: импортированные (если есть) либо исходные.
-  const baseSeries = importedSeries ?? profile.series;
-  const shownProfile: ProductProfile = importedSeries
-    ? { ...profile, series: importedSeries }
-    : profile;
-  const shownActive = baseSeries.filter((s) => enabled.includes(s.product));
+  const shownActive = profile.series.filter((s) => enabled.includes(s.product));
+  const seriesYears = shownActive[0]?.points?.map((pt) => pt.year) ?? [];
+  const years = seriesYears.length > 0 ? seriesYears : range(profile.startYear, profile.endYear);
 
   return (
     <>
@@ -197,55 +107,11 @@ export function ProductTab({
       <PanelSection
         title={`Профиль по датам · ${profile.startYear}–${profile.endYear}`}
         grow
-        action={
-          <div className="pp-profile-actions">
-            {importedSeries && (
-              <button
-                type="button"
-                className="pp-add-btn pp-add-btn--ghost"
-                onClick={handleReset}
-                title="Вернуть исходный профиль"
-              >
-                Сбросить
-              </button>
-            )}
-            <button
-              type="button"
-              className="pp-add-btn"
-              onClick={() => fileInputRef.current?.click()}
-              title="Импортировать профиль (JSON или CSV)"
-            >
-              <AppIcon name="import" size={13} />
-              Импорт
-            </button>
-            <button
-              type="button"
-              className="pp-add-btn"
-              onClick={handleExport}
-              title="Экспортировать профиль в JSON"
-            >
-              <AppIcon name="export" size={13} />
-              Экспорт
-            </button>
-          </div>
-        }
       >
-        {/* Скрытый выбор файла для импорта профиля */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".json,.csv,.txt,application/json,text/csv,text/plain"
-          style={{ display: 'none' }}
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) void handleImportFile(file);
-            e.target.value = ''; // позволить повторный выбор того же файла
-          }}
-        />
         {view === 'table' ? (
-          <ProfileTable profile={shownProfile} series={shownActive} years={years} />
+          <ProfileTable profile={profile} series={shownActive} years={years} />
         ) : (
-          <ProfileGraph profile={shownProfile} series={shownActive} />
+          <ProfileGraph profile={profile} series={shownActive} />
         )}
       </PanelSection>
     </>
@@ -263,23 +129,49 @@ function ProfileTable({
   series: ProductProfile['series'];
   years: number[];
 }) {
+  // Гарантия уникальности: объединяем любые дублирующиеся серии по типу продукта
+  const uniqueSeries = useMemo(() => {
+    const map = new Map<ProductType, ProductSeries>();
+    for (const s of series) {
+      const existing = map.get(s.product);
+      if (!existing) {
+        map.set(s.product, { product: s.product, points: s.points.map((p) => ({ ...p })) });
+      } else {
+        for (const p of s.points) {
+          const pt = existing.points.find((x) => x.year === p.year);
+          if (pt) pt.value = Math.round((pt.value + p.value) * 100) / 100;
+          else existing.points.push({ ...p });
+        }
+      }
+    }
+    return Array.from(map.values());
+  }, [series]);
+
+  if (uniqueSeries.length === 0) {
+    return (
+      <div className="pp-muted" style={{ padding: '32px 16px', textAlign: 'center' }}>
+        Табличные данные профиля продукции пока не заполнены
+      </div>
+    );
+  }
+
   const unitOf = (p: ProductType) =>
     profile.products.find((x) => x.product === p)?.unit ?? '';
   const valueAt = (p: ProductType, year: number) =>
-    series.find((s) => s.product === p)?.points.find((pt) => pt.year === year)?.value;
+    uniqueSeries.find((s) => s.product === p)?.points.find((pt) => pt.year === year)?.value;
   return (
     <div className="pp-table-wrap">
       <table className="pp-table">
         <thead>
           <tr>
             <th className="pp-table__year-col">Год</th>
-            <th className="pp-table__group" colSpan={series.length}>
+            <th className="pp-table__group" colSpan={uniqueSeries.length}>
               {profile.measureLabel}
             </th>
           </tr>
           <tr>
             <th />
-            {series.map((s) => (
+            {uniqueSeries.map((s) => (
               <th key={s.product} className="pp-table__product-head">
                 <span
                   className="pp-table__swatch"
@@ -296,7 +188,7 @@ function ProfileTable({
           {years.map((year) => (
             <tr key={year}>
               <td className="pp-table__year">{year}</td>
-              {series.map((s) => (
+              {uniqueSeries.map((s) => (
                 <td key={s.product} className="pp-table__num">
                   {formatNum(valueAt(s.product, year))}
                 </td>
@@ -317,14 +209,49 @@ function ProfileGraph({
   series: ProductProfile['series'];
 }) {
   const [hoverYear, setHoverYear] = useState<number | null>(null);
-  const points = series[0]?.points ?? [];
-  const max = Math.max(profile.limit ?? 0, ...series.flatMap((s) => s.points.map((p) => p.value)), 1);
-  const allYears = points.map((p) => p.year);
+
+  // Гарантируем уникальность по каждому типу вещества
+  const uniqueSeries = useMemo(() => {
+    const map = new Map<ProductType, ProductSeries>();
+    for (const s of series) {
+      const existing = map.get(s.product);
+      if (!existing) {
+        map.set(s.product, { product: s.product, points: s.points.map((p) => ({ ...p })) });
+      } else {
+        for (const p of s.points) {
+          const pt = existing.points.find((x) => x.year === p.year);
+          if (pt) pt.value = Math.round((pt.value + p.value) * 100) / 100;
+          else existing.points.push({ ...p });
+        }
+      }
+    }
+    return Array.from(map.values());
+  }, [series]);
+
+  const allYears = useMemo(() => {
+    const yearSet = new Set<number>();
+    for (const s of uniqueSeries) {
+      for (const p of s.points) {
+        yearSet.add(p.year);
+      }
+    }
+    return Array.from(yearSet).sort((a, b) => a - b);
+  }, [uniqueSeries]);
+
+  if (uniqueSeries.length === 0 || allYears.length === 0) {
+    return (
+      <div className="pp-muted" style={{ padding: '48px 16px', textAlign: 'center' }}>
+        График профиля продукции пока не заполнен
+      </div>
+    );
+  }
+
+  const max = Math.max(profile.limit ?? 0, ...uniqueSeries.flatMap((s) => s.points.map((p) => p.value)), 1);
 
   const hoverValues =
     hoverYear == null
       ? []
-      : series.map((s) => ({
+      : uniqueSeries.map((s) => ({
         product: s.product,
         value: s.points.find((p) => p.year === hoverYear)?.value ?? 0,
       }));
@@ -357,7 +284,7 @@ function ProfileGraph({
               onBlur={() => setHoverYear(null)}
               aria-label={`${year}: ${hoverValues.map((v) => formatNum(v.value)).join(', ')}`}
             >
-              {series.map((s) => {
+              {uniqueSeries.map((s) => {
                 const v = s.points.find((p) => p.year === year)?.value ?? 0;
                 return (
                   <span
@@ -387,6 +314,7 @@ function ProfileGraph({
       </div>
       <div className="pp-chart__axis">
         <span>{allYears[0]}</span>
+        {allYears.length > 2 && <span>{allYears[Math.floor(allYears.length / 2)]}</span>}
         <span>{allYears[allYears.length - 1]}</span>
       </div>
     </div>

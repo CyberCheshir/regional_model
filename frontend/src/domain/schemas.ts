@@ -123,6 +123,7 @@ export const ValidationItemSchema = z.object({
   value: z.string().min(1),
   ok: z.boolean(),
 });
+export type ValidationItem = z.infer<typeof ValidationItemSchema>;
 
 /** Детальная карточка объекта (инспектор). */
 export const EntityDetailsSchema = z.object({
@@ -134,6 +135,9 @@ export const EntityDetailsSchema = z.object({
   /** Лицензионный участок */
   licenseArea: z.string().min(1),
   owner: z.string().min(1),
+  period: z.string().optional(),
+  condition: z.string().optional(),
+  attributes: z.record(z.string(), z.unknown()).optional(),
   modelStatus: z.array(ValidationItemSchema),
   outgoing: z.array(FlowSchema),
   incoming: z.array(FlowSchema),

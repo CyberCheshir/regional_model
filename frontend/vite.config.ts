@@ -22,6 +22,7 @@ export default defineConfig({
         // а vis подгружается, только если он реально задействован.
         manualChunks: {
           vis: ['vis-network', 'vis-data'],
+          xlsx: ['xlsx'],
         },
       },
     },

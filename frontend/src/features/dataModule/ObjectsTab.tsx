@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AppIcon } from '../../components/AppIcon';
 import type { BatchEditParams, BatchEditScope, ModelObject, ObjectTypeFilter } from './types';
-import { INITIAL_MODEL_OBJECTS, INITIAL_SELECTED_OBJECT_IDS } from './mockData';
+import { useMapDrawing } from '../map/mapDrawing';
+import { buildElementGroups, buildModelObjects } from '../../domain/elementGroups';
 import './ObjectsTab.css';
 
 export type ObjectsTabProps = {
@@ -12,12 +13,68 @@ export type ObjectsTabProps = {
 };
 
 export function ObjectsTab({ onShowOnMap, onOpenObject }: ObjectsTabProps) {
-  const [items, setItems] = useState<ModelObject[]>(INITIAL_MODEL_OBJECTS);
+  const { vertices, pipelines, segments, taps, batchUpdateEntityParams } = useMapDrawing();
+
+  // Список объектов формируется через доменную проекцию buildModelObjects —
+  // единый источник истины в domain layer.
+  const initialItemsFromGroups = useMemo<ModelObject[]>(() => {
+    const groups = buildElementGroups({ vertices, pipelines, segments, taps });
+    const entityParamMap = new Map<string, Partial<ModelObject>>();
+    for (const v of vertices) {
+      entityParamMap.set(v.id, {
+        owner: v.owner || (v.attributes?.owner as string) || '—',
+        condition: v.condition || (v.attributes?.condition as string) || 'Работает',
+        period: v.period || (v.attributes?.period as string) || '2026–2040',
+        source: v.source || (v.attributes?.source as string) || 'Модель',
+        status: v.status === 'warning' ? 'Проверить' : 'Готов',
+      });
+    }
+    for (const p of pipelines) {
+      entityParamMap.set(p.id, {
+        owner: p.owner || (p.attributes?.owner as string) || '—',
+        condition: p.condition || (p.attributes?.condition as string) || 'Работает',
+        period: p.period || (p.attributes?.period as string) || '2026–2040',
+        source: p.source || (p.attributes?.source as string) || 'Модель',
+        status: p.status === 'warning' ? 'Проверить' : 'Готов',
+      });
+    }
+    for (const t of taps) {
+      entityParamMap.set(t.id, {
+        owner: t.owner || (t.attributes?.owner as string) || '—',
+        condition: t.condition || (t.attributes?.condition as string) || 'Работает',
+        period: t.period || (t.attributes?.period as string) || '2026–2040',
+        source: t.source || (t.attributes?.source as string) || 'Модель',
+        status: t.status === 'warning' ? 'Проверить' : 'Готов',
+      });
+    }
+    return buildModelObjects(groups, entityParamMap);
+  }, [vertices, pipelines, segments, taps]);
+
+  const [items, setItems] = useState<ModelObject[]>(initialItemsFromGroups);
+
+  // Синхронизируем состояние items при изменении элементов на карте/в группах,
+  // сохраняя пользовательские правки
+  useEffect(() => {
+    setItems((prevItems) => {
+      const prevMap = new Map<string, ModelObject>(prevItems.map((item) => [item.id, item]));
+      return initialItemsFromGroups.map((fresh) => {
+        const existing = prevMap.get(fresh.id);
+        if (!existing) return fresh;
+        return {
+          ...fresh,
+          period: existing.period || fresh.period,
+          source: existing.source || fresh.source,
+          status: existing.status || fresh.status,
+          owner: existing.owner || fresh.owner,
+          condition: existing.condition || fresh.condition,
+        };
+      });
+    });
+  }, [initialItemsFromGroups]);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<ObjectTypeFilter>('all');
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(
-    new Set(INITIAL_SELECTED_OBJECT_IDS),
-  );
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Состояние блока группового редактирования
   const [editScope, setEditScope] = useState<BatchEditScope>('selected');
@@ -103,25 +160,44 @@ export function ObjectsTab({ onShowOnMap, onOpenObject }: ObjectsTabProps) {
 
   // Применить групповые параметры
   const handleApplyBatch = () => {
+    const targetIds: string[] = [];
+    if (editScope === 'selected') {
+      selectedIds.forEach((id) => targetIds.push(id));
+    } else if (editScope === 'filter') {
+      filteredItems.forEach((item) => targetIds.push(item.id));
+    } else {
+      const first = selectedIds.size > 0 ? Array.from(selectedIds)[0] : items[0]?.id;
+      if (first) targetIds.push(first);
+    }
+
+    if (targetIds.length === 0) return;
+
+    const conditionToStatus = (cond?: string): 'running' | 'warning' | 'stopped' => {
+      if (cond === 'Остановлен') return 'stopped';
+      if (cond === 'Предупреждение') return 'warning';
+      return 'running';
+    };
+
+    // 1. Обновляем ДОМЕННЫЙ СЛОЙ (useMapDrawing)
+    batchUpdateEntityParams(targetIds, {
+      owner: batchParams.owner,
+      period: batchParams.period,
+      condition: batchParams.condition,
+      source: batchParams.paramSource,
+      status: conditionToStatus(batchParams.condition),
+    });
+
+    // 2. Обновляем локальное табличное состояние
     setItems((prev) =>
       prev.map((item) => {
-        let shouldUpdate = false;
-        if (editScope === 'selected') {
-          shouldUpdate = selectedIds.has(item.id);
-        } else if (editScope === 'filter') {
-          shouldUpdate = filteredItems.some((f) => f.id === item.id);
-        } else {
-          // single: первый выбранный или активный
-          shouldUpdate = selectedIds.has(item.id) || item.id === prev[0]?.id;
-        }
-
-        if (shouldUpdate) {
+        if (targetIds.includes(item.id)) {
           return {
             ...item,
             owner: batchParams.owner || item.owner,
             period: batchParams.period || item.period,
             condition: batchParams.condition || item.condition,
             source: batchParams.paramSource || item.source,
+            status: batchParams.condition === 'Предупреждение' ? 'Проверить' : 'Готов',
           };
         }
         return item;
@@ -256,17 +332,22 @@ export function ObjectsTab({ onShowOnMap, onOpenObject }: ObjectsTabProps) {
                       <td className="objects-tab__obj-name">{item.name}</td>
                       <td>{item.category}</td>
                       <td>{item.typeClass}</td>
-                      <td>{item.period}</td>
-                      <td>{item.source}</td>
+                      <td>{item.period || '—'}</td>
+                      <td>{item.source || '—'}</td>
                       <td>
-                        <span
-                          className={`objects-tab__status-badge${item.status === 'Проверить'
-                              ? ' objects-tab__status-badge--check'
-                              : ''
+                        {item.status ? (
+                          <span
+                            className={`objects-tab__status-badge${
+                              item.status === 'Проверить'
+                                ? ' objects-tab__status-badge--check'
+                                : ''
                             }`}
-                        >
-                          {item.status}
-                        </span>
+                          >
+                            {item.status}
+                          </span>
+                        ) : (
+                          <span className="objects-tab__status-badge">—</span>
+                        )}
                       </td>
                     </tr>
                   );
