@@ -61,7 +61,7 @@ class NetworkNodeSerializer(UidSafeMixin, serializers.ModelSerializer):
     class Meta:
         model = NetworkNode
         fields = [
-            "id", "uid", "project", "facility", "external_key", "name", "kind",
+            "id", "uid", "project", "facility", "external_key", "name", "kind", "node_type",
             "lat", "lng", "tap_edge_external", "tap_t",
             "bound_tap_external", "bound_fitting_external",
             "attributes", "created_at", "updated_at",

@@ -47,6 +47,7 @@ export type IconName =
   | 'pencil'
   // Misc actions
   | 'close'
+  | 'search'
   // Status & flows
   | 'check-success'
   | 'flow-physical'
@@ -353,6 +354,12 @@ const ICONS: Record<IconName, IconDefinition> = {
     stroke: true,
     strokeWidth: 1.5,
     paths: '<path d="M4 4l8 8M12 4l-8 8"/>',
+  },
+  search: {
+    viewBox: '0 0 16 16',
+    stroke: true,
+    strokeWidth: 1.5,
+    paths: '<circle cx="6.5" cy="6.5" r="4.5"/><path d="M10 10l4.5 4.5"/>',
   },
 };
 

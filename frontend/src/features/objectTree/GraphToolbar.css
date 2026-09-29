@@ -44,11 +44,6 @@
   justify-content: center;
 }
 
-/* В строке шеврон не нужен — там только иконка + подпись по центру */
-.graph-toolbar__group-buttons--inline .graph-toolbar__chevron {
-  display: none;
-}
-
 /* Ряд квадратных кнопок-действий (импорт / экспорт / примеры) — под основной
    кнопкой группы, в одну строку. */
 .graph-toolbar__group-actions {
@@ -192,22 +187,4 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-/* Шеврон справа — признак перехода/выбора (макет orientation.png).
-   Приглушённый цвет, активируется при наведении/выборе карточки. */
-.graph-toolbar__chevron {
-  flex: 0 0 auto;
-  margin-left: auto;
-  color: var(--text-muted, #8a94a6);
-  transition: color 0.12s ease, transform 0.12s ease;
-}
-
-.graph-toolbar__button:hover:not(:disabled) .graph-toolbar__chevron {
-  color: var(--color-primary, #0066cc);
-  transform: translateX(1px);
-}
-
-.graph-toolbar__button.is-active .graph-toolbar__chevron {
-  color: var(--color-primary, #0066cc);
 }

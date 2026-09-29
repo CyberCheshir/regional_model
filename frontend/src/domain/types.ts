@@ -21,6 +21,8 @@ import {
   type HydraulicCalc,
   type AnalyticsData,
   type AnalyticsItem,
+  type NodeType,
+  NODE_TYPE_LABELS,
 } from './schemas';
 
 export type {
@@ -37,7 +39,10 @@ export type {
   HydraulicCalc,
   AnalyticsData,
   AnalyticsItem,
+  NodeType,
 };
+
+export { NODE_TYPE_LABELS };
 
 /** Тип флюида: нефть / газ / вода */
 export type FluidType = z.infer<typeof FluidTypeSchema>;
@@ -57,9 +62,11 @@ export type Pipeline = z.infer<typeof PipelineSchema> & { kind: 'pipeline' };
 export type Area = z.infer<typeof AreaSchema> & { kind: 'area' };
 /** Сегмент трубопровода (ребро полилинии). */
 export type Segment = { kind: 'segment' };
+/** Узел сети (врезка или стык трубопровода). */
+export type NetworkNodeEntity = { kind: 'node'; nodeType: NodeType; typeLabel: string };
 
 /** Любая сущность доменной модели. */
-export type DomainEntity = Wellpad | Facility | Pipeline | Area | Segment;
+export type DomainEntity = Wellpad | Facility | Pipeline | Area | Segment | NetworkNodeEntity;
 
 /** Узел графа карты. */
 export type GraphNode = z.infer<typeof GraphNodeSchema>;

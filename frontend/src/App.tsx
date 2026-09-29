@@ -14,6 +14,7 @@ import { DEFAULT_TIME_RANGE, type TimeRangeState } from './features/timeRange/ty
 import { useEntityDetailsQuery } from './api/queries';
 import { useUiState } from './state/uiState';
 import { useMapDrawing } from './features/map/mapDrawing';
+import { DataModuleView } from './features/dataModule/DataModuleView';
 import { fetchProjectSnapshot } from './api/mapSave';
 import { parseLicenceAreaGeoJSON } from './features/map/importLicenceArea';
 import {
@@ -22,7 +23,7 @@ import {
   type AreaExportFormat,
 } from './features/map/importAreas';
 import type { EntityDetails, SelectedEntity } from './domain/types';
-import type { DrawTool, MapVertex } from './features/map/drawingTypes';
+import type { DrawTool, MapTap, MapVertex } from './features/map/drawingTypes';
 import type { PipelineRecord } from './features/map/mapDrawing';
 
 /**
@@ -36,7 +37,27 @@ function buildLocalEntityDetails(
   vertices: MapVertex[],
   pipelines: PipelineRecord[],
   segments: Array<{ id: string; label?: string; pipelineId: string | null; fluid: string }> = [],
+  taps: MapTap[] = [],
 ): EntityDetails | null {
+  const tap = taps.find((t) => t.id === id || `tap-${t.id}` === id);
+  if (tap) {
+    return {
+      id: tap.id,
+      label: tap.label || 'Врезка',
+      kind: 'node',
+      subType: 'Врезка',
+      status: 'running',
+      licenseArea: '—',
+      owner: '—',
+      modelStatus: [
+        { label: 'Тип узла', value: 'Врезка', ok: true },
+        { label: 'Трубопровод-носитель', value: tap.edgeId ? 'привязана' : 'не привязана', ok: !!tap.edgeId },
+        { label: 'Позиция вдоль трубы', value: `${Math.round(tap.t * 100)}%`, ok: true },
+      ],
+      outgoing: [],
+      incoming: [],
+    };
+  }
   const segment = segments.find((s) => s.id === id);
   if (segment) {
     return {
@@ -90,6 +111,23 @@ function buildLocalEntityDetails(
       incoming: [],
     };
   }
+  if (id.startsWith('drawv-') || id.startsWith('node-')) {
+    return {
+      id,
+      label: 'Стык трубопровода',
+      kind: 'node',
+      subType: 'Стык трубопровода',
+      status: 'running',
+      licenseArea: '—',
+      owner: '—',
+      modelStatus: [
+        { label: 'Тип узла', value: 'Стык трубопровода', ok: true },
+        { label: 'Состояние', value: 'подключён', ok: true },
+      ],
+      outgoing: [],
+      incoming: [],
+    };
+  }
   return null;
 }
 
@@ -102,6 +140,8 @@ function nodeKindToEntityKind(node: TreeNodeData): SelectedEntity['kind'] {
       return 'segment';
     case 'wellpad':
       return 'wellpad';
+    case 'node':
+      return 'node';
     case 'delivery-point':
     case 'facility':
     default:
@@ -151,10 +191,12 @@ function App() {
     vertices: drawVertices,
     pipelines: drawPipelines,
     segments: drawSegments,
+    taps: drawTaps,
     exportModel,
     renameVertex,
     renamePipeline,
     renameSegment,
+    renameTap,
     fluid: drawFluid,
     setFluid: setDrawFluid,
     pipelineClass: drawPipelineClass,
@@ -214,7 +256,7 @@ function App() {
    * запрос к backend НЕ отправляем — иначе в консоли 404.
    */
   const localEntity = selectedId
-    ? buildLocalEntityDetails(selectedId, drawVertices, drawPipelines, drawSegments)
+    ? buildLocalEntityDetails(selectedId, drawVertices, drawPipelines, drawSegments, drawTaps)
     : null;
 
   /** Детали выбранного объекта — domain-state через react-query (Этап 9.3).
@@ -234,6 +276,7 @@ function App() {
     if (!id) return;
     if (selectedEntity?.kind === 'pipeline') renamePipeline(id, nextLabel);
     else if (selectedEntity?.kind === 'segment') renameSegment(id, nextLabel);
+    else if (selectedEntity?.kind === 'node') renameTap(id, nextLabel);
     else renameVertex(id, nextLabel);
   };
 
@@ -471,15 +514,17 @@ function App() {
           e.target.value = ''; // позволить повторный выбор того же файла
         }}
       />
-      <TopBar
-        breadcrumbs={[{ label: 'Восточная Сибирь' }, { label: 'Региональный модуль' }]}
-        viewMode={viewMode}
-        onViewModeChange={handleViewModeChange}
-        scenarioLabel="Базовый сценарий"
-        onOpenScenario={handleOpenScenario}
-        onImportModel={() => modelInputRef.current?.click()}
-        onExportModel={handleExportModel}
-      />
+      {activeModule === 'map' && (
+        <TopBar
+          breadcrumbs={[{ label: 'Восточная Сибирь' }, { label: 'Региональный модуль' }]}
+          viewMode={viewMode}
+          onViewModeChange={handleViewModeChange}
+          scenarioLabel="Базовый сценарий"
+          onOpenScenario={handleOpenScenario}
+          onImportModel={() => modelInputRef.current?.click()}
+          onExportModel={handleExportModel}
+        />
+      )}
       <AppShell
         leftCollapsed={leftCollapsed}
         rightCollapsed={rightCollapsed}
@@ -552,7 +597,22 @@ function App() {
             onRename={handleRenameSelected}
           />
         }
-        bottom={<BottomPanel value={timeRange} onChange={setTimeRange} />}
+        bottom={activeModule === 'map' ? <BottomPanel value={timeRange} onChange={setTimeRange} /> : undefined}
+        overlayModule={
+          activeModule === 'data' ? (
+            <DataModuleView
+              onShowOnMap={(obj) => {
+                selectEntity(obj.id, (obj.kind as SelectedEntity['kind']) || 'facility');
+                setActiveModule('map');
+              }}
+              onOpenObject={(obj) => {
+                selectEntity(obj.id, (obj.kind as SelectedEntity['kind']) || 'facility');
+                setActiveModule('map');
+                setRightCollapsed(false);
+              }}
+            />
+          ) : undefined
+        }
       />
     </div>
   );

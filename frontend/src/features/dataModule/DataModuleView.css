@@ -1,0 +1,77 @@
+/* Стили главного окна модуля «Данные» */
+
+.data-module {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  width: 100%;
+  background-color: var(--bg-app, #f4f7fa);
+  color: #0f172a;
+  padding: 24px 32px 40px 32px;
+  box-sizing: border-box;
+}
+
+/* Шапка раздела */
+.data-module__header {
+  margin-bottom: 24px;
+}
+
+.data-module__title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.02em;
+}
+
+.data-module__subtitle {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0 0 20px 0;
+}
+
+/* Навигационные вкладки */
+.data-module__tabs {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 0;
+}
+
+.data-module__tab-btn {
+  position: relative;
+  background: none;
+  border: none;
+  color: #64748b;
+  font-size: 15px;
+  font-weight: 500;
+  padding: 8px 4px 14px 4px;
+  cursor: pointer;
+  transition: color 0.15s;
+  user-select: none;
+}
+
+.data-module__tab-btn:hover {
+  color: #0f172a;
+}
+
+.data-module__tab-btn.is-active {
+  color: #0066cc;
+  font-weight: 600;
+}
+
+.data-module__tab-indicator {
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background-color: #0066cc;
+  border-radius: 2px;
+}
+
+/* Контентная область активной вкладки */
+.data-module__content {
+  width: 100%;
+}

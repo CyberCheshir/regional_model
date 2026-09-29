@@ -586,6 +586,12 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
         const tap: MapTap = {
           id: tapId,
           uid: newUid(),
+          nodeType: 'tap',
+          typeLabel: 'Врезка',
+          attributes: {
+            node_type: 'tap',
+            type: 'Врезка',
+          },
           label: `Врезка ${tapSeqRef.current}`,
           x,
           y,
@@ -615,6 +621,12 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
     const tap: MapTap = {
       id: tapId,
       uid: newUid(),
+      nodeType: 'tap',
+      typeLabel: 'Врезка',
+      attributes: {
+        node_type: 'tap',
+        type: 'Врезка',
+      },
       label: `Врезка ${tapSeqRef.current}`,
       x,
       y,

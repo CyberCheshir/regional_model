@@ -11,7 +11,9 @@ export type TreeNodeKind =
   | 'delivery-point'
   | 'pipeline'
   /** Сегмент трубопровода (дочерний узел трубопровода в дереве) */
-  | 'segment';
+  | 'segment'
+  /** Узел сети (врезка или стык трубопровода) */
+  | 'node';
 
 export type TreeNodeData = {
   id: string;

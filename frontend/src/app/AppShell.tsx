@@ -20,6 +20,8 @@ export type AppShellProps = {
   right: ReactNode;
   /** Необязательный слот нижней панели (например, «Демонстрируемый период») */
   bottom?: ReactNode;
+  /** Полноэкранный модуль-оверлей (например, «Данные», «Расчёты») */
+  overlayModule?: ReactNode;
   /** Текущая ширина левой панели (контролируемая, при expanded) */
   leftWidth?: number;
   /** Текущая ширина правой панели (контролируемая, при expanded) */
@@ -50,6 +52,7 @@ export function AppShell({
   center,
   right,
   bottom,
+  overlayModule,
   leftWidth = SHELL_COLUMNS.left,
   rightWidth = SHELL_COLUMNS.right,
   onLeftWidthChange,
@@ -110,56 +113,62 @@ export function AppShell({
       {/* Слой 1: панели поверх карты */}
       <aside className="app-shell__activity">{activity}</aside>
 
-      {leftCollapsed ? (
-        <PanelRestoreBar
-          side="left"
-          label="Показать панель управления элементами"
-          onRestore={() => onToggleLeft?.()}
-        />
+      {overlayModule ? (
+        <div className="app-shell__overlay-module">{overlayModule}</div>
       ) : (
-        <aside className="app-shell__left" style={leftPanelStyle}>
-          <div className="shell-panel shell-panel--left">{left}</div>
-        </aside>
-      )}
+        <>
+          {leftCollapsed ? (
+            <PanelRestoreBar
+              side="left"
+              label="Показать панель управления элементами"
+              onRestore={() => onToggleLeft?.()}
+            />
+          ) : (
+            <aside className="app-shell__left" style={leftPanelStyle}>
+              <div className="shell-panel shell-panel--left">{left}</div>
+            </aside>
+          )}
 
-      {hasLeftResizer && (
-        <div className="app-shell__left-resizer" style={leftResizerStyle}>
-          <PanelResizer
-            side="left"
-            startWidth={startWidthOr(leftWidth, SHELL_COLUMNS.left)}
-            onWidthChange={onLeftWidthChange}
-          />
-        </div>
-      )}
+          {hasLeftResizer && (
+            <div className="app-shell__left-resizer" style={leftResizerStyle}>
+              <PanelResizer
+                side="left"
+                startWidth={startWidthOr(leftWidth, SHELL_COLUMNS.left)}
+                onWidthChange={onLeftWidthChange}
+              />
+            </div>
+          )}
 
-      {hasRightResizer && (
-        <div className="app-shell__right-resizer" style={rightResizerStyle}>
-          <PanelResizer
-            side="right"
-            startWidth={startWidthOr(rightWidth, SHELL_COLUMNS.right)}
-            onWidthChange={onRightWidthChange}
-          />
-        </div>
-      )}
+          {hasRightResizer && (
+            <div className="app-shell__right-resizer" style={rightResizerStyle}>
+              <PanelResizer
+                side="right"
+                startWidth={startWidthOr(rightWidth, SHELL_COLUMNS.right)}
+                onWidthChange={onRightWidthChange}
+              />
+            </div>
+          )}
 
-      {rightCollapsed ? (
-        <PanelRestoreBar
-          side="right"
-          label="Показать инспектор объекта"
-          onRestore={() => onToggleRight?.()}
-        />
-      ) : (
-        <aside className="app-shell__right" style={rightPanelStyle}>
-          <div className="shell-panel shell-panel--right">{right}</div>
-        </aside>
-      )}
+          {rightCollapsed ? (
+            <PanelRestoreBar
+              side="right"
+              label="Показать инспектор объекта"
+              onRestore={() => onToggleRight?.()}
+            />
+          ) : (
+            <aside className="app-shell__right" style={rightPanelStyle}>
+              <div className="shell-panel shell-panel--right">{right}</div>
+            </aside>
+          )}
 
-      {/* Слой 2: нижняя панель — отдельный ряд в самом низу рабочей области */}
-      {bottom ? (
-        <div className="app-shell__bottom" ref={bottomRef}>
-          {bottom}
-        </div>
-      ) : null}
+          {/* Слой 2: нижняя панель — отдельный ряд в самом низу рабочей области */}
+          {bottom ? (
+            <div className="app-shell__bottom" ref={bottomRef}>
+              {bottom}
+            </div>
+          ) : null}
+        </>
+      )}
     </div>
   );
 }

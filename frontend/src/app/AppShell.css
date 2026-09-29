@@ -50,7 +50,19 @@
   left: 0;
   width: 56px;
   bottom: 0;
-  z-index: 4;
+  z-index: 10;
+}
+
+/* Оверлей-модули (Данные, Расчёты и т.п.) поверх карты и панелей */
+.app-shell__overlay-module {
+  position: absolute;
+  top: 0;
+  left: 56px;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  background-color: var(--bg-app, #f4f7fa);
+  overflow-y: auto;
 }
 
 /* Обёртки разделителей: фиксированная ширина, позиция — из inline-стилей */

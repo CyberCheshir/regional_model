@@ -53,4 +53,5 @@ const KIND_LABEL: Record<EntityDetails['kind'], string> = {
   'delivery-point': 'Точка поставки',
   pipeline: 'Нефтепровод',
   segment: 'Сегмент трубопровода',
+  node: 'Узел сети',
 };

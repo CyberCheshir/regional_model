@@ -1,6 +1,7 @@
 geo_platform_clean/
 /.env
 
+.AGENTS
 # Node.js
 node_modules/
 npm-debug.log*

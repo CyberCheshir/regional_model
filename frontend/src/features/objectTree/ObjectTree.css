@@ -68,6 +68,11 @@
   flex: 0 0 auto;
 }
 
+.object-tree__kind-icon--raster {
+  object-fit: contain;
+  display: block;
+}
+
 .object-tree__label {
   flex: 1 1 auto;
   display: flex;

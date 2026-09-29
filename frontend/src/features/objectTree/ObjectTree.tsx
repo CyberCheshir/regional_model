@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { ObjectTreeData, TreeNodeData } from './types';
 import { AppIcon } from '../../components/AppIcon';
 import type { IconName } from '../../components/IconRegistry';
+import tapIcon from '../../assets/design/tap.png';
 import './ObjectTree.css';
 
 /** Иконка по категории узла (icons.md: tree-*) */
@@ -12,6 +13,8 @@ const KIND_ICON: Record<TreeNodeData['kind'], IconName> = {
   pipeline: 'tree-pipeline',
   // Сегмент — та же «труба», но мельче в иерархии (иконка flow-physical).
   segment: 'flow-physical',
+  // Узел сети (врезка или стык)
+  node: 'tree-delivery-point',
 };
 
 export type ObjectTreeEvents = {
@@ -229,7 +232,17 @@ function TreeBranch({
           <span className="object-tree__chevron object-tree__chevron--stub" />
         )}
 
-        <AppIcon name={KIND_ICON[node.kind]} size={16} className="object-tree__kind-icon" />
+        {node.kind === 'node' && (node.subType === 'Врезка' || node.label.toLowerCase().includes('врезка')) ? (
+          <img
+            src={tapIcon}
+            alt=""
+            className="object-tree__kind-icon object-tree__kind-icon--raster"
+            width={16}
+            height={16}
+          />
+        ) : (
+          <AppIcon name={KIND_ICON[node.kind]} size={16} className="object-tree__kind-icon" />
+        )}
 
         {editing ? (
           <input

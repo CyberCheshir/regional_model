@@ -55,7 +55,7 @@ export const GRAPH_TOOL_GROUPS: readonly GraphToolGroup[] = [
   {
     title: 'Вершины',
     tools: [
-      { id: 'create-wellpad', label: 'Система сбора', icon: 'tree-wellpad', iconSrc: wellpadIcon },
+      { id: 'create-wellpad', label: 'Объект добычи', icon: 'tree-wellpad', iconSrc: wellpadIcon },
       { id: 'create-facility', label: 'Объект подготовки', icon: 'tree-facility', iconSrc: facilityIcon },
       { id: 'create-delivery-point', label: 'Точка поставки', icon: 'tree-delivery-point', iconSrc: deliveryPointIcon },
     ],
@@ -197,12 +197,6 @@ export function GraphToolbar({
                       {tool.label && (
                         <span className="graph-toolbar__label">{tool.label}</span>
                       )}
-                      {/* Шеврон справа — как в макете выбора типа элемента */}
-                      <AppIcon
-                        name="chevron"
-                        size={12}
-                        className="graph-toolbar__chevron"
-                      />
                     </button>
                   );
                 })}

@@ -1,0 +1,180 @@
+/* Стили вкладки «Связи» */
+
+.connections-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.connections-tab__topbar {
+  background-color: #ffffff;
+  border-radius: 16px;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.connections-tab__filter-pills {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.connections-tab__pill {
+  border: 1px solid transparent;
+  background-color: #f4f6fa;
+  color: #475569;
+  border-radius: 20px;
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.connections-tab__pill:hover {
+  background-color: #e8ecf3;
+  color: #1e293b;
+}
+
+.connections-tab__pill.is-active {
+  background-color: #e8f1fc;
+  border-color: #99c2f0;
+  color: #0066cc;
+  font-weight: 600;
+}
+
+.connections-tab__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(360px, 1fr);
+  gap: 20px;
+  align-items: stretch;
+}
+
+@media (max-width: 1200px) {
+  .connections-tab__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.connections-tab__card {
+  background-color: #ffffff;
+  border-radius: 20px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.connections-tab__eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.connections-tab__table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.connections-tab__table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.connections-tab__table th {
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  border-bottom: 1px solid #edf2f7;
+}
+
+.connections-tab__table td {
+  padding: 13px 12px;
+  font-size: 13.5px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+}
+
+.connections-tab__name {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.connections-tab__status-badge {
+  font-size: 13px;
+  color: #10b981;
+  font-weight: 500;
+}
+
+.connections-tab__status-badge--check {
+  color: #d97706;
+}
+
+/* Правая карточка: Контроль топологии */
+.connections-tab__heading {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 16px 0;
+}
+
+.connections-tab__check-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.connections-tab__check-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  background-color: #f8fafc;
+  border-radius: 10px;
+  border: 1px solid #edf2f7;
+}
+
+.connections-tab__check-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #e6f9f0;
+  color: #10b981;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.connections-tab__check-icon--warn {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.connections-tab__check-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 2px 0;
+}
+
+.connections-tab__check-desc {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.45;
+}

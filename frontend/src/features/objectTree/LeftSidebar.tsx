@@ -86,16 +86,17 @@ export function LeftSidebar({
   onImportSample,
   onApplyPipelineTool,
 }: LeftSidebarProps) {
-  const { pipelines, vertices, segments, renameVertex, renamePipeline, renameSegment } =
+  const { pipelines, vertices, segments, taps, renameVertex, renamePipeline, renameSegment, renameTap } =
     useMapDrawing();
 
   /**
    * Переименование узла дерева (двойной клик): маршрутизируем по виду сущности.
-   * Объекты — вершины; трубопроводы — записи; сегменты — рёбра (segments).
+   * Объекты — вершины; трубопроводы — записи; сегменты — рёбра (segments); врезки — taps.
    */
   const handleRename = (node: TreeNodeData, nextLabel: string) => {
     if (node.kind === 'pipeline') renamePipeline(node.id, nextLabel);
     else if (node.kind === 'segment') renameSegment(node.id, nextLabel);
+    else if (node.kind === 'node') renameTap(node.id, nextLabel);
     else renameVertex(node.id, nextLabel);
   };
 
@@ -114,15 +115,24 @@ export function LeftSidebar({
     const wellpads = byKind('wellpad');
     const facilities = byKind('facility');
     const deliveryPoints = byKind('delivery-point');
+    const tapNodes = (taps || []).map((t) => ({
+      id: t.id,
+      label: t.label,
+      kind: 'node' as const,
+      subType: 'Врезка',
+    }));
 
     if (wellpads.length > 0) {
-      groups.push({ id: 'group-wellpads', label: 'Системы сбора', children: wellpads });
+      groups.push({ id: 'group-wellpads', label: 'Объекты добычи', children: wellpads });
     }
     if (facilities.length > 0) {
       groups.push({ id: 'group-facilities', label: 'Объекты подготовки', children: facilities });
     }
     if (deliveryPoints.length > 0) {
       groups.push({ id: 'group-delivery', label: 'Точки поставки', children: deliveryPoints });
+    }
+    if (tapNodes.length > 0) {
+      groups.push({ id: 'group-taps', label: 'Врезки', children: tapNodes });
     }
     // Трубопроводы БЕЗ сегментов в дерево не попадают: запись существует,
     // только пока у неё есть хотя бы одно ребро (0 сегментов → удаляем из
@@ -164,7 +174,7 @@ export function LeftSidebar({
     function segmentsOfPipeline(pipelineId: string) {
       return segments.filter((s) => s.pipelineId === pipelineId);
     }
-  }, [pipelines, vertices, segments]);
+  }, [pipelines, vertices, segments, taps]);
   // Fallback: если видимость не контролируется извне — локальное состояние
   const [localHiddenIds, setLocalHiddenIds] = useState<ReadonlySet<string>>(new Set());
   const effectiveHidden = hiddenIds ?? localHiddenIds;

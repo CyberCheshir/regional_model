@@ -69,6 +69,20 @@ def build_project_snapshot(project: Project) -> dict:
                 "uid": _uid_of(n),
                 "name": n.name,
                 "kind": n.kind,
+                "node_type": getattr(n, "node_type", n.kind),
+                "attributes": {
+                    **(n.attributes or {}),
+                    "node_type": getattr(n, "node_type", n.kind),
+                    "type": (
+                        "Врезка"
+                        if getattr(n, "node_type", n.kind) == "tap"
+                        else (
+                            "Тройник"
+                            if getattr(n, "node_type", n.kind) == "tee"
+                            else "Стык трубопровода"
+                        )
+                    ),
+                },
                 "lat": n.lat,
                 "lng": n.lng,
                 "facility_id": _local_id(n.facility) if n.facility_id else None,

@@ -1,0 +1,178 @@
+import type { ModelObject } from './types';
+
+export const INITIAL_MODEL_OBJECTS: ModelObject[] = [
+  {
+    id: 'obj-severny',
+    name: 'Северный',
+    category: 'Объект добычи',
+    typeClass: 'Кустовая площадка',
+    period: '2026–2040',
+    source: 'Профиль',
+    status: 'Готов',
+    owner: 'ГПН-3',
+    condition: 'Работает',
+    kind: 'wellpad',
+  },
+  {
+    id: 'obj-upn-2',
+    name: 'УПН-2',
+    category: 'Площадной объект',
+    typeClass: 'Подготовка нефти',
+    period: '2026–2040',
+    source: 'АКСИОМА',
+    status: 'Готов',
+    owner: 'ГПН-3',
+    condition: 'Работает',
+    kind: 'facility',
+  },
+  {
+    id: 'obj-gp-1',
+    name: 'ГП-1',
+    category: 'Площадной объект',
+    typeClass: 'Подготовка газа',
+    period: '2028–2040',
+    source: 'АКСИОМА',
+    status: 'Готов',
+    owner: 'ГПН-3',
+    condition: 'Работает',
+    kind: 'facility',
+  },
+  {
+    id: 'obj-sikn-1525',
+    name: 'СИКН-1525',
+    category: 'Площадной объект',
+    typeClass: 'Сдача нефти',
+    period: '2026–2040',
+    source: 'АКСИОМА',
+    status: 'Готов',
+    owner: 'ГПН-3',
+    condition: 'Работает',
+    kind: 'delivery-point',
+  },
+  {
+    id: 'obj-pipe-01',
+    name: 'Нефтепровод 01',
+    category: 'Трубопровод',
+    typeClass: 'Нефть · промысловый',
+    period: '2026–2040',
+    source: 'Импорт',
+    status: 'Готов',
+    owner: 'ГПН-3',
+    condition: 'Работает',
+    kind: 'pipeline',
+  },
+  {
+    id: 'obj-pipe-03',
+    name: 'Газопровод 03',
+    category: 'Трубопровод',
+    typeClass: 'Газ · межпромысловый',
+    period: '2028–2040',
+    source: 'Импорт',
+    status: 'Проверить',
+    owner: 'ГПН-3',
+    condition: 'Работает',
+    kind: 'pipeline',
+  },
+  {
+    id: 'obj-node-12',
+    name: 'Узел 12',
+    category: 'Узел',
+    typeClass: 'Стык трубопровода',
+    period: '2026–2040',
+    source: 'Модель',
+    status: 'Готов',
+    owner: 'ГПН-3',
+    condition: 'Работает',
+    kind: 'node',
+  },
+  {
+    id: 'obj-tap-01',
+    name: 'Врезка 01',
+    category: 'Узел',
+    typeClass: 'Врезка',
+    period: '2026–2040',
+    source: 'Модель',
+    status: 'Готов',
+    owner: 'ГПН-3',
+    condition: 'Работает',
+    kind: 'node',
+  },
+];
+
+export const INITIAL_SELECTED_OBJECT_IDS = ['obj-severny', 'obj-upn-2', 'obj-pipe-01'];
+
+/** Данные профилей (UI images/Activity bar/Данные/профили.png) */
+export const PROFILES_CONTROL_VALUES = [
+  { year: 2026, oil: '480 тыс. т', gas: '82 млн м³', water: '120 тыс. т', source: 'Профиль' },
+  { year: 2030, oil: '395 тыс. т', gas: '71 млн м³', water: '178 тыс. т', source: 'Профиль' },
+  { year: 2035, oil: '285 тыс. т', gas: '59 млн м³', water: '275 тыс. т', source: 'Профиль' },
+  { year: 2040, oil: '190 тыс. т', gas: '46 млн м³', water: '360 тыс. т', source: 'Профиль' },
+];
+
+/** Данные связей модели (UI images/Activity bar/Данные/связи.png) */
+export const CONNECTIONS_DATA = [
+  {
+    id: 'conn-1',
+    from: 'Северный',
+    flowType: 'Нефтепровод 01',
+    to: 'УПН-2',
+    productClass: 'Нефть · промысловый',
+    period: '2026–2040',
+    status: 'Корректно',
+  },
+  {
+    id: 'conn-2',
+    from: 'Северный',
+    flowType: 'Логический поток',
+    to: 'УПН-2',
+    productClass: 'Продукция',
+    period: '2026–2040',
+    status: 'Корректно',
+  },
+  {
+    id: 'conn-3',
+    from: 'ГП-1',
+    flowType: 'Газопровод 03',
+    to: 'Региональная сеть',
+    productClass: 'Газ · межпромысловый',
+    period: '2028–2040',
+    status: 'Проверить',
+  },
+  {
+    id: 'conn-4',
+    from: 'УПН-2',
+    flowType: 'Продуктопровод 02',
+    to: 'СИКН-1525',
+    productClass: 'Нефть · межпромысловый',
+    period: '2026–2040',
+    status: 'Корректно',
+  },
+];
+
+/** Данные шаблонов импорта/экспорта (UI images/Activity bar/Данные/импорт экспорт.png) */
+export const IMPORT_TEMPLATES = [
+  {
+    id: 'tpl-objects',
+    title: 'Объекты и координаты',
+    description: 'Создание или обновление объектов по коду, типу и координатам.',
+    filename: 'Объекты_ПДИМ.xlsx',
+  },
+  {
+    id: 'tpl-profiles',
+    title: 'Профили',
+    description: 'Добыча, поступление и поставка по периодам.',
+    filename: 'Профили_ПДИМ.xlsx',
+  },
+  {
+    id: 'tpl-elevations',
+    title: 'Высотные отметки трубопроводов',
+    description: 'Пикетаж и отметки вдоль существующего трубопровода.',
+    filename: 'Высоты_трубопроводов.xlsx',
+  },
+  {
+    id: 'tpl-params',
+    title: 'Параметры объектов',
+    description: 'Групповое обновление поддерживаемых параметров существующих объектов.',
+    filename: 'Параметры_ПДИМ.xlsx',
+  },
+];

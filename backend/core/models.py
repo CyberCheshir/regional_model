@@ -82,6 +82,14 @@ class PipelineClass(models.TextChoices):
     LOGICAL = "logical", "Логический поток"
 
 
+class NodeType(models.TextChoices):
+    """Тип узла: врезка, стык трубопровода или тройник."""
+
+    TAP = "tap", "Врезка"
+    JOINT = "joint", "Стык трубопровода"
+    TEE = "tee", "Тройник"
+
+
 class StatusChoices(models.TextChoices):
     RUNNING = "running", "Работает"
     WARNING = "warning", "Предупреждение"
@@ -139,7 +147,8 @@ class NetworkNode(TimestampedModel, ExternalUidModel):
     """
 
     NODE_KINDS = [
-        ("vertex", "Вершина ребра"),
+        ("joint", "Стык трубопровода"),
+        ("vertex", "Стык трубопровода"),
         ("tee", "Тройник"),
         ("tap", "Врезка"),
     ]
@@ -151,12 +160,15 @@ class NetworkNode(TimestampedModel, ExternalUidModel):
     )
     external_key = models.CharField(max_length=255, null=True, blank=True)
     name = models.CharField(max_length=255)
-    kind = models.CharField(max_length=16, choices=NODE_KINDS, default="vertex")
+    kind = models.CharField(max_length=16, choices=NODE_KINDS, default="joint")
+    node_type = models.CharField(
+        max_length=32, choices=NodeType.choices, default=NodeType.JOINT
+    )
     lat = models.FloatField()
     lng = models.FloatField()
 
     # --- Связи для врезок и подключённых к ним/тройникам вершин ребёр ---
-    # Врезка (kind='tap'): на каком ребре лежит и где именно (t ∈ [0..1]).
+    # Врезка (kind='tap' / node_type='tap'): на каком ребре лежит и где именно (t ∈ [0..1]).
     # Хранится внешним ключом (external_key сегмента) — как и прочие id графа.
     tap_edge_external = models.CharField(max_length=255, null=True, blank=True)
     tap_t = models.FloatField(null=True, blank=True)
@@ -165,6 +177,28 @@ class NetworkNode(TimestampedModel, ExternalUidModel):
     bound_fitting_external = models.CharField(max_length=255, null=True, blank=True)
 
     attributes = models.JSONField(default=dict, blank=True)
+
+    def save(self, *args, **kwargs):
+        # Синхронизация kind и node_type, а также сохранение типа в attributes
+        if self.kind == "tap" or self.node_type == NodeType.TAP:
+            self.kind = "tap"
+            self.node_type = NodeType.TAP
+        elif self.kind == "tee" or self.node_type == NodeType.TEE:
+            self.kind = "tee"
+            self.node_type = NodeType.TEE
+        else:
+            self.kind = "joint"
+            self.node_type = NodeType.JOINT
+
+        if not isinstance(self.attributes, dict):
+            self.attributes = {}
+        self.attributes["node_type"] = self.node_type
+        self.attributes["type"] = (
+            "Врезка"
+            if self.node_type == NodeType.TAP
+            else ("Тройник" if self.node_type == NodeType.TEE else "Стык трубопровода")
+        )
+        super().save(*args, **kwargs)
 
     class Meta:
         ordering = ["name", "id"]

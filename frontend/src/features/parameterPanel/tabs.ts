@@ -37,6 +37,8 @@ export const PARAMETER_TABS_BY_KIND: Record<ParameterPanelKind, ParameterTabId[]
   pipeline: ['general', 'calendar', 'product', 'hydraulic', 'analytics'],
   facility: ['general', 'calendar', 'product', 'analytics'],
   wellpad: ['general', 'calendar', 'product', 'analytics'],
+  // Для узла (врезка, стык) доступна ТОЛЬКО вкладка «Общие параметры»
+  node: ['general'],
 };
 
 /** Вкладки для конкретного рода объекта (в правильном порядке). */

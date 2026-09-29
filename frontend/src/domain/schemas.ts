@@ -88,7 +88,18 @@ export const TreeNodeKindSchema = z.enum([
   'delivery-point',
   'pipeline',
   'segment',
+  'node',
 ]);
+
+/** Тип узла: врезка или стык трубопровода (также поддерживается тройник) */
+export const NodeTypeSchema = z.enum(['tap', 'joint', 'tee']);
+export type NodeType = z.infer<typeof NodeTypeSchema>;
+
+export const NODE_TYPE_LABELS: Record<NodeType, string> = {
+  tap: 'Врезка',
+  joint: 'Стык трубопровода',
+  tee: 'Тройник',
+};
 
 /** Поток-связь между объектами (без физической трубы / с трубой). */
 export const FlowSchema = z.object({
@@ -136,9 +147,9 @@ export type EntityDetails = z.infer<typeof EntityDetailsSchema>;
 
 /**
  * Род панели параметров: определяет НАБОР вкладок (у трубопровода есть
- * гидравлический расчёт, у площадных объектов — нет).
+ * гидравлический расчёт, у площадных объектов — нет, у узла/врезки — только общие параметры).
  */
-export const ParameterPanelKindSchema = z.enum(['pipeline', 'facility', 'wellpad']);
+export const ParameterPanelKindSchema = z.enum(['pipeline', 'facility', 'wellpad', 'node']);
 export type ParameterPanelKind = z.infer<typeof ParameterPanelKindSchema>;
 
 /** Тип продукта (колонки профиля продукции). */

@@ -596,6 +596,7 @@ export function MapViewport({
           // Тройник (серая вершина) — свободная точка в месте клика
           if (ctx.tool === 'tee') {
             ctx.addTee.current(world.x, world.y);
+            ctx.setTool.current('none');
             return;
           }
           // Врезка — на ВЫБРАННОМ ребре: вычисляем t проекцией клика на ребро
@@ -607,6 +608,7 @@ export function MapViewport({
               const px = ends ? ends.from.x + (ends.to.x - ends.from.x) * t : world.x;
               const py = ends ? ends.from.y + (ends.to.y - ends.from.y) * t : world.y;
               ctx.addTap.current(edgeId, px, py);
+              ctx.setTool.current('none');
             }
             return;
           }
@@ -1003,13 +1005,14 @@ export function MapViewport({
       }
       const world = lngLatToGraphPoint(lng, lat);
       if (isVertexTool(tool)) {
-        // Множественное создание: режим НЕ закрывается — можно поставить ещё
-        // объекты. Выход из режима — ПКМ (см. эффект cancelDrawing ниже).
+        // Одиночное создание: клик создаёт элемент и режим деактивируется
         addVertexRef.current(tool, world.x, world.y);
+        setToolRef.current('none');
         return;
       }
       if (tool === 'tee') {
         addTeeRef.current(world.x, world.y);
+        setToolRef.current('none');
         return;
       }
       if (tool === 'licence-area') {
@@ -1022,6 +1025,7 @@ export function MapViewport({
           Math.hypot(world.x - first.x, world.y - first.y) <= AREA_CLOSE_RADIUS
         ) {
           closeAreaRef.current();
+          setToolRef.current('none');
           return;
         }
         addAreaPointRef.current(world.x, world.y);
@@ -1163,6 +1167,14 @@ export function MapViewport({
             selectedIds={highlightedVertexIds}
             selectedSegmentIds={highlightedSegmentIds}
             selectedTapIds={selections.filter((s) => s.kind === 'tap').map((s) => s.id)}
+            onSelectTap={(id, withShift) => {
+              if (withShift) {
+                toggleSelection({ kind: 'tap', id });
+                return;
+              }
+              setSelections([{ kind: 'tap', id }]);
+              onSelect(id, 'node');
+            }}
             selectedFittingIds={selections.filter((s) => s.kind === 'fitting').map((s) => s.id)}
             onSelectFitting={(id, withShift) =>
               withShift
@@ -1189,11 +1201,13 @@ export function MapViewport({
                 const vx = nearFrom ? a.x : b.x;
                 const vy = nearFrom ? a.y : b.y;
                 addTap(edgeId, vx, vy, true);
+                setTool('none');
                 return;
               }
               // Иначе — обычный разрез ребра в точке клика.
               const t = projectOnSegmentGeo(world, a, b);
               addTap(edgeId, a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t);
+              setTool('none');
             }}
             onSelect={(id, withShift) => {
               if (withShift) {
@@ -1240,11 +1254,6 @@ export function MapViewport({
               );
               replaceSegmentEnds(ends, bound);
             }}
-            onSelectTap={(id, withShift) =>
-              withShift
-                ? toggleSelection({ kind: 'tap', id })
-                : setSelections([{ kind: 'tap', id }])
-            }
             directed={displaySettings.directedGraph}
             showJoints={displaySettings.showEdgeJoints}
             showLabels={showLabels}

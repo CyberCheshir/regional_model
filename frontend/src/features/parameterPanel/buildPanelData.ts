@@ -25,6 +25,7 @@ import type {
 
 /** Род панели по категории объекта и его подтипу. */
 export function panelKindFor(entity: EntityDetails): ParameterPanelKind {
+  if (entity.kind === 'node') return 'node';
   if (entity.kind === 'pipeline' || entity.kind === 'segment') return 'pipeline';
   if (entity.kind === 'wellpad') return 'wellpad';
   return 'facility';
@@ -33,7 +34,8 @@ export function panelKindFor(entity: EntityDetails): ParameterPanelKind {
 /** Класс объекта для подзаголовка («Промысловый» и т.п.). */
 function objectClassFor(entity: EntityDetails, kind: ParameterPanelKind): string {
   if (kind === 'pipeline') return 'Промысловый';
-  if (kind === 'wellpad') return 'Система сбора';
+  if (kind === 'wellpad') return 'Объект добычи';
+  if (entity.kind === 'node') return entity.subType ?? 'Узел сети';
   return entity.subType ?? 'Объект подготовки';
 }
 

@@ -74,6 +74,7 @@ export function ParameterPanel({
       active={hasTab(panelKind, activeTab) ? activeTab : firstTabForKind(panelKind)}
       onChange={onTabChange}
       kind={entity?.kind}
+      subType={entity?.subType}
     />
   ) : null;
 

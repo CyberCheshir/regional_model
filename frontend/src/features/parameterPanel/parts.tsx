@@ -14,6 +14,8 @@ import facilityIcon from '../../assets/design/facility.png';
 import deliveryPointIcon from '../../assets/design/delivery-point.png';
 import pipelineIcon from '../../assets/design/pipeline.png';
 import segmentIcon from '../../assets/design/segment.png';
+import tapIcon from '../../assets/design/tap.png';
+import teeIcon from '../../assets/design/tee.png';
 
 /** Иконка-картинка типа объекта для верхней зоны рельса. */
 const KIND_IMAGE: Record<EntityDetails['kind'], string> = {
@@ -22,6 +24,7 @@ const KIND_IMAGE: Record<EntityDetails['kind'], string> = {
   'delivery-point': deliveryPointIcon,
   pipeline: pipelineIcon,
   segment: segmentIcon,
+  node: tapIcon,
 };
 
 /** Строка «метка — значение». Значение необязательно (тогда только метка). */
@@ -85,20 +88,28 @@ export function PanelTabRail({
   active,
   onChange,
   kind,
+  subType,
 }: {
   tabs: ParameterTab[];
   active: ParameterTabId;
   onChange: (tab: ParameterTabId) => void;
   /** Тип объекта — задаёт картинку в верхней зоне рельса */
   kind?: EntityDetails['kind'];
+  /** Подтип объекта (например, «Врезка», «Тройник») для выбора точной картинки */
+  subType?: string;
 }) {
+  const kindImageSrc =
+    kind === 'node'
+      ? (subType === 'Тройник' ? teeIcon : tapIcon)
+      : (kind ? KIND_IMAGE[kind] : undefined);
+
   return (
     <div className="pp-rail">
       {/* Зона 1: по высоте шапки — картинка типа в кнопке по центру */}
       <div className="pp-rail__zone pp-rail__zone--top" aria-hidden="true">
-        {kind && (
+        {kindImageSrc && (
           <span className="pp-rail__item pp-rail__item--kind">
-            <img className="pp-rail__kind-img" src={KIND_IMAGE[kind]} alt="" />
+            <img className="pp-rail__kind-img" src={kindImageSrc} alt="" />
           </span>
         )}
       </div>

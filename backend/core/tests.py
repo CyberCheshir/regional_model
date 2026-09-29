@@ -327,3 +327,97 @@ class LicenceAreaTests(TestCase):
         )
         self.assertEqual(good.status_code, 201, good.json())
         self.assertEqual(LicenceArea.objects.count(), 1)
+
+
+class NodeTapAndJointTests(TestCase):
+    """Тесты узлов сети: врезка и стык трубопровода, сохранение типа и атрибутов."""
+
+    def setUp(self):
+        self.project = Project.objects.create(name="Тест узлов", slug="test-nodes")
+        self.client = APIClient()
+
+    def test_node_type_tap_and_joint_attributes(self):
+        tap_node = NetworkNode.objects.create(
+            project=self.project,
+            name="Врезка 1",
+            kind="tap",
+            node_type="tap",
+            lat=61.1,
+            lng=76.7,
+        )
+        self.assertEqual(tap_node.node_type, "tap")
+        self.assertEqual(tap_node.kind, "tap")
+        self.assertEqual(tap_node.attributes["node_type"], "tap")
+        self.assertEqual(tap_node.attributes["type"], "Врезка")
+
+        joint_node = NetworkNode.objects.create(
+            project=self.project,
+            name="Стык 1",
+            kind="joint",
+            lat=61.2,
+            lng=76.8,
+        )
+        self.assertEqual(joint_node.node_type, "joint")
+        self.assertEqual(joint_node.kind, "joint")
+        self.assertEqual(joint_node.attributes["node_type"], "joint")
+        self.assertEqual(joint_node.attributes["type"], "Стык трубопровода")
+
+    def test_map_save_and_load_preserves_node_types(self):
+        payload = {
+            "project_id": str(self.project.id),
+            "facilities": [],
+            "nodes": [
+                {
+                    "id": "node-joint-1",
+                    "name": "Стык 1",
+                    "node_type": "joint",
+                    "lat": 61.1,
+                    "lng": 76.7,
+                },
+                {
+                    "id": "node-tap-1",
+                    "name": "Врезка 1",
+                    "node_type": "tap",
+                    "lat": 61.15,
+                    "lng": 76.75,
+                },
+            ],
+            "segments": [
+                {
+                    "id": "seg-1",
+                    "name": "Сегмент 1",
+                    "start_node_id": "node-joint-1",
+                    "end_node_id": "node-tap-1",
+                    "fluid": "oil",
+                }
+            ],
+            "pipelines": [],
+            "licence_areas": [],
+        }
+        res = self.client.post("/api/map/save/", payload, format="json")
+        self.assertEqual(res.status_code, 201, res.json())
+
+        snap = self.client.get("/api/map/load/", {"project_id": str(self.project.id)}).json()
+        nodes = {n["name"]: n for n in snap["nodes"]}
+        self.assertEqual(nodes["Стык 1"]["node_type"], "joint")
+        self.assertEqual(nodes["Стык 1"]["attributes"]["type"], "Стык трубопровода")
+        self.assertEqual(nodes["Врезка 1"]["node_type"], "tap")
+        self.assertEqual(nodes["Врезка 1"]["attributes"]["type"], "Врезка")
+
+    def test_entity_details_for_tap_node(self):
+        tap_node = NetworkNode.objects.create(
+            project=self.project,
+            name="Врезка на МН",
+            kind="tap",
+            node_type="tap",
+            tap_edge_external="pipe-1",
+            tap_t=0.35,
+            lat=61.1,
+            lng=76.7,
+        )
+        res = self.client.get(f"/api/entities/{tap_node.id}/")
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertEqual(data["kind"], "node")
+        self.assertEqual(data["subType"], "Врезка")
+        self.assertTrue(any(item["label"] == "Тип узла" and item["value"] == "Врезка" for item in data["modelStatus"]))

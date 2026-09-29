@@ -213,15 +213,40 @@ def save_map_graph(project: Project, payload: dict) -> dict:
     nodes_by_local: dict[str, NetworkNode] = {}
     for row in nodes_payload:
         local_id = _checked_id(row.get("id"), "nodes")
-        kind = row.get("kind") or "vertex"
-        if kind not in {"vertex", "tee", "tap"}:
-            raise GraphImportError(f"Неизвестный kind узла: {kind}")
+        raw_kind = (
+            row.get("node_type")
+            or (row.get("attributes") or {}).get("node_type")
+            or row.get("kind")
+            or "joint"
+        )
+        if raw_kind in ("tap", "врезка"):
+            node_type = "tap"
+            kind = "tap"
+        elif raw_kind in ("tee", "тройник"):
+            node_type = "tee"
+            kind = "tee"
+        elif raw_kind in ("joint", "vertex", "стык трубопровода"):
+            node_type = "joint"
+            kind = "joint"
+        else:
+            raise GraphImportError(f"Неизвестный тип узла: {raw_kind}")
+
         facility_local = row.get("facility_id")
         uid = _as_uuid(row.get("uid"))
+        attrs = dict(row.get("attributes") or {})
+        attrs["node_type"] = node_type
+        attrs["type"] = (
+            "Врезка"
+            if node_type == "tap"
+            else ("Тройник" if node_type == "tee" else "Стык трубопровода")
+        )
+
         fields = {
             "facility": facilities_by_local.get(str(facility_local)) if facility_local else None,
-            "name": row.get("name") or "Узел",
+            "name": row.get("name")
+            or ("Врезка" if node_type == "tap" else ("Тройник" if node_type == "tee" else "Стык трубопровода")),
             "kind": kind,
+            "node_type": node_type,
             "lat": float(row.get("lat", 0.0)),
             "lng": float(row.get("lng", 0.0)),
             # Привязка врезки к ребру (edgeId, t) и подключённых вершин.
@@ -230,6 +255,7 @@ def save_map_graph(project: Project, payload: dict) -> dict:
             "bound_tap_external": row.get("bound_tap_id") or None,
             "bound_fitting_external": row.get("bound_fitting_id") or None,
             "external_key": local_id,
+            "attributes": attrs,
         }
         record = existing_nodes.get(uid) if uid else None
         if record is not None:

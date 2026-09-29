@@ -43,7 +43,9 @@ export type ProjectSnapshotInput = {
     /** Уникальный id сущности (в старых снимках может отсутствовать) */
     uid?: string;
     name: string;
-    kind: 'vertex' | 'tee' | 'tap';
+    kind: string;
+    node_type?: string;
+    attributes?: Record<string, unknown>;
     lat: number;
     lng: number;
     facility_id?: string | null;
@@ -137,12 +139,20 @@ export function nodeToDrawVertex(
   const world = lngLatToGraphPoint(node.lng, node.lat);
   const vid = `snap-${node.id}`;
 
-  if (node.kind === 'tap') {
+  const isTap = node.kind === 'tap' || node.node_type === 'tap';
+  if (isTap) {
     if (!tapsById.has(node.id)) {
       tapsById.set(node.id, {
         id: node.id,
         // uid из снимка; старый файл без uid — генерируем новый.
         uid: node.uid ?? newUid(),
+        nodeType: 'tap',
+        typeLabel: 'Врезка',
+        attributes: {
+          node_type: 'tap',
+          type: 'Врезка',
+          ...(node.attributes || {}),
+        },
         label: node.name,
         x: world.x,
         y: world.y,

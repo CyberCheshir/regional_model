@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from core.models import Facility, Flow, LicenceArea, Pipeline, Project, ValidationItem
+from core.models import Facility, Flow, LicenceArea, NetworkNode, Pipeline, Project, ValidationItem
 
 # Соответствие доменного kind → kind дерева фронтенда (TreeNodeKindSchema).
 TREE_KIND_BY_FACILITY = {
@@ -37,7 +37,54 @@ def build_entity_details(entity_id) -> dict | None:
     if pipeline is not None:
         return _pipeline_details(pipeline)
 
+    node = NetworkNode.objects.filter(id=entity_id).select_related("facility").first()
+    if node is not None:
+        return _node_details(node)
+
     return None
+
+
+def _node_details(node: NetworkNode) -> dict:
+    node_type = getattr(node, "node_type", node.kind)
+    is_tap = node_type == "tap"
+    type_label = (
+        "Врезка"
+        if is_tap
+        else ("Тройник" if node_type == "tee" else "Стык трубопровода")
+    )
+
+    model_status = [
+        {"label": "Тип узла", "value": type_label, "ok": True},
+    ]
+    if is_tap:
+        model_status.append(
+            {
+                "label": "Трубопровод-носитель",
+                "value": node.tap_edge_external or "привязана",
+                "ok": bool(node.tap_edge_external),
+            }
+        )
+        if node.tap_t is not None:
+            model_status.append(
+                {"label": "Позиция вдоль трубы", "value": f"{round(node.tap_t * 100)}%", "ok": True}
+            )
+    elif node.facility:
+        model_status.append(
+            {"label": "Объект размещения", "value": node.facility.name, "ok": True}
+        )
+
+    return {
+        "id": str(node.id),
+        "label": node.name or type_label,
+        "kind": "node",
+        "subType": type_label,
+        "status": "running",
+        "licenseArea": node.facility.license_area if node.facility else "—",
+        "owner": node.facility.owner if node.facility else "—",
+        "modelStatus": model_status,
+        "outgoing": [],
+        "incoming": [],
+    }
 
 
 def _facility_details(facility: Facility) -> dict:

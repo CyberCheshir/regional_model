@@ -1,0 +1,496 @@
+/* Стили вкладки «Объекты» модуля «Данные» */
+
+.objects-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+/* Верхняя панель фильтров и поиска */
+.objects-tab__topbar {
+  background-color: #ffffff;
+  border-radius: 16px;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.objects-tab__topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.objects-tab__search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 280px;
+  max-width: 360px;
+  flex: 1;
+}
+
+.objects-tab__search-icon {
+  position: absolute;
+  left: 12px;
+  color: #94a3b8;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+}
+
+.objects-tab__search-input {
+  width: 100%;
+  background-color: #f4f6fa;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 8px 12px 8px 36px;
+  font-size: 13.5px;
+  color: #0f172a;
+  outline: none;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+
+.objects-tab__search-input:focus {
+  background-color: #ffffff;
+  border-color: #99c2f0;
+}
+
+.objects-tab__search-input::placeholder {
+  color: #94a3b8;
+}
+
+.objects-tab__filter-pills {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.objects-tab__filter-pill {
+  border: 1px solid transparent;
+  background-color: #f4f6fa;
+  color: #475569;
+  border-radius: 20px;
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  user-select: none;
+}
+
+.objects-tab__filter-pill:hover {
+  background-color: #e8ecf3;
+  color: #1e293b;
+}
+
+.objects-tab__filter-pill.is-active {
+  background-color: #e8f1fc;
+  border-color: #99c2f0;
+  color: #0066cc;
+  font-weight: 600;
+}
+
+.objects-tab__btn-batch-toggle {
+  border: 1px solid #d0d7de;
+  background-color: #ffffff;
+  color: #0066cc;
+  border-radius: 20px;
+  padding: 6px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.objects-tab__btn-batch-toggle:hover {
+  background-color: #f0f7ff;
+  border-color: #0066cc;
+}
+
+/* Основная сетка: Левая карточка (таблица) + Правая карточка (групповое редактирование) */
+.objects-tab__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) 420px;
+  gap: 20px;
+  align-items: stretch;
+}
+
+@media (max-width: 1200px) {
+  .objects-tab__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Карточки */
+.objects-tab__card {
+  background-color: #ffffff;
+  border-radius: 20px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.objects-tab__eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+/* Таблица объектов */
+.objects-tab__table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.objects-tab__table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.objects-tab__table th {
+  padding: 10px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  border-bottom: 1px solid #edf2f7;
+  white-space: nowrap;
+}
+
+.objects-tab__table td {
+  padding: 12px 8px;
+  font-size: 13px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+  color: #334155;
+  white-space: nowrap;
+  transition: background-color 0.1s;
+}
+
+.objects-tab__table tbody tr {
+  cursor: pointer;
+}
+
+.objects-tab__table tbody tr:hover td {
+  background-color: #f8fafc;
+}
+
+.objects-tab__table tbody tr.is-selected td {
+  background-color: #f4f8fd;
+}
+
+.objects-tab__col-check {
+  width: 36px;
+  text-align: center;
+}
+
+.objects-tab__checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: #0066cc;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.objects-tab__obj-name {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.objects-tab__status-badge {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.objects-tab__status-badge--check {
+  color: #d97706;
+  font-weight: 500;
+}
+
+/* Подвал левой карточки */
+.objects-tab__footer {
+  margin-top: auto;
+  padding-top: 20px;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.objects-tab__selection-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.objects-tab__selection-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.objects-tab__selection-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #64748b;
+}
+
+.objects-tab__selection-count {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.objects-tab__selection-items {
+  font-size: 13px;
+  color: #64748b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.objects-tab__footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.objects-tab__btn-secondary {
+  border: 1px solid #d0d7de;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #0f172a;
+  background-color: #ffffff;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.objects-tab__btn-secondary:hover:not(:disabled) {
+  background-color: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.objects-tab__btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.objects-tab__btn-map {
+  border: 1px solid #99c2f0;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #0066cc;
+  background-color: #ffffff;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.objects-tab__btn-map:hover:not(:disabled) {
+  background-color: #f0f7ff;
+  border-color: #0066cc;
+}
+
+.objects-tab__btn-map:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Правая карточка: Групповое редактирование */
+.objects-tab__heading {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 16px 0;
+}
+
+.objects-tab__scope-pills {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.objects-tab__scope-pill {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.objects-tab__scope-pill:hover {
+  background-color: #f1f5f9;
+}
+
+.objects-tab__scope-pill.is-active {
+  background-color: #e8f1fc;
+  border-color: #99c2f0;
+  color: #0066cc;
+  font-weight: 600;
+}
+
+.objects-tab__hint {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #64748b;
+  margin: 0 0 20px 0;
+}
+
+.objects-tab__section-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  text-transform: uppercase;
+  margin: 0 0 12px 0;
+}
+
+.objects-tab__form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 600px) {
+  .objects-tab__form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.objects-tab__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.objects-tab__field-label {
+  font-size: 12px;
+  color: #475569;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.objects-tab__field-input,
+.objects-tab__field-select {
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 13.5px;
+  color: #0f172a;
+  outline: none;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+
+.objects-tab__field-input:focus,
+.objects-tab__field-select:focus {
+  background-color: #ffffff;
+  border-color: #99c2f0;
+}
+
+/* Блок предупреждения для типоспецифичных полей */
+.objects-tab__notice-box {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 24px;
+}
+
+.objects-tab__notice-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  margin: 0 0 6px 0;
+}
+
+.objects-tab__notice-text {
+  font-size: 12px;
+  line-height: 1.55;
+  color: #64748b;
+  margin: 0;
+}
+
+/* Кнопка применения */
+.objects-tab__apply-wrap {
+  margin-top: auto;
+  padding-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+}
+
+.objects-tab__btn-apply {
+  background-color: #0066cc;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 11px 24px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s, transform 0.05s;
+}
+
+.objects-tab__btn-apply:hover:not(:disabled) {
+  background-color: #0052a3;
+}
+
+.objects-tab__btn-apply:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.objects-tab__btn-apply:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.objects-tab__toast-applied {
+  font-size: 12.5px;
+  color: #0e8345;
+  font-weight: 500;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -244,8 +244,12 @@ export type MapFitting = {
   lat: number;
 };
 
+/** Тип узла сети: врезка или стык трубопровода (также тройник) */
+export type NodeType = 'tap' | 'joint' | 'tee';
+
 /**
- * Врезка — точка на существующем ребре (трубопроводе), светлее вершин рёбер.
+ * Врезка — точка-узел на существующем ребре (трубопроводе), светлее вершин рёбер.
+ * Представляет собой узел сети с атрибутом типа (node_type: 'tap').
  * Хранит привязку к ребру (edgeId) и параметр t ∈ [0..1] вдоль него,
  * чтобы пересчитываться при перемещении концов ребра.
  */
@@ -253,6 +257,14 @@ export type MapTap = {
   id: string;
   /** Уникальный id сущности (скрыт от пользователя) */
   uid: EntityUid;
+  /** Атрибут, хранящий тип узла */
+  nodeType?: 'tap';
+  typeLabel?: 'Врезка';
+  attributes?: {
+    node_type?: 'tap';
+    type?: 'Врезка';
+    [key: string]: unknown;
+  };
   label: string;
   x: number;
   y: number;
@@ -384,7 +396,7 @@ export function isVertexTool(tool: DrawTool): tool is VertexKind {
 
 /** Названия для авто-имён вершин. */
 export const VERTEX_LABEL: Record<VertexKind, string> = {
-  wellpad: 'Система сбора',
+  wellpad: 'Объект добычи',
   facility: 'Объект подготовки',
   'delivery-point': 'Точка поставки',
 };

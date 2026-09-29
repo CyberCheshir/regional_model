@@ -42,7 +42,11 @@ export type MapSavePayload = {
     /** Уникальный id сущности (скрыт от пользователя) */
     uid: string;
     name: string;
-    kind: 'vertex' | 'tee' | 'tap';
+    kind: 'vertex' | 'tee' | 'tap' | 'joint';
+    /** Тип узла: врезка, стык трубопровода, тройник */
+    node_type?: 'tap' | 'joint' | 'tee';
+    /** Атрибуты узла, хранящие тип и метаданные */
+    attributes?: Record<string, unknown>;
     lat: number;
     lng: number;
     /** Объект, на границе которого лежит узел (для 'box'-стыков) */
@@ -148,8 +152,11 @@ export function buildSavePayload(input: MapSaveInput): MapSavePayload {
     const key = nodeKey(v);
     if (nodesByKey.has(key)) return;
     const geo = graphPointToLngLat(v.x, v.y);
-    const kind: 'vertex' | 'tee' | 'tap' =
-      v.type === 'tap' ? 'tap' : v.type === 'fitting' ? 'tee' : 'vertex';
+    const isTap = v.type === 'tap';
+    const isTee = v.type === 'fitting';
+    const nodeType: 'tap' | 'joint' | 'tee' = isTap ? 'tap' : isTee ? 'tee' : 'joint';
+    const typeLabel = isTap ? 'Врезка' : isTee ? 'Тройник' : 'Стык трубопровода';
+    const kind: 'joint' | 'tee' | 'tap' = isTap ? 'tap' : isTee ? 'tee' : 'joint';
     // Врезка: сохраняем её координаты, привязку к ребру (edgeId) и параметр t.
     const tapMeta =
       v.type === 'tap'
@@ -168,8 +175,13 @@ export function buildSavePayload(input: MapSaveInput): MapSavePayload {
           : v.type === 'fitting'
             ? ((input.fittings ?? []).find((it) => it.id === v.fittingId)?.uid ?? newUid())
             : newUid(),
-      name: `${kind === 'tee' ? 'Тройник' : kind === 'tap' ? 'Врезка' : 'Узел'} ${nodesByKey.size + 1}`,
+      name: `${typeLabel} ${nodesByKey.size + 1}`,
       kind,
+      node_type: nodeType,
+      attributes: {
+        node_type: nodeType,
+        type: typeLabel,
+      },
       lat: geo.lat,
       lng: geo.lng,
       facility_id: v.type === 'box' ? v.boxId : null,
@@ -209,11 +221,18 @@ export function buildSavePayload(input: MapSaveInput): MapSavePayload {
       uid: t.uid,
       name: t.label || `Врезка ${nodesByKey.size + 1}`,
       kind: 'tap',
+      node_type: 'tap',
+      attributes: {
+        node_type: 'tap',
+        type: 'Врезка',
+        edge_id: t.edgeId,
+        t: t.t,
+      },
       lat: t.lat,
       lng: t.lng,
       facility_id: null,
       // Ребро-носитель и позиция вдоль него (t = 0/1 — врезка на вершине).
-      tap_edge_id: t.edgeId ,
+      tap_edge_id: t.edgeId,
       tap_t: t.t,
       bound_tap_id: null,
       bound_fitting_id: null,
@@ -232,6 +251,11 @@ export function buildSavePayload(input: MapSaveInput): MapSavePayload {
       uid: f.uid,
       name: f.label || `Тройник ${nodesByKey.size + 1}`,
       kind: 'tee',
+      node_type: 'tee',
+      attributes: {
+        node_type: 'tee',
+        type: 'Тройник',
+      },
       lat: geo.lat,
       lng: geo.lng,
       facility_id: null,
