@@ -23,6 +23,7 @@ import type {
 export type PipelineRecord = {
   id: string;
   label: string;
+  fluid?: string;
   owner?: string;
   condition?: string;
   period?: string;

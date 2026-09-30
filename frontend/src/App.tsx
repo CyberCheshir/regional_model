@@ -15,6 +15,8 @@ import { useEntityDetailsQuery } from './api/queries';
 import { useUiState } from './state/uiState';
 import { useMapDrawing } from './features/map/mapDrawing';
 import { DataModuleView } from './features/dataModule/DataModuleView';
+import { HydraulicCalcView } from './features/hydraulicCalc/HydraulicCalcView';
+import { AnalyticsView } from './features/analytics/AnalyticsView';
 import { fetchProjectSnapshot } from './api/mapSave';
 import { parseLicenceAreaGeoJSON } from './features/map/importLicenceArea';
 import {
@@ -503,6 +505,10 @@ function App() {
                 setRightCollapsed(false);
               }}
             />
+          ) : activeModule === 'calc' ? (
+            <HydraulicCalcView onNavigateToMap={() => setActiveModule('map')} />
+          ) : activeModule === 'analytics' ? (
+            <AnalyticsView onNavigateToMap={() => setActiveModule('map')} />
           ) : undefined
         }
       />

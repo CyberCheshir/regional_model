@@ -1,0 +1,587 @@
+/* Стили вкладки «Сравнение сценариев» модуля «Аналитика» */
+
+.scenarios-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+/* 1. Верхняя панель управления сценариями */
+.scenarios-tab__control-card {
+  background-color: #ffffff;
+  border-radius: 16px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.scenarios-tab__control-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.scenarios-tab__selectors {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.scenarios-tab__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.scenarios-tab__label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.scenarios-tab__select {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 7px 12px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0f172a;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.scenarios-tab__select:focus {
+  border-color: #0066cc;
+  background-color: #ffffff;
+}
+
+/* Переключатель подрежимов (сегментированные кнопки) */
+.scenarios-tab__segmented {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 10px;
+  background-color: #f1f5f9;
+  border: 1px solid #e2e8f0;
+}
+
+.scenarios-tab__seg-btn {
+  padding: 7px 16px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.scenarios-tab__seg-btn:hover {
+  color: #0f172a;
+}
+
+.scenarios-tab__seg-btn--active {
+  background-color: #eff6ff;
+  border-color: #bfdbfe;
+  color: #0066cc;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 102, 204, 0.08);
+}
+
+.scenarios-tab__btn-compare {
+  background-color: #0066cc;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 22px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.scenarios-tab__btn-compare:hover {
+  background-color: #0052a3;
+  box-shadow: 0 4px 10px rgba(0, 102, 204, 0.2);
+}
+
+/* Полоса фильтров */
+.scenarios-tab__filterbar {
+  background-color: #ffffff;
+  border-radius: 14px;
+  padding: 10px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  flex-wrap: wrap;
+}
+
+.scenarios-tab__filter-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  margin-right: 4px;
+}
+
+.scenarios-tab__filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: 1px solid #e2e8f0;
+  background-color: #f8fafc;
+  color: #475569;
+  user-select: none;
+}
+
+.scenarios-tab__filter-pill:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+.scenarios-tab__filter-pill--active {
+  background-color: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1e40af;
+  font-weight: 600;
+}
+
+/* ================================================================== */
+/* 2. Подрежим: Производственные показатели                           */
+/* ================================================================== */
+
+/* Карточка выбранного показателя */
+.scenarios-tab__selected-kpi-card {
+  background-color: #ffffff;
+  border-radius: 16px;
+  padding: 18px 24px;
+  display: grid;
+  grid-template-columns: minmax(240px, 1.4fr) repeat(5, 1fr);
+  gap: 20px;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+@media (max-width: 1200px) {
+  .scenarios-tab__selected-kpi-card {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .scenarios-tab__selected-kpi-card {
+    grid-template-columns: 1fr;
+  }
+}
+
+.scenarios-tab__selected-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.scenarios-tab__selected-eyebrow {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.scenarios-tab__selected-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.scenarios-tab__kpi-box {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.scenarios-tab__kpi-label {
+  font-size: 11.5px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.scenarios-tab__kpi-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.scenarios-tab__kpi-value--green {
+  color: #10b981;
+}
+
+.scenarios-tab__kpi-sub {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+/* Двухколоночная сетка производственных показателей */
+.scenarios-tab__prod-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2.2fr) minmax(280px, 1fr);
+  gap: 16px;
+  align-items: stretch;
+}
+
+@media (max-width: 1100px) {
+  .scenarios-tab__prod-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.scenarios-tab__card {
+  background-color: #ffffff;
+  border-radius: 20px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.scenarios-tab__heading {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 4px 0;
+}
+
+.scenarios-tab__desc {
+  font-size: 12.5px;
+  color: #64748b;
+  margin: 0 0 16px 0;
+}
+
+/* Блок графика */
+.scenarios-tab__chart-wrap {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.scenarios-tab__chart-svg {
+  width: 100%;
+  height: 220px;
+  display: block;
+}
+
+.scenarios-tab__chart-legend {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.scenarios-tab__legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #475569;
+  font-weight: 500;
+}
+
+.scenarios-tab__legend-marker {
+  width: 14px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+.scenarios-tab__legend-marker--dashed {
+  height: 2px;
+  border-top: 2px dashed #94a3b8;
+  background: transparent;
+}
+
+/* Таблица контрольных годов */
+.scenarios-tab__section-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  text-transform: uppercase;
+  margin: 0 0 10px 0;
+}
+
+.scenarios-tab__table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.scenarios-tab__table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.scenarios-tab__table th {
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  border-bottom: 1px solid #edf2f7;
+  white-space: nowrap;
+}
+
+.scenarios-tab__table td {
+  padding: 10px 12px;
+  font-size: 13px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+  font-variant-numeric: tabular-nums;
+  vertical-align: middle;
+}
+
+/* Правая колонка: Доступные показатели */
+.scenarios-tab__indicators-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.scenarios-tab__indicator-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background-color: #f8fafc;
+  cursor: pointer;
+  transition: all 0.15s;
+  user-select: none;
+}
+
+.scenarios-tab__indicator-item:hover {
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.scenarios-tab__indicator-item--active {
+  background-color: #eff6ff;
+  border-color: #93c5fd;
+  color: #0066cc;
+}
+
+.scenarios-tab__indicator-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.scenarios-tab__indicator-item--active .scenarios-tab__indicator-name {
+  color: #0066cc;
+}
+
+.scenarios-tab__indicator-unit {
+  font-size: 11.5px;
+  color: #64748b;
+}
+
+.scenarios-tab__indicator-peak {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: #94a3b8;
+}
+
+.scenarios-tab__btn-graph {
+  background-color: #ffffff;
+  border: 1px solid #d0d7de;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+  margin-top: auto;
+}
+
+.scenarios-tab__btn-graph:hover {
+  background-color: #f8fafc;
+  border-color: #0066cc;
+  color: #0066cc;
+}
+
+/* ================================================================== */
+/* 3. Подрежим: Ограничения и рекомендации                            */
+/* ================================================================== */
+
+/* Карточка сводки изменений (7 плашек) */
+.scenarios-tab__summary-card {
+  background-color: #ffffff;
+  border-radius: 16px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.scenarios-tab__summary-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 1200px) {
+  .scenarios-tab__summary-row {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .scenarios-tab__summary-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.scenarios-tab__summary-box {
+  background-color: #f8fafc;
+  border: 1px solid #edf2f7;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.scenarios-tab__summary-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.scenarios-tab__summary-val {
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.scenarios-tab__summary-val--green {
+  color: #10b981;
+}
+
+.scenarios-tab__summary-val--orange {
+  color: #ea580c;
+}
+
+.scenarios-tab__summary-sub {
+  font-size: 10.5px;
+  color: #94a3b8;
+}
+
+/* Двухколоночная сетка ограничений */
+.scenarios-tab__limits-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.8fr);
+  gap: 16px;
+  align-items: stretch;
+}
+
+@media (max-width: 1100px) {
+  .scenarios-tab__limits-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.scenarios-tab__row-highlight td {
+  background-color: #eff6ff !important;
+}
+
+.scenarios-tab__badge-status {
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.scenarios-tab__badge-status--resolved {
+  color: #10b981;
+}
+
+.scenarios-tab__badge-status--decreased {
+  color: #10b981;
+}
+
+.scenarios-tab__badge-status--grown {
+  color: #ea580c;
+}
+
+/* Блок выбранного изменения внутри правой карточки */
+.scenarios-tab__detail-box {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #edf2f7;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.scenarios-tab__detail-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.scenarios-tab__detail-sub {
+  font-size: 12.5px;
+  color: #475569;
+  margin: 0 0 8px 0;
+}
+
+.scenarios-tab__detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px 20px;
+}
+
+.scenarios-tab__detail-prop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+}
+
+.scenarios-tab__detail-label {
+  color: #64748b;
+}
+
+.scenarios-tab__detail-value {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.scenarios-tab__detail-value--green {
+  color: #10b981;
+}

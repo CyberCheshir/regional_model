@@ -1,0 +1,513 @@
+/* Стили вкладки «Дорожные карты» модуля «Аналитика» */
+
+.roadmaps-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+/* 1. Верхняя сводка KPI мероприятий */
+.roadmaps-tab__kpi-card {
+  background-color: #ffffff;
+  border-radius: 16px;
+  padding: 16px 20px;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+@media (max-width: 1100px) {
+  .roadmaps-tab__kpi-card {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.roadmaps-tab__kpi-box {
+  background-color: #f8fafc;
+  border: 1px solid #edf2f7;
+  border-radius: 10px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.roadmaps-tab__kpi-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.roadmaps-tab__kpi-val {
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+
+.roadmaps-tab__kpi-val--red {
+  color: #dc2626;
+}
+
+.roadmaps-tab__kpi-val--blue {
+  color: #0066cc;
+}
+
+.roadmaps-tab__kpi-sub {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+/* 2. Полоса фильтров и управления масштабом */
+.roadmaps-tab__filterbar {
+  background-color: #ffffff;
+  border-radius: 14px;
+  padding: 10px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  flex-wrap: wrap;
+}
+
+.roadmaps-tab__filters-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.roadmaps-tab__filter-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  margin-right: 4px;
+}
+
+.roadmaps-tab__filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: 1px solid #e2e8f0;
+  background-color: #f8fafc;
+  color: #475569;
+  user-select: none;
+}
+
+.roadmaps-tab__filter-pill:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+.roadmaps-tab__filter-pill--active {
+  background-color: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1e40af;
+  font-weight: 600;
+}
+
+/* Переключатель масштаба времени */
+.roadmaps-tab__scale-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.roadmaps-tab__scale-label {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.roadmaps-tab__segmented {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 8px;
+  background-color: #f1f5f9;
+  border: 1px solid #e2e8f0;
+}
+
+.roadmaps-tab__seg-btn {
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.12s;
+  white-space: nowrap;
+}
+
+.roadmaps-tab__seg-btn--active {
+  background-color: #eff6ff;
+  border-color: #bfdbfe;
+  color: #0066cc;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0, 102, 204, 0.08);
+}
+
+/* 3. Основная двухколоночная рабочая зона: Список + Гант / Детали */
+.roadmaps-tab__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr);
+  gap: 16px;
+  align-items: stretch;
+}
+
+@media (max-width: 1200px) {
+  .roadmaps-tab__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.roadmaps-tab__card {
+  background-color: #ffffff;
+  border-radius: 20px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.roadmaps-tab__header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.roadmaps-tab__heading {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.roadmaps-tab__eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+/* Диаграмма Ганта */
+.roadmaps-tab__gantt-container {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid #edf2f7;
+  border-radius: 12px;
+  background-color: #ffffff;
+}
+
+.roadmaps-tab__gantt-header {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  border-bottom: 1px solid #e2e8f0;
+  background-color: #f8fafc;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.roadmaps-tab__gantt-header-title {
+  padding: 10px 14px;
+  border-right: 1px solid #e2e8f0;
+}
+
+.roadmaps-tab__gantt-timeline-header {
+  display: grid;
+  grid-template-columns: repeat(21, 1fr);
+  text-align: center;
+  padding: 10px 0;
+}
+
+.roadmaps-tab__timeline-year-mark {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  border-right: 1px dashed #e2e8f0;
+}
+
+.roadmaps-tab__timeline-year-mark:last-child {
+  border-right: none;
+}
+
+/* Строки Ганта */
+.roadmaps-tab__gantt-row {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  border-bottom: 1px solid #f1f5f9;
+  cursor: pointer;
+  transition: background-color 0.12s;
+  min-height: 52px;
+  align-items: center;
+}
+
+.roadmaps-tab__gantt-row:hover {
+  background-color: #f8fafc;
+}
+
+.roadmaps-tab__gantt-row--selected {
+  background-color: #eff6ff !important;
+}
+
+.roadmaps-tab__row-info {
+  padding: 10px 14px;
+  border-right: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.roadmaps-tab__row-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.roadmaps-tab__row-sub {
+  font-size: 11px;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.roadmaps-tab__gantt-timeline-body {
+  position: relative;
+  height: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  padding: 0 4px;
+}
+
+.roadmaps-tab__grid-lines {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: grid;
+  grid-template-columns: repeat(21, 1fr);
+  pointer-events: none;
+}
+
+.roadmaps-tab__grid-col {
+  border-right: 1px dashed #f1f5f9;
+  height: 100%;
+}
+
+.roadmaps-tab__grid-col:last-child {
+  border-right: none;
+}
+
+/* Полоса мероприятия Ганта */
+.roadmaps-tab__bar {
+  position: absolute;
+  height: 26px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #0066cc 0%, #2563eb 100%);
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  box-shadow: 0 1px 4px rgba(0, 102, 204, 0.2);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+
+.roadmaps-tab__bar:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 102, 204, 0.35);
+}
+
+.roadmaps-tab__bar--critical {
+  background: linear-gradient(90deg, #dc2626 0%, #ef4444 100%);
+  box-shadow: 0 1px 4px rgba(220, 38, 38, 0.2);
+}
+
+.roadmaps-tab__bar--critical:hover {
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.35);
+}
+
+.roadmaps-tab__bar--medium {
+  background: linear-gradient(90deg, #ca8a04 0%, #eab308 100%);
+}
+
+.roadmaps-tab__bar-marker-end {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background-color: rgba(255, 255, 255, 0.5);
+  border-top-right-radius: 6px;
+  border-bottom-right-radius: 6px;
+}
+
+/* Правая карточка: Детали выбранного мероприятия */
+.roadmaps-tab__details {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.roadmaps-tab__detail-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.roadmaps-tab__badge-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  width: fit-content;
+}
+
+.roadmaps-tab__badge-status--planning {
+  background-color: #eff6ff;
+  color: #0066cc;
+}
+
+.roadmaps-tab__badge-status--critical {
+  background-color: #fef2f2;
+  color: #dc2626;
+}
+
+.roadmaps-tab__props-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  background-color: #f8fafc;
+  border-radius: 12px;
+  padding: 14px;
+  border: 1px solid #edf2f7;
+}
+
+.roadmaps-tab__prop-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.roadmaps-tab__prop-item--full {
+  grid-column: span 2;
+}
+
+.roadmaps-tab__prop-label {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.roadmaps-tab__prop-val {
+  font-size: 13px;
+  color: #0f172a;
+  font-weight: 600;
+}
+
+/* Декомпозиция этапов выбранного мероприятия */
+.roadmaps-tab__stages-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 8px 0 0 0;
+}
+
+.roadmaps-tab__stages-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.roadmaps-tab__stage-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  font-size: 12.5px;
+}
+
+.roadmaps-tab__stage-name {
+  font-weight: 600;
+  color: #334155;
+}
+
+.roadmaps-tab__stage-meta {
+  font-size: 11.5px;
+  color: #64748b;
+}
+
+.roadmaps-tab__actions {
+  display: flex;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid #edf2f7;
+}
+
+.roadmaps-tab__btn {
+  flex: 1;
+  padding: 9px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+}
+
+.roadmaps-tab__btn--primary {
+  background-color: #0066cc;
+  color: #ffffff;
+  border: none;
+}
+
+.roadmaps-tab__btn--primary:hover {
+  background-color: #0052a3;
+}
+
+.roadmaps-tab__btn--outline {
+  background-color: #ffffff;
+  color: #475569;
+  border: 1px solid #d0d7de;
+}
+
+.roadmaps-tab__btn--outline:hover {
+  background-color: #f8fafc;
+  color: #0f172a;
+}

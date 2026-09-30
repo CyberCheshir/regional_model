@@ -1,0 +1,345 @@
+/* Стили вкладки «Выбор контура» модуля гидравлических расчетов */
+
+.contour-tab {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(360px, 1fr);
+  gap: 20px;
+  align-items: stretch;
+  width: 100%;
+}
+
+@media (max-width: 1200px) {
+  .contour-tab {
+    grid-template-columns: 1fr;
+  }
+}
+
+.contour-tab__card {
+  background-color: #ffffff;
+  border-radius: 20px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.contour-tab__eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.contour-tab__heading {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 16px 0;
+}
+
+/* Верхняя панель фильтров контура */
+.contour-tab__filters-row {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.contour-tab__filter-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.contour-tab__filter-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.contour-tab__filter-select {
+  background-color: #f4f6fa;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0f172a;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.contour-tab__filter-select:focus {
+  border-color: #0066cc;
+}
+
+/* Поиск объектов */
+.contour-tab__search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+  max-width: 400px;
+}
+
+.contour-tab__search-icon {
+  position: absolute;
+  left: 12px;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+}
+
+.contour-tab__search-input {
+  width: 100%;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 8px 12px 8px 36px;
+  font-size: 13px;
+  color: #0f172a;
+  outline: none;
+  transition: all 0.15s;
+}
+
+.contour-tab__search-input:focus {
+  background-color: #ffffff;
+  border-color: #0066cc;
+  box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.12);
+}
+
+/* Таблица объектов в контуре */
+.contour-tab__table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  margin-bottom: 20px;
+  flex: 1;
+}
+
+.contour-tab__table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.contour-tab__table th {
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  border-bottom: 1px solid #edf2f7;
+  white-space: nowrap;
+}
+
+.contour-tab__table td {
+  padding: 12px 12px;
+  font-size: 13.5px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+  vertical-align: middle;
+}
+
+.contour-tab__col-check {
+  width: 40px;
+  text-align: center !important;
+}
+
+.contour-tab__checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #0066cc;
+}
+
+.contour-tab__table tr:hover td {
+  background-color: #f8fafc;
+}
+
+.contour-tab__obj-name {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+/* Статус-бейджи */
+.contour-tab__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.contour-tab__badge--included {
+  background-color: #e6f9f0;
+  color: #0e8345;
+}
+
+.contour-tab__badge--excluded {
+  background-color: #f1f5f9;
+  color: #64748b;
+}
+
+/* Подвал левой карточки */
+.contour-tab__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #f1f5f9;
+  flex-wrap: wrap;
+}
+
+.contour-tab__summary {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.contour-tab__btn-next {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #0066cc;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 22px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.contour-tab__btn-next:hover:not(:disabled) {
+  background-color: #0052a3;
+}
+
+.contour-tab__btn-next:disabled {
+  background-color: #cbd5e1;
+  cursor: not-allowed;
+}
+
+/* Правая колонка: Чеклист контроля связности */
+.contour-tab__checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.contour-tab__check-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.contour-tab__check-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background-color: #e6f9f0;
+  color: #10b981;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.contour-tab__check-icon--warn {
+  background-color: #fff7ed;
+  color: #ea580c;
+}
+
+.contour-tab__check-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 3px 0;
+}
+
+.contour-tab__check-detail {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+}
+
+.contour-tab__status-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  font-weight: 600;
+  margin-top: auto;
+}
+
+.contour-tab__status-banner--ok {
+  background-color: #e6f9f0;
+  color: #0e8345;
+}
+
+.contour-tab__status-banner--warn {
+  background-color: #fff7ed;
+  color: #ea580c;
+}
+
+.contour-tab__status-banner-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #10b981;
+}
+
+.contour-tab__status-banner--warn .contour-tab__status-banner-dot {
+  background-color: #ea580c;
+}
+
+/* Правая колонка: Сохраненные схемы */
+.contour-tab__presets {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.contour-tab__preset-btn {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  text-align: left;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.contour-tab__preset-btn:hover {
+  background-color: #f0f7ff;
+  border-color: #99c2f0;
+}
+
+.contour-tab__preset-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.contour-tab__preset-desc {
+  font-size: 11.5px;
+  color: #64748b;
+}

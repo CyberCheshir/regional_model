@@ -1,0 +1,318 @@
+/* Стили вкладки «Результаты расчета» модуля гидравлических расчетов */
+
+.results-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+/* Верхняя полоса ключевых KPI-метрик */
+.results-tab__metrics-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 992px) {
+  .results-tab__metrics-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 576px) {
+  .results-tab__metrics-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.results-tab__metric-card {
+  background-color: #ffffff;
+  border-radius: 16px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.results-tab__metric-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.results-tab__metric-val-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.results-tab__metric-val {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.results-tab__metric-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  background-color: #e6f9f0;
+  color: #0e8345;
+}
+
+/* Основная сетка: График+Таблица слева, Анализ+Действия справа */
+.results-tab__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(360px, 1fr);
+  gap: 20px;
+  align-items: stretch;
+}
+
+@media (max-width: 1200px) {
+  .results-tab__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.results-tab__card {
+  background-color: #ffffff;
+  border-radius: 20px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.results-tab__eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.results-tab__heading {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 16px 0;
+}
+
+/* Блок графика */
+.results-tab__chart-card {
+  background-color: #f8fafc;
+  border: 1px solid #edf2f7;
+  border-radius: 14px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  position: relative;
+}
+
+.results-tab__chart-legend {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.results-tab__legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: #475569;
+  font-weight: 500;
+}
+
+.results-tab__legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.results-tab__chart-svg {
+  width: 100%;
+  height: 220px;
+  display: block;
+}
+
+/* Таблица пикетов */
+.results-tab__table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  margin-bottom: 16px;
+}
+
+.results-tab__table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.results-tab__table th {
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  border-bottom: 1px solid #edf2f7;
+  white-space: nowrap;
+}
+
+.results-tab__table td {
+  padding: 12px 12px;
+  font-size: 13px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+  vertical-align: middle;
+  font-variant-numeric: tabular-nums;
+}
+
+.results-tab__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.results-tab__badge--optimal {
+  background-color: #e6f9f0;
+  color: #0e8345;
+}
+
+.results-tab__badge--normal {
+  background-color: #f0f7ff;
+  color: #0066cc;
+}
+
+.results-tab__badge--warning {
+  background-color: #fff7ed;
+  color: #ea580c;
+}
+
+/* Правая колонка: Чеклист оценки режима */
+.results-tab__checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.results-tab__check-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.results-tab__check-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background-color: #e6f9f0;
+  color: #10b981;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.results-tab__check-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 3px 0;
+}
+
+.results-tab__check-detail {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+}
+
+.results-tab__status-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  font-weight: 600;
+  margin-top: auto;
+  background-color: #e6f9f0;
+  color: #0e8345;
+}
+
+.results-tab__status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #10b981;
+}
+
+/* Действия правой колонки */
+.results-tab__actions-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.results-tab__btn-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 18px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+
+.results-tab__btn-action--primary {
+  background-color: #0066cc;
+  color: #ffffff;
+  border: none;
+}
+
+.results-tab__btn-action--primary:hover {
+  background-color: #0052a3;
+  box-shadow: 0 4px 12px rgba(0, 102, 204, 0.25);
+}
+
+.results-tab__btn-action--secondary {
+  background-color: #ffffff;
+  border: 1px solid #d0d7de;
+  color: #0f172a;
+}
+
+.results-tab__btn-action--secondary:hover {
+  background-color: #f1f5f9;
+}
+
+.results-tab__btn-action--outline {
+  background-color: #ffffff;
+  border: 1px solid #0066cc;
+  color: #0066cc;
+}
+
+.results-tab__btn-action--outline:hover {
+  background-color: #f0f7ff;
+}

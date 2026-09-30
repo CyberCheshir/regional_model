@@ -1,0 +1,518 @@
+/* Стили вкладки «Рекомендации» модуля «Аналитика» */
+
+.recommendations-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+/* 1. Верхняя полоса фильтров */
+.recommendations-tab__filterbar {
+  background-color: #ffffff;
+  border-radius: 14px;
+  padding: 10px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  flex-wrap: wrap;
+}
+
+.recommendations-tab__filter-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  margin-right: 4px;
+}
+
+.recommendations-tab__filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: 1px solid #e2e8f0;
+  background-color: #f8fafc;
+  color: #475569;
+  user-select: none;
+}
+
+.recommendations-tab__filter-pill:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+.recommendations-tab__filter-pill--active {
+  background-color: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1e40af;
+  font-weight: 600;
+}
+
+/* 2. Основная трехколоночная сетка */
+.recommendations-tab__grid {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1.8fr) 340px;
+  gap: 16px;
+  align-items: stretch;
+}
+
+@media (max-width: 1400px) {
+  .recommendations-tab__grid {
+    grid-template-columns: 260px minmax(0, 1fr) 320px;
+  }
+}
+
+@media (max-width: 1100px) {
+  .recommendations-tab__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.recommendations-tab__card {
+  background-color: #ffffff;
+  border-radius: 20px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.recommendations-tab__eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+.recommendations-tab__heading {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 16px 0;
+}
+
+/* Левая колонка: Иерархия модели */
+.recommendations-tab__tree {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.recommendations-tab__tree-node {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.12s;
+  border: 1px solid transparent;
+  user-select: none;
+}
+
+.recommendations-tab__tree-node:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+.recommendations-tab__tree-node--selected {
+  background-color: #eff6ff;
+  border-color: #93c5fd;
+  color: #0066cc;
+  font-weight: 600;
+}
+
+.recommendations-tab__tree-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.recommendations-tab__tree-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.recommendations-tab__tree-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.recommendations-tab__tree-badge {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #64748b;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.recommendations-tab__tree-children {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-left: 16px;
+  margin-top: 2px;
+}
+
+/* Центральная колонка: Верхние 4 счетчика */
+.recommendations-tab__stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 600px) {
+  .recommendations-tab__stats-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.recommendations-tab__stat-box {
+  background-color: #f8fafc;
+  border: 1px solid #edf2f7;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.recommendations-tab__stat-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.recommendations-tab__stat-num {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.recommendations-tab__stat-num--blue {
+  color: #0066cc;
+}
+
+.recommendations-tab__stat-num--orange {
+  color: #ea580c;
+}
+
+.recommendations-tab__stat-num--red {
+  color: #dc2626;
+}
+
+.recommendations-tab__stat-num--yellow {
+  color: #ca8a04;
+}
+
+/* Таблица рекомендаций */
+.recommendations-tab__table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  margin-bottom: 20px;
+}
+
+.recommendations-tab__table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.recommendations-tab__table th {
+  padding: 9px 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #64748b;
+  border-bottom: 1px solid #edf2f7;
+  white-space: nowrap;
+}
+
+.recommendations-tab__table td {
+  padding: 11px 10px;
+  font-size: 12.5px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+  vertical-align: middle;
+}
+
+.recommendations-tab__table tr {
+  cursor: pointer;
+  transition: background-color 0.12s;
+}
+
+.recommendations-tab__table tr:hover td {
+  background-color: #f8fafc;
+}
+
+.recommendations-tab__table tr.is-selected td {
+  background-color: #eff6ff;
+}
+
+.recommendations-tab__col-elem {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.recommendations-tab__col-num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Блок категоризации */
+.recommendations-tab__categorization-box {
+  background-color: #f8fafc;
+  border: 1px solid #edf2f7;
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.recommendations-tab__cat-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12.5px;
+}
+
+.recommendations-tab__cat-label {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.recommendations-tab__cat-code {
+  font-family: monospace;
+  font-size: 11.5px;
+  color: #0f172a;
+  background-color: #e2e8f0;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.recommendations-tab__cat-val {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.recommendations-tab__cat-note {
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: #64748b;
+  margin: 4px 0 0 0;
+}
+
+/* Сетка типовых категорий */
+.recommendations-tab__categories-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+@media (max-width: 600px) {
+  .recommendations-tab__categories-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.recommendations-tab__cat-btn {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+  user-select: none;
+}
+
+.recommendations-tab__cat-btn:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+.recommendations-tab__cat-btn--selected {
+  background-color: #eff6ff;
+  border-color: #93c5fd;
+  color: #0066cc;
+  font-weight: 600;
+}
+
+/* Правая колонка: Карточка выбранной рекомендации */
+.recommendations-tab__card-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 4px 0;
+}
+
+.recommendations-tab__card-sub {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0 0 16px 0;
+}
+
+.recommendations-tab__prop-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 14px;
+}
+
+.recommendations-tab__prop-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.recommendations-tab__prop-val {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.recommendations-tab__cat-badge {
+  display: inline-block;
+  background-color: #f1f5f9;
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 12px;
+  color: #334155;
+  font-weight: 500;
+}
+
+.recommendations-tab__cat-input {
+  background-color: #ffffff;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 12px;
+  color: #0f172a;
+  margin-top: 4px;
+  outline: none;
+}
+
+.recommendations-tab__timing-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.recommendations-tab__timing-col {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.recommendations-tab__timing-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.recommendations-tab__timing-val {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.recommendations-tab__timing-val--blue {
+  color: #0066cc;
+}
+
+/* Список этапов реализации */
+.recommendations-tab__stages-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+.recommendations-tab__stage-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #f8fafc;
+  border: 1px solid #edf2f7;
+  border-radius: 8px;
+  padding: 7px 12px;
+  font-size: 12.5px;
+}
+
+.recommendations-tab__stage-name {
+  color: #334155;
+  font-weight: 500;
+}
+
+.recommendations-tab__stage-dur {
+  color: #64748b;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Нижний ряд кнопок */
+.recommendations-tab__actions-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 16px;
+}
+
+.recommendations-tab__btn {
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.recommendations-tab__btn--outline {
+  background-color: #ffffff;
+  border: 1px solid #0066cc;
+  color: #0066cc;
+}
+
+.recommendations-tab__btn--outline:hover {
+  background-color: #f0f7ff;
+}
+
+.recommendations-tab__btn--primary {
+  background-color: #0066cc;
+  color: #ffffff;
+  border: none;
+}
+
+.recommendations-tab__btn--primary:hover {
+  background-color: #0052a3;
+  box-shadow: 0 4px 10px rgba(0, 102, 204, 0.2);
+}

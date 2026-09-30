@@ -1,0 +1,382 @@
+/* Стили вкладки «Обзор» модуля «Аналитика» */
+
+.overview-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+/* 1. Верхний ряд: 5 KPI-карточек */
+.overview-tab__kpi-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 1200px) {
+  .overview-tab__kpi-row {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .overview-tab__kpi-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .overview-tab__kpi-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.overview-tab__kpi-card {
+  background-color: #ffffff;
+  border-radius: 16px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  min-height: 110px;
+  box-sizing: border-box;
+}
+
+.overview-tab__kpi-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.overview-tab__kpi-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.overview-tab__kpi-delta {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  background-color: #e6f9f0;
+  color: #0e8345;
+  white-space: nowrap;
+}
+
+.overview-tab__kpi-value {
+  font-size: 26px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 6px 0 4px 0;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.overview-tab__kpi-value--critical {
+  color: #dc2626;
+}
+
+.overview-tab__kpi-value--blue {
+  color: #0066cc;
+}
+
+.overview-tab__kpi-value--text {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.overview-tab__kpi-sub {
+  font-size: 11.5px;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 2. Сетка из двух колонок (средний и нижний ряды) */
+.overview-tab__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(360px, 1fr);
+  gap: 20px;
+  align-items: stretch;
+}
+
+@media (max-width: 1100px) {
+  .overview-tab__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.overview-tab__card {
+  background-color: #ffffff;
+  border-radius: 20px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.overview-tab__heading {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 4px 0;
+  letter-spacing: -0.01em;
+}
+
+.overview-tab__desc {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0 0 20px 0;
+}
+
+/* Блок графика ограничений и стартов мероприятий */
+.overview-tab__chart-wrap {
+  width: 100%;
+  margin-bottom: 16px;
+  position: relative;
+}
+
+.overview-tab__chart-svg {
+  width: 100%;
+  height: 200px;
+  display: block;
+}
+
+.overview-tab__chart-legend {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.overview-tab__legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #475569;
+  font-weight: 500;
+}
+
+.overview-tab__legend-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+/* Карточка: Состояние по ЛУ */
+.overview-tab__areas-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 4px;
+}
+
+.overview-tab__area-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.overview-tab__area-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0f172a;
+  width: 150px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.overview-tab__area-bar-wrap {
+  flex: 1;
+  height: 8px;
+  background-color: #f1f5f9;
+  border-radius: 9999px;
+  overflow: hidden;
+  position: relative;
+}
+
+.overview-tab__area-bar {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+.overview-tab__area-count {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #0f172a;
+  width: 24px;
+  text-align: right;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.overview-tab__area-crit {
+  font-size: 12px;
+  font-weight: 600;
+  width: 80px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.overview-tab__area-crit--critical {
+  color: #dc2626;
+}
+
+.overview-tab__area-crit--high {
+  color: #ea580c;
+}
+
+.overview-tab__area-crit--medium {
+  color: #ca8a04;
+}
+
+/* Таблица рисков */
+.overview-tab__table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  margin-bottom: 20px;
+}
+
+.overview-tab__table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.overview-tab__table th {
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  border-bottom: 1px solid #edf2f7;
+  white-space: nowrap;
+}
+
+.overview-tab__table td {
+  padding: 13px 12px;
+  font-size: 13px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+  vertical-align: middle;
+}
+
+.overview-tab__table-element {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.overview-tab__table-crit {
+  font-weight: 600;
+}
+
+.overview-tab__table-solution {
+  color: #0066cc;
+  font-weight: 500;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 13px;
+  text-align: left;
+}
+
+.overview-tab__table-solution:hover {
+  text-decoration: underline;
+}
+
+/* Кнопка внизу карточек */
+.overview-tab__btn-link {
+  align-self: flex-start;
+  background-color: #ffffff;
+  border: 1px solid #d0d7de;
+  border-radius: 10px;
+  padding: 9px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0066cc;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-top: auto;
+}
+
+.overview-tab__btn-link:hover {
+  background-color: #f0f7ff;
+  border-color: #0066cc;
+}
+
+/* Карточка: Ближайшие решения */
+.overview-tab__solutions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.overview-tab__solution-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background-color: #f8fafc;
+  border: 1px solid #edf2f7;
+  transition: all 0.15s;
+}
+
+.overview-tab__solution-item:hover {
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.overview-tab__solution-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background-color: #e0f2fe;
+  color: #0284c7;
+  font-size: 13.5px;
+  font-weight: 700;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.overview-tab__solution-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.overview-tab__solution-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.overview-tab__solution-sub {
+  font-size: 12px;
+  color: #64748b;
+}

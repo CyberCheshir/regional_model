@@ -56,9 +56,9 @@ export function ImportExportTab() {
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  /** Скачивание шаблона или текущей выгрузки через domain layer */
+  /** Скачивание эталонного шаблона для импорта данных */
   const handleDownloadTemplate = (tplId: string, filename: string) => {
-    // Если есть предзаготовленный образец в /templates/
+    // 1. Приоритетное скачивание точного файла-шаблона из /templates/ (.xlsx)
     if (filename.endsWith('.xlsx')) {
       const a = document.createElement('a');
       a.href = `/templates/${encodeURIComponent(filename)}`;
@@ -66,27 +66,35 @@ export function ImportExportTab() {
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      console.info(`[domain] скачан файл образца: ${filename}`);
+      setToastMessage(`Скачан шаблон: ${filename}`);
+      setTimeout(() => setToastMessage(null), 3000);
+      console.info(`[domain] скачан эталонный файл шаблона: ${filename}`);
       return;
     }
 
+    // 2. Резервные текстовые / CSV генераторы
     if (tplId === 'tpl-objects' || tplId === 'tpl-params') {
       downloadDomainObjects(objects, 'csv', filename.replace(/\.(xlsx|csv|json)$/, ''));
-      console.info(`[domain] скачан файл объектов из domain layer: ${filename}`);
+      setToastMessage(`Сформирован шаблон объектов: ${filename}`);
+      setTimeout(() => setToastMessage(null), 3000);
       return;
     }
 
     if (tplId === 'tpl-profiles') {
-      const csv = 'Наименование;Тип;Продукт;Ед.изм;2026;2027;2028;2029;2030\r\nсистема сбора газа;Добыча;Нефть;тыс.т/год;0;0;0;0;0\r\nсистема сбора жидкости;Добыча;Нефть;тыс.т/год;1347.2;2150.5;2411.3;2311.1;2152.0';
+      const csv =
+        'Наименование;Тип;Продукт;Ед.изм;2026;2027;2028;2029;2030\r\nсистема сбора газа;Добыча;Нефть;тыс.т/год;0;0;0;0;0\r\nсистема сбора жидкости;Добыча;Нефть;тыс.т/год;1347.2;2150.5;2411.3;2311.1;2152.0';
       downloadCsvFile(csv, filename);
-      console.info(`[domain] скачан шаблон профилей: ${filename}`);
+      setToastMessage(`Сформирован шаблон профилей: ${filename}`);
+      setTimeout(() => setToastMessage(null), 3000);
       return;
     }
 
     if (tplId === 'tpl-elevations') {
-      const csv = 'PipelineID;PipelineName;PointNo;Distance_km;Elevation_m;GroundTemperature_C;SegmentRoughness_mm;InsulationThickness_mm;HeatTransferCoeff_Wm2K\r\nт.вр. - ПСП;т.вр. - ПСП;1;0;312.5;2.5;0.015;50;1.2';
+      const csv =
+        'PipelineID;PipelineName;PointNo;Distance_km;Elevation_m;GroundTemperature_C;SegmentRoughness_mm;InsulationThickness_mm;HeatTransferCoeff_Wm2K\r\nт.вр. - ПСП;т.вр. - ПСП;1;0;312.5;2.5;0.015;50;1.2';
       downloadCsvFile(csv, filename);
-      console.info(`[domain] скачан шаблон высотных отметок: ${filename}`);
+      setToastMessage(`Сформирован шаблон отметок: ${filename}`);
+      setTimeout(() => setToastMessage(null), 3000);
     }
   };
 

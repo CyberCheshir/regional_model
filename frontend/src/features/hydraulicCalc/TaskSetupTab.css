@@ -1,0 +1,349 @@
+/* Стили вкладки «Постановка задачи» модуля гидравлических расчетов */
+
+.task-setup-tab {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(360px, 1fr);
+  gap: 20px;
+  align-items: stretch;
+  width: 100%;
+}
+
+@media (max-width: 1200px) {
+  .task-setup-tab {
+    grid-template-columns: 1fr;
+  }
+}
+
+.task-setup-tab__card {
+  background-color: #ffffff;
+  border-radius: 20px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.task-setup-tab__eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.task-setup-tab__heading {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 16px 0;
+}
+
+.task-setup-tab__section-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #0f172a;
+  text-transform: uppercase;
+  margin: 20px 0 14px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Сетки полей ввода */
+.task-setup-tab__form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px 20px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 768px) {
+  .task-setup-tab__form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.task-setup-tab__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.task-setup-tab__label {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.task-setup-tab__input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.task-setup-tab__input {
+  width: 100%;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0f172a;
+  outline: none;
+  transition: all 0.15s;
+  box-sizing: border-box;
+}
+
+.task-setup-tab__input:focus {
+  background-color: #ffffff;
+  border-color: #0066cc;
+  box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.12);
+}
+
+.task-setup-tab__unit {
+  position: absolute;
+  right: 12px;
+  font-size: 12px;
+  color: #94a3b8;
+  font-weight: 500;
+  pointer-events: none;
+}
+
+.task-setup-tab__select {
+  width: 100%;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0f172a;
+  outline: none;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+}
+
+.task-setup-tab__select:focus {
+  border-color: #0066cc;
+}
+
+/* Таблица расчетных участков */
+.task-setup-tab__table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  margin-bottom: 24px;
+}
+
+.task-setup-tab__table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.task-setup-tab__table th {
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  border-bottom: 1px solid #edf2f7;
+  white-space: nowrap;
+}
+
+.task-setup-tab__table td {
+  padding: 12px 12px;
+  font-size: 13px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+  vertical-align: middle;
+}
+
+.task-setup-tab__col-name {
+  font-weight: 600;
+  color: #0f172a;
+  white-space: nowrap;
+}
+
+.task-setup-tab__col-num {
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+/* Кнопки действий */
+.task-setup-tab__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #f1f5f9;
+  flex-wrap: wrap;
+}
+
+.task-setup-tab__btn-back {
+  background: none;
+  border: 1px solid #d0d7de;
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.task-setup-tab__btn-back:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+.task-setup-tab__btn-run {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #0066cc;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 28px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.task-setup-tab__btn-run:hover:not(:disabled) {
+  background-color: #0052a3;
+  box-shadow: 0 4px 12px rgba(0, 102, 204, 0.25);
+}
+
+.task-setup-tab__btn-run:disabled {
+  background-color: #cbd5e1;
+  cursor: not-allowed;
+}
+
+/* Правая колонка: Чеклист готовности */
+.task-setup-tab__checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.task-setup-tab__check-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.task-setup-tab__check-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background-color: #e6f9f0;
+  color: #10b981;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.task-setup-tab__check-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 3px 0;
+}
+
+.task-setup-tab__check-detail {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+}
+
+.task-setup-tab__status-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  font-weight: 600;
+  margin-top: auto;
+  background-color: #e6f9f0;
+  color: #0e8345;
+}
+
+.task-setup-tab__status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #10b981;
+}
+
+/* Правая колонка: История расчетов */
+.task-setup-tab__history {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.task-setup-tab__history-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  transition: all 0.15s;
+}
+
+.task-setup-tab__history-card:hover {
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.task-setup-tab__history-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.task-setup-tab__history-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.task-setup-tab__history-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+.task-setup-tab__history-badge--success {
+  background-color: #e6f9f0;
+  color: #0e8345;
+}
+
+.task-setup-tab__history-badge--warning {
+  background-color: #fff7ed;
+  color: #ea580c;
+}
+
+.task-setup-tab__history-summary {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
