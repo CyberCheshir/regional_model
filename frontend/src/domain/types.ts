@@ -22,6 +22,12 @@ import {
   type AnalyticsData,
   type AnalyticsItem,
   type NodeType,
+  type PipelineClass,
+  type PipelineInstallation,
+  type PipelineOwner,
+  type PipelineRouteCondition,
+  type PipelineStatus,
+  type PipelineType,
   type ValidationItem,
   NODE_TYPE_LABELS,
 } from './schemas';
@@ -41,6 +47,12 @@ export type {
   AnalyticsData,
   AnalyticsItem,
   NodeType,
+  PipelineClass,
+  PipelineInstallation,
+  PipelineOwner,
+  PipelineRouteCondition,
+  PipelineStatus,
+  PipelineType,
   ValidationItem,
 };
 

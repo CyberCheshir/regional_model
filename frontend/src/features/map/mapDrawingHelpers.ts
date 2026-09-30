@@ -24,7 +24,24 @@ export type PipelineRecord = {
   id: string;
   label: string;
   fluid?: string;
+  /** Тип трубопровода в общих параметрах. */
+  pipelineType?: 'npp' | 'gp' | 'water';
+  /** Классификация трубопровода. */
+  pipelineClass?: 'field' | 'interfield' | 'trunk' | 'logical';
+  /** Протяжённость трубопровода в километрах. */
+  lengthKm?: number;
+  /** Наружный диаметр трубы в миллиметрах. */
+  outerDiameterMm?: number;
+  /** Толщина стенки трубы в миллиметрах. */
+  wallThicknessMm?: number;
+  roughnessMm?: number;
+  installation?: 'underground' | 'overground' | 'embankment' | 'underwater';
+  depthM?: number;
+  routeCondition?: 'unspecified' | 'dryland' | 'permafrost' | 'dryland30-permafrost70' | 'dryland70-permafrost30';
+  additivesEfficiency?: boolean;
+  pipelineStatus?: 'approved' | 'new';
   owner?: string;
+
   condition?: string;
   period?: string;
   source?: string;

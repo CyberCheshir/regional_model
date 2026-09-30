@@ -8,8 +8,68 @@ import { z } from 'zod';
 /** Тип флюида. */
 export const FluidTypeSchema = z.enum(['oil', 'gas', 'product']);
 
+/** Тип трубопровода для общих параметров. */
+export const PipelineTypeSchema = z.enum(['npp', 'gp', 'water']);
+export type PipelineType = z.infer<typeof PipelineTypeSchema>;
+
+/** Подписи типов трубопровода для UI и экспортов. */
+export const PIPELINE_TYPE_LABELS: Record<PipelineType, string> = {
+  npp: 'НП (нефтепродуктопровод / нефтепровод)',
+  gp: 'ГП (газопровод)',
+  water: 'ВД (водовод)',
+};
+
 /** Класс трубопровода: фильтр стиля линии (цвет задаётся флюидом). */
 export const PipelineClassSchema = z.enum(['field', 'interfield', 'trunk', 'logical']);
+export type PipelineClass = z.infer<typeof PipelineClassSchema>;
+
+/** Подписи классов трубопровода для панели общих параметров. */
+export const PIPELINE_CLASS_LABELS: Record<Exclude<PipelineClass, 'logical'>, string> = {
+  field: 'Промысловый',
+  interfield: 'Межпромысловый',
+  trunk: 'Магистральный',
+};
+
+/** Способ прокладки трубопровода. */
+export const PipelineInstallationSchema = z.enum(['underground', 'overground', 'embankment', 'underwater']);
+export type PipelineInstallation = z.infer<typeof PipelineInstallationSchema>;
+export const PIPELINE_INSTALLATION_LABELS: Record<PipelineInstallation, string> = {
+  underground: 'Подземный',
+  overground: 'Надземный',
+  embankment: 'В насыпи',
+  underwater: 'Подводный',
+};
+
+/** Условия трассы. */
+export const PipelineRouteConditionSchema = z.enum(['unspecified', 'dryland', 'permafrost', 'dryland30-permafrost70', 'dryland70-permafrost30']);
+export type PipelineRouteCondition = z.infer<typeof PipelineRouteConditionSchema>;
+export const PIPELINE_ROUTE_CONDITION_LABELS: Record<PipelineRouteCondition, string> = {
+  unspecified: 'Не указано',
+  dryland: 'Суходол',
+  permafrost: 'МГ (многолетнемерзлые грунты)',
+  'dryland30-permafrost70': '30% Суходол 70% ММГ',
+  'dryland70-permafrost30': '70% Суходол 30% ММГ',
+};
+
+/** Допустимые владельцы трубопровода в общих параметрах. */
+export const PipelineOwnerSchema = z.enum(['gp-angara', 'gp-zapolyarye', 'gazprom', 'surgutneftegaz', 'transneft', 'unspecified']);
+export type PipelineOwner = z.infer<typeof PipelineOwnerSchema>;
+export const PIPELINE_OWNER_LABELS: Record<PipelineOwner, string> = {
+  'gp-angara': 'ГПН-Ангара',
+  'gp-zapolyarye': 'ГПН-Заполярье',
+  gazprom: 'Газпром',
+  surgutneftegaz: 'Сургутнефтегаз',
+  transneft: 'Траснефть',
+  unspecified: 'Не указан',
+};
+
+/** Статус трубопровода в общих параметрах. */
+export const PipelineStatusSchema = z.enum(['approved', 'new']);
+export type PipelineStatus = z.infer<typeof PipelineStatusSchema>;
+export const PIPELINE_STATUS_LABELS: Record<PipelineStatus, string> = {
+  approved: 'Утвержденный',
+  new: 'Новый',
+};
 
 /** Тип маркера на карте. */
 export const MarkerKindSchema = z.enum(['wellpad', 'processing', 'delivery']);
@@ -41,8 +101,25 @@ export const PipelineSchema = z.object({
   id: z.string().min(1),
   label: z.string().min(1),
   fluid: FluidTypeSchema,
-  /** Длина в километрах */
-  lengthKm: z.number().positive(),
+  /** Владелец трубопровода. */
+  owner: z.string().optional(),
+  /** Тип трубопровода: НП, ГП или ВД. */
+  pipelineType: PipelineTypeSchema.optional(),
+  /** Классификация трубопровода. */
+  pipelineClass: PipelineClassSchema.optional(),
+  /** Протяжённость в километрах. */
+  lengthKm: z.number().nonnegative().default(0),
+  /** Наружный диаметр трубы в миллиметрах. */
+  outerDiameterMm: z.number().int().nonnegative().optional(),
+  /** Толщина стенки трубы в миллиметрах. */
+  wallThicknessMm: z.number().int().nonnegative().optional(),
+  /** Шероховатость внутренней поверхности трубы в миллиметрах. */
+  roughnessMm: z.number().int().nonnegative().default(0),
+  installation: PipelineInstallationSchema.optional().default('overground'),
+  depthM: z.number().nonnegative().optional().default(0),
+  routeCondition: PipelineRouteConditionSchema.optional().default('unspecified'),
+  additivesEfficiency: z.boolean().optional().default(false),
+  pipelineStatus: PipelineStatusSchema.optional().default('new'),
 });
 
 /** Площадной объект (лицензионный участок). */
@@ -131,6 +208,23 @@ export const EntityDetailsSchema = z.object({
   label: z.string().min(1),
   kind: TreeNodeKindSchema,
   subType: z.string().optional(),
+  /** Тип трубопровода для редактирования во вкладке «Общие параметры». */
+  pipelineType: PipelineTypeSchema.optional(),
+  /** Классификация трубопровода для редактирования во вкладке «Общие параметры». */
+  pipelineClass: PipelineClassSchema.optional(),
+  /** Протяжённость трубопровода в километрах. */
+  lengthKm: z.number().nonnegative().optional(),
+  /** Наружный диаметр трубы в миллиметрах. */
+  outerDiameterMm: z.number().int().nonnegative().optional(),
+  /** Толщина стенки трубы в миллиметрах. */
+  wallThicknessMm: z.number().int().nonnegative().optional(),
+  /** Шероховатость внутренней поверхности трубы в миллиметрах. */
+  roughnessMm: z.number().int().nonnegative().optional(),
+  installation: PipelineInstallationSchema.optional(),
+  depthM: z.number().nonnegative().optional(),
+  routeCondition: PipelineRouteConditionSchema.optional(),
+  additivesEfficiency: z.boolean().optional(),
+  pipelineStatus: PipelineStatusSchema.optional(),
   status: z.enum(['running', 'warning', 'stopped']),
   /** Лицензионный участок */
   licenseArea: z.string().min(1),

@@ -1,20 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ObjectTreeData, TreeNodeData } from './types';
 import { AppIcon } from '../../components/AppIcon';
-import type { IconName } from '../../components/IconRegistry';
 import tapIcon from '../../assets/design/tap.png';
+import wellpadIcon from '../../assets/design/wellpad.png';
+import facilityIcon from '../../assets/design/facility.png';
+import deliveryPointIcon from '../../assets/design/delivery-point.png';
+import pipelineIcon from '../../assets/design/pipeline.png';
 import './ObjectTree.css';
 
-/** Иконка по категории узла (icons.md: tree-*) */
-const KIND_ICON: Record<TreeNodeData['kind'], IconName> = {
-  wellpad: 'tree-wellpad',
-  facility: 'tree-facility',
-  'delivery-point': 'tree-delivery-point',
-  pipeline: 'tree-pipeline',
-  // Сегмент — та же «труба», но мельче в иерархии (иконка flow-physical).
-  segment: 'flow-physical',
-  // Узел сети (врезка или стык)
-  node: 'tree-delivery-point',
+/** PNG-иконки групп совпадают с кнопками соответствующих инструментов. */
+const GROUP_ICON: Record<string, string> = {
+  'group-wellpads': wellpadIcon,
+  'group-facilities': facilityIcon,
+  'group-delivery': deliveryPointIcon,
+  'group-pipelines': pipelineIcon,
+  'group-taps': tapIcon,
 };
 
 export type ObjectTreeEvents = {
@@ -57,27 +57,13 @@ export function ObjectTree({
   onToggleVisibility,
   onRename,
 }: ObjectTreeProps) {
+  // Все группы и вложенные узлы по умолчанию свернуты.
+  // Новые элементы также не раскрываются автоматически: состояние дерева
+  // должно оставаться предсказуемым после добавления объектов.
   const [internalExpanded, setInternalExpanded] = useState<ReadonlySet<string>>(
-    () => new Set(expandableIds(groups)),
+    () => new Set(),
   );
   const expanded = expandedIds ?? internalExpanded;
-
-  // Авто-раскрытие НОВЫХ раскрываемых узлов (группы и трубопроводы с сегментами),
-  // появившихся при проектировании. Уже свёрнутые пользователем не трогаем —
-  // добавляем только те id, которых ещё не знали.
-  const [knownIds, setKnownIds] = useState<ReadonlySet<string>>(
-    () => new Set(expandableIds(groups)),
-  );
-  const expandable = expandableIds(groups);
-  const hasNewExpandable = expandable.some((id) => !knownIds.has(id));
-  if (hasNewExpandable && !expandedIds) {
-    setKnownIds(new Set(expandable));
-    setInternalExpanded((prev) => {
-      const next = new Set(prev);
-      expandable.forEach((id) => next.add(id));
-      return next;
-    });
-  }
 
   const toggleExpand = (id: string) => {
     const next = new Set(expanded);
@@ -113,28 +99,7 @@ function groupNode(group: ObjectTreeData): TreeNodeData {
   return { id: group.id, label: group.label, kind: 'facility', children: group.children };
 }
 
-/**
- * Все id узлов, которые МОЖНО раскрывать (есть children) — рекурсивно, включая
- * группы верхнего уровня и трубопроводы с сегментами. Используется для
- * авто-раскрытия новых узлов (чтобы сегменты были видны сразу).
- */
-function expandableIds(groups: ObjectTreeData[]): string[] {
-  const ids: string[] = [];
-  const walk = (nodes: TreeNodeData[]) => {
-    for (const n of nodes) {
-      if (n.children?.length) {
-        ids.push(n.id);
-        walk(n.children);
-      }
-    }
-  };
-  for (const g of groups) {
-    ids.push(g.id);
-    walk(g.children);
-  }
-  return ids;
-}
-
+/** Рекурсивная ветка дерева: контейнер или листовой узел. */
 type TreeBranchProps = ObjectTreeEvents & {
   node: TreeNodeData;
   depth: number;
@@ -144,7 +109,6 @@ type TreeBranchProps = ObjectTreeEvents & {
   onToggleExpand: (id: string) => void;
 };
 
-/** Рекурсивная ветка дерева: контейнер или листовой узел */
 function TreeBranch({
   node,
   depth,
@@ -200,8 +164,9 @@ function TreeBranch({
   };
 
   const handleLabelClick = () => {
-    // Клик по имени во время правки не должен пере-выбирать узел.
-    if (editing) return;
+    // Группа — только контейнер дерева, а не сущность API.
+    // Она не должна открывать свойства и инициировать запрос /api/entities/group-*.
+    if (editing || isGroup) return;
     onSelect?.(node);
   };
 
@@ -210,6 +175,7 @@ function TreeBranch({
       <div
         className={
           'object-tree__row' +
+          (isGroup ? ' object-tree__row--group' : '') +
           (isSelected ? ' object-tree__row--selected' : '') +
           (isHidden ? ' object-tree__row--hidden' : '')
         }
@@ -232,16 +198,14 @@ function TreeBranch({
           <span className="object-tree__chevron object-tree__chevron--stub" />
         )}
 
-        {node.kind === 'node' && (node.subType === 'Врезка' || node.label.toLowerCase().includes('врезка')) ? (
+        {GROUP_ICON[node.id] && (
           <img
-            src={tapIcon}
+            src={GROUP_ICON[node.id]}
             alt=""
             className="object-tree__kind-icon object-tree__kind-icon--raster"
-            width={16}
-            height={16}
+            width={18}
+            height={18}
           />
-        ) : (
-          <AppIcon name={KIND_ICON[node.kind]} size={16} className="object-tree__kind-icon" />
         )}
 
         {editing ? (

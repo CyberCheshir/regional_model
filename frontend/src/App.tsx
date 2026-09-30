@@ -24,7 +24,7 @@ import {
   downloadAreasFile,
   type AreaExportFormat,
 } from './features/map/importAreas';
-import type { SelectedEntity } from './domain/types';
+import type { PipelineClass, PipelineType, SelectedEntity } from './domain/types';
 import { buildEntityDetails, downloadDomainModel, parseDomainModelFile } from './domain';
 import type { DrawTool } from './features/map/drawingTypes';
 
@@ -94,6 +94,7 @@ function App() {
     renamePipeline,
     renameSegment,
     renameTap,
+    updateEntityParams,
     fluid: drawFluid,
     setFluid: setDrawFluid,
     pipelineClass: drawPipelineClass,
@@ -183,6 +184,65 @@ function App() {
     else renameVertex(id, nextLabel);
   };
 
+  /** Изменить тип выбранного трубопровода в доменном слое. */
+  const handlePipelineTypeChange = (pipelineType: PipelineType) => {
+    const id = selectedEntity?.id;
+    if (id && (selectedEntity.kind === 'pipeline' || selectedEntity.kind === 'segment')) {
+      updateEntityParams(id, { pipelineType });
+    }
+  };
+
+  /** Изменить классификацию выбранного трубопровода в доменном слое. */
+  const handlePipelineClassChange = (pipelineClass: PipelineClass) => {
+    const id = selectedEntity?.id;
+    if (id && (selectedEntity.kind === 'pipeline' || selectedEntity.kind === 'segment')) {
+      updateEntityParams(id, { pipelineClass });
+    }
+  };
+
+  /** Изменить протяжённость выбранного трубопровода в доменном слое. */
+  const handlePipelineLengthChange = (lengthKm: number) => {
+    const id = selectedEntity?.id;
+    if (id && (selectedEntity.kind === 'pipeline' || selectedEntity.kind === 'segment')) {
+      updateEntityParams(id, { lengthKm: Math.max(0, lengthKm) });
+    }
+  };
+
+  const handlePipelineOuterDiameterChange = (outerDiameterMm: number) => {
+    const id = selectedEntity?.id;
+    if (id && (selectedEntity.kind === 'pipeline' || selectedEntity.kind === 'segment')) {
+      updateEntityParams(id, { outerDiameterMm: Math.max(0, Math.trunc(outerDiameterMm)) });
+    }
+  };
+
+  const handlePipelineWallThicknessChange = (wallThicknessMm: number) => {
+    const id = selectedEntity?.id;
+    if (id && (selectedEntity.kind === 'pipeline' || selectedEntity.kind === 'segment')) {
+      updateEntityParams(id, { wallThicknessMm: Math.max(0, Math.trunc(wallThicknessMm)) });
+    }
+  };
+
+  const handlePipelineRoughnessChange = (roughnessMm: number) => {
+    const id = selectedEntity?.id;
+    if (id && (selectedEntity.kind === 'pipeline' || selectedEntity.kind === 'segment')) {
+      updateEntityParams(id, { roughnessMm: Math.max(0, Math.trunc(roughnessMm)) });
+    }
+  };
+
+  const handlePipelineAdvancedChange = (patch: {
+    installation?: 'underground' | 'overground' | 'embankment' | 'underwater';
+    depthM?: number;
+    routeCondition?: 'unspecified' | 'dryland' | 'permafrost' | 'dryland30-permafrost70' | 'dryland70-permafrost30';
+    additivesEfficiency?: boolean;
+    pipelineStatus?: 'approved' | 'new';
+    owner?: 'gp-angara' | 'gp-zapolyarye' | 'gazprom' | 'surgutneftegaz' | 'transneft' | 'unspecified';
+  }) => {
+    const id = selectedEntity?.id;
+    if (id && (selectedEntity.kind === 'pipeline' || selectedEntity.kind === 'segment')) {
+      updateEntityParams(id, patch);
+    }
+  };
+
   /**
    * Соответствие «кнопка инструмента → режим создания на карте».
    * 'none' — инструмент пока не имеет режима на карте (заготовка).
@@ -217,6 +277,8 @@ function App() {
 
   // Повторный клик по уже выбранному элементу — снимает выделение (toggle).
   const handleSelect = (node: TreeNodeData) => {
+    // Группы дерева не являются сущностями API и не имеют свойств.
+    if (node.id.startsWith('group-')) return;
     if (selectedEntity?.id === node.id) {
       selectEntity(null);
       return;
@@ -489,6 +551,13 @@ function App() {
             onNavigateToRelation={(id) => selectEntity(id, 'facility')}
             onCollapse={() => setRightCollapsed(true)}
             onRename={handleRenameSelected}
+            onPipelineTypeChange={handlePipelineTypeChange}
+            onPipelineClassChange={handlePipelineClassChange}
+            onPipelineLengthChange={handlePipelineLengthChange}
+            onPipelineOuterDiameterChange={handlePipelineOuterDiameterChange}
+            onPipelineWallThicknessChange={handlePipelineWallThicknessChange}
+            onPipelineRoughnessChange={handlePipelineRoughnessChange}
+            onPipelineAdvancedChange={handlePipelineAdvancedChange}
           />
         }
         bottom={activeModule === 'map' ? <BottomPanel value={timeRange} onChange={setTimeRange} /> : undefined}

@@ -14,6 +14,12 @@ import type {
   HydraulicCalc,
   ParameterPanelData,
   ParameterPanelKind,
+  PipelineClass,
+  PipelineInstallation,
+  PipelineOwner,
+  PipelineRouteCondition,
+  PipelineStatus,
+  PipelineType,
   ProductProfile,
   ProductType,
   ValidationItem,
@@ -39,7 +45,23 @@ export type EntityDetailsInput = {
     id: string;
     label: string;
     fluid?: string;
-    owner?: string;
+    /** Тип трубопровода для общих параметров. */
+    pipelineType?: PipelineType;
+    pipelineClass?: PipelineClass;
+    /** Протяжённость трубопровода в километрах. */
+    lengthKm?: number;
+    /** Наружный диаметр трубы в миллиметрах. */
+    outerDiameterMm?: number;
+    /** Толщина стенки трубы в миллиметрах. */
+    wallThicknessMm?: number;
+    /** Шероховатость внутренней поверхности трубы в миллиметрах. */
+    roughnessMm?: number;
+    installation?: PipelineInstallation;
+    depthM?: number;
+    routeCondition?: PipelineRouteCondition;
+    additivesEfficiency?: boolean;
+    pipelineStatus?: PipelineStatus;
+    owner?: PipelineOwner | string;
     condition?: string;
     period?: string;
     source?: string;
@@ -219,6 +241,18 @@ export function buildEntityDetails({
       owner: segment.owner || parentPipe?.owner || (mergedAttributes.owner as string) || '—',
       period: segment.period || parentPipe?.period || (mergedAttributes.period as string) || '2026–2040',
       condition: segment.condition || parentPipe?.condition || (mergedAttributes.condition as string) || 'Работает',
+      pipelineType: parentPipe?.pipelineType ?? (mergedAttributes.pipelineType as PipelineType | undefined),
+      pipelineClass: (parentPipe?.pipelineClass ?? segment.pipelineClass ?? mergedAttributes.pipelineClass) as PipelineClass | undefined,
+      lengthKm: parentPipe?.lengthKm ?? (mergedAttributes.lengthKm as number | undefined) ?? 0,
+      outerDiameterMm: parentPipe?.outerDiameterMm ?? (mergedAttributes.outerDiameterMm as number | undefined),
+      wallThicknessMm: parentPipe?.wallThicknessMm ?? (mergedAttributes.wallThicknessMm as number | undefined),
+      roughnessMm: parentPipe?.roughnessMm ?? (mergedAttributes.roughnessMm as number | undefined) ?? 0,
+      installation: parentPipe?.installation ?? (mergedAttributes.installation as PipelineInstallation | undefined),
+      depthM: parentPipe?.depthM ?? (mergedAttributes.depthM as number | undefined) ?? 0,
+      routeCondition: parentPipe?.routeCondition ?? (mergedAttributes.routeCondition as PipelineRouteCondition | undefined),
+      additivesEfficiency: parentPipe?.additivesEfficiency ?? (mergedAttributes.additivesEfficiency as boolean | undefined),
+      pipelineStatus: parentPipe?.pipelineStatus ?? (mergedAttributes.pipelineStatus as PipelineStatus | undefined),
+      owner: parentPipe?.owner ?? (mergedAttributes.owner as string | undefined),
       attributes: mergedAttributes,
       modelStatus,
       outgoing: [],
@@ -308,6 +342,18 @@ export function buildEntityDetails({
       owner: pipeline.owner || (pipeline.attributes?.owner as string) || '—',
       period: pipeline.period || (pipeline.attributes?.period as string) || '2026–2040',
       condition: pipeline.condition || (pipeline.attributes?.condition as string) || 'Работает',
+      pipelineType: pipeline.pipelineType ?? (pipeline.attributes?.pipelineType as PipelineType | undefined),
+      pipelineClass: pipeline.pipelineClass ?? (pipeline.attributes?.pipelineClass as PipelineClass | undefined),
+      lengthKm: pipeline.lengthKm ?? (pipeline.attributes?.lengthKm as number | undefined) ?? 0,
+      outerDiameterMm: pipeline.outerDiameterMm ?? (pipeline.attributes?.outerDiameterMm as number | undefined),
+      wallThicknessMm: pipeline.wallThicknessMm ?? (pipeline.attributes?.wallThicknessMm as number | undefined),
+      roughnessMm: pipeline.roughnessMm ?? (pipeline.attributes?.roughnessMm as number | undefined) ?? 0,
+      installation: pipeline.installation ?? (pipeline.attributes?.installation as PipelineInstallation | undefined),
+      depthM: pipeline.depthM ?? (pipeline.attributes?.depthM as number | undefined) ?? 0,
+      routeCondition: pipeline.routeCondition ?? (pipeline.attributes?.routeCondition as PipelineRouteCondition | undefined),
+      additivesEfficiency: pipeline.additivesEfficiency ?? (pipeline.attributes?.additivesEfficiency as boolean | undefined),
+      pipelineStatus: pipeline.pipelineStatus ?? (pipeline.attributes?.pipelineStatus as PipelineStatus | undefined),
+      owner: pipeline.owner ?? (pipeline.attributes?.owner as string | undefined),
       attributes: pipeline.attributes,
       modelStatus,
       outgoing: [],

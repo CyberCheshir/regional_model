@@ -654,6 +654,17 @@ export function MapViewport({
         }
         ctx.onSelect(id, id ? getMapNodeEntityKind(id) : undefined);
       },
+      // Двойной клик по сегменту выбирает весь трубопровод-родитель.
+      // Одиночный click выше по-прежнему выбирает конкретный сегмент.
+      doubleClick: (params: unknown) => {
+        const p = params as ClickParams;
+        const clickedEdge = p.edges && p.edges.length > 0 ? String(p.edges[0]) : null;
+        if (!clickedEdge) return;
+        const segment = geometryRef.current.drawingSegments.find((item) => item.id === clickedEdge);
+        if (segment?.pipelineId) {
+          clickContextRef.current.onSelect(segment.pipelineId, 'pipeline');
+        }
+      },
       // Начало перетаскивания vis-узла (вершина ребра/тройник/врезка) —
       // один снимок истории на всё действие.
       dragStart: () => beginActionRef.current(),
@@ -1226,8 +1237,16 @@ export function MapViewport({
                 return;
               }
               setSelections([{ kind: 'segment', id }]);
-              // Синхронизация: выбор сегмента на карте → дерево + инспектор.
+              // Одиночный клик по карте выбирает конкретный сегмент.
               onSelect(id, 'segment');
+            }}
+            onSelectPipeline={(pipelineId) => {
+              const pipeSegmentIds = drawingSegments
+                .filter((segment) => segment.pipelineId === pipelineId)
+                .map((segment) => segment.id);
+              setSelections(pipeSegmentIds.map((id) => ({ kind: 'segment' as const, id })));
+              // Двойной клик по сегменту открывает весь трубопровод.
+              onSelect(pipelineId, 'pipeline');
             }}
             onClearSelection={() => setSelections([])}
             onLasso={(poly) => selectInWorldPolygon(poly)}

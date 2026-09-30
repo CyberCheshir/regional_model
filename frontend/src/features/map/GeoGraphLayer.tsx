@@ -85,6 +85,8 @@ export type GeoGraphLayerProps = {
   onSelect?: (id: string, withShift: boolean) => void;
   /** Выбор ребра по клику (withShift — мультивыбор) */
   onSelectSegment?: (id: string, withShift: boolean) => void;
+  /** Выбор трубопровода по двойному клику на его сегменте */
+  onSelectPipeline?: (pipelineId: string) => void;
   /** Режим врезки: клик по ребру сразу создаёт врезку в точке клика */
   tapMode?: boolean;
   /**
@@ -208,6 +210,7 @@ export function GeoGraphLayer({
   snapTargetId = null,
   onSelect,
   onSelectSegment,
+  onSelectPipeline,
   tapMode = false,
   drawingMode = false,
   onSegmentPress,
@@ -885,11 +888,16 @@ export function GeoGraphLayer({
                   }
                   onSelectSegment?.(s.id, e.shiftKey);
                 }}
-                onPointerUp={(e) => {
-                  if (drawingMode && !tapMode) return;
-                  e.stopPropagation();
-                }}
-              />
+                  onPointerUp={(e) => {
+                    if (drawingMode && !tapMode) return;
+                    e.stopPropagation();
+                  }}
+                  onDoubleClick={(e) => {
+                    if (drawingMode || tapMode) return;
+                    e.stopPropagation();
+                    if (s.pipelineId) onSelectPipeline?.(s.pipelineId);
+                  }}
+                />
               <line
                 x1={a.x}
                 y1={a.y}

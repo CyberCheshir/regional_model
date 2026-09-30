@@ -29,9 +29,24 @@
   background: var(--bg-row-hover, var(--bg-card-hover, rgba(0, 0, 0, 0.04)));
 }
 
+/* Группа — это контейнер дерева, поэтому выделяем её типографикой и разделителем,
+   не окрашивая обычные элементы. */
+.object-tree__row--group {
+  margin: 4px 0 2px;
+  border-bottom: 1px solid var(--border-subtle, #edf2f7);
+  border-radius: 0;
+  color: var(--text-main, #000);
+  font-weight: 700;
+}
+
+.object-tree__row--group .object-tree__name {
+  letter-spacing: 0.02em;
+}
+
 .object-tree__row--selected,
 .object-tree__row--selected:hover {
   background: var(--bg-card-selected, rgba(59, 130, 246, 0.18));
+  box-shadow: inset 3px 0 0 var(--color-primary, #0066cc);
 }
 
 .object-tree__row--hidden .object-tree__name,

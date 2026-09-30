@@ -13,7 +13,7 @@ import { AppIcon } from '../../components/AppIcon';
 import { AsyncState } from '../../components/AsyncState';
 import type { EntityDetails, ParameterTabId } from '../../domain/types';
 import { buildParameterPanelData } from './buildPanelData';
-import { hasTab, tabsForKind, firstTabForKind } from './tabs';
+import { tabsForKind, firstTabForKind } from './tabs';
 import { PanelTabRail } from './parts';
 import { ParameterPanelHeader } from './ParameterPanelHeader';
 import { GeneralTab } from './GeneralTab';
@@ -33,6 +33,27 @@ export type ParameterPanelProps = {
   onNavigateToRelation: (id: string) => void;
   /** Переименовать выбранный объект */
   onRename?: (nextLabel: string) => void;
+  /** Изменить тип трубопровода в доменном слое */
+  onPipelineTypeChange?: (pipelineType: import('../../domain/types').PipelineType) => void;
+  /** Изменить классификацию трубопровода в доменном слое */
+  onPipelineClassChange?: (pipelineClass: import('../../domain/types').PipelineClass) => void;
+  /** Изменить протяжённость трубопровода в доменном слое */
+  onPipelineLengthChange?: (lengthKm: number) => void;
+  /** Изменить наружный диаметр трубы */
+  onPipelineOuterDiameterChange?: (diameterMm: number) => void;
+  /** Изменить толщину стенки трубы */
+  onPipelineWallThicknessChange?: (thicknessMm: number) => void;
+  /** Изменить шероховатость трубы */
+  onPipelineRoughnessChange?: (roughnessMm: number) => void;
+  /** Изменить дополнительные параметры трубопровода */
+  onPipelineAdvancedChange?: (patch: {
+    installation?: import('../../domain/types').PipelineInstallation;
+    depthM?: number;
+    routeCondition?: import('../../domain/types').PipelineRouteCondition;
+    additivesEfficiency?: boolean;
+    pipelineStatus?: import('../../domain/types').PipelineStatus;
+    owner?: import('../../domain/types').PipelineOwner;
+  }) => void;
   /** Добавить период вывода из эксплуатации (заготовка) */
   onAddShutdown?: () => void;
   /** Перейти в гидравлический расчёт (заготовка) */
@@ -49,29 +70,42 @@ export function ParameterPanel({
   onTabChange,
   onNavigateToRelation,
   onRename,
+  onPipelineTypeChange,
+  onPipelineLengthChange,
+  onPipelineOuterDiameterChange,
+  onPipelineWallThicknessChange,
+  onPipelineRoughnessChange,
+  onPipelineAdvancedChange,
   onAddShutdown,
   onOpenCalc,
   loading = false,
   error = null,
   onRetry,
   onCollapse,
+  onPipelineClassChange,
 }: ParameterPanelProps) {
   const data = entity ? buildParameterPanelData(entity) : null;
   const panelKind = data?.panelKind ?? null;
+  // У сегмента нет собственного профиля продукции — вкладка не показывается.
+  const availableTabs = panelKind
+    ? tabsForKind(panelKind).filter((tab) => !(entity?.kind === 'segment' && tab.id === 'product'))
+    : [];
+  const firstAvailableTab = availableTabs[0]?.id ?? firstTabForKind(panelKind ?? 'node');
+  const hasAvailableTab = availableTabs.some((tab) => tab.id === activeTab);
 
   // Если у объекта нет активной вкладки — переключаемся на первую доступную.
   useEffect(() => {
     if (!panelKind) return;
-    if (!hasTab(panelKind, activeTab)) onTabChange(firstTabForKind(panelKind));
-  }, [panelKind, activeTab, onTabChange]);
+    if (!hasAvailableTab) onTabChange(firstAvailableTab);
+  }, [panelKind, hasAvailableTab, firstAvailableTab, onTabChange]);
 
   // Рельс вкладок — отдельная колонка НА ВСЮ ВЫСОТУ панели: левая часть
   // шапки объекта лежит поверх рельса (по макету). Поэтому шапка рендерится
   // внутри правой колонки, а не над всёй панелью.
   const rail = panelKind ? (
     <PanelTabRail
-      tabs={tabsForKind(panelKind)}
-      active={hasTab(panelKind, activeTab) ? activeTab : firstTabForKind(panelKind)}
+      tabs={availableTabs}
+      active={hasAvailableTab ? activeTab : firstAvailableTab}
       onChange={onTabChange}
       kind={entity?.kind}
       subType={entity?.subType}
@@ -86,13 +120,20 @@ export function ParameterPanel({
   } else if (!entity || !data || !panelKind) {
     body = <EmptyState />;
   } else {
-    const current = hasTab(panelKind, activeTab) ? activeTab : firstTabForKind(panelKind);
+    const current = hasAvailableTab ? activeTab : firstAvailableTab;
     body = (
       <div className="pp__content">
         <TabContent
           tab={current}
           data={data}
           onRename={onRename}
+          onPipelineTypeChange={onPipelineTypeChange}
+          onPipelineClassChange={onPipelineClassChange}
+          onPipelineLengthChange={onPipelineLengthChange}
+          onPipelineOuterDiameterChange={onPipelineOuterDiameterChange}
+          onPipelineWallThicknessChange={onPipelineWallThicknessChange}
+          onPipelineRoughnessChange={onPipelineRoughnessChange}
+          onPipelineAdvancedChange={onPipelineAdvancedChange}
           onNavigateToRelation={onNavigateToRelation}
           onAddShutdown={onAddShutdown}
           onOpenCalc={onOpenCalc}
@@ -139,6 +180,13 @@ function TabContent({
   tab,
   data,
   onRename,
+  onPipelineTypeChange,
+  onPipelineClassChange,
+  onPipelineLengthChange,
+  onPipelineOuterDiameterChange,
+  onPipelineWallThicknessChange,
+  onPipelineRoughnessChange,
+  onPipelineAdvancedChange,
   onNavigateToRelation,
   onAddShutdown,
   onOpenCalc,
@@ -146,13 +194,40 @@ function TabContent({
   tab: ParameterTabId;
   data: ReturnType<typeof buildParameterPanelData>;
   onRename?: (nextLabel: string) => void;
+  onPipelineTypeChange?: (pipelineType: import('../../domain/types').PipelineType) => void;
+  onPipelineClassChange?: (pipelineClass: import('../../domain/types').PipelineClass) => void;
+  onPipelineLengthChange?: (lengthKm: number) => void;
+  onPipelineOuterDiameterChange?: (diameterMm: number) => void;
+  onPipelineWallThicknessChange?: (thicknessMm: number) => void;
+  onPipelineRoughnessChange?: (roughnessMm: number) => void;
+  onPipelineAdvancedChange?: (patch: {
+    installation?: import('../../domain/types').PipelineInstallation;
+    depthM?: number;
+    routeCondition?: import('../../domain/types').PipelineRouteCondition;
+    additivesEfficiency?: boolean;
+    pipelineStatus?: import('../../domain/types').PipelineStatus;
+    owner?: import('../../domain/types').PipelineOwner;
+  }) => void;
   onNavigateToRelation: (id: string) => void;
   onAddShutdown?: () => void;
   onOpenCalc?: () => void;
 }) {
   switch (tab) {
     case 'general':
-      return <GeneralTab data={data} onRename={onRename} onNavigateToRelation={onNavigateToRelation} />;
+      return (
+        <GeneralTab
+          data={data}
+          onRename={onRename}
+          onPipelineTypeChange={onPipelineTypeChange}
+          onPipelineClassChange={onPipelineClassChange}
+          onPipelineLengthChange={onPipelineLengthChange}
+          onPipelineOuterDiameterChange={onPipelineOuterDiameterChange}
+          onPipelineWallThicknessChange={onPipelineWallThicknessChange}
+          onPipelineRoughnessChange={onPipelineRoughnessChange}
+          onPipelineAdvancedChange={onPipelineAdvancedChange}
+          onNavigateToRelation={onNavigateToRelation}
+        />
+      );
     case 'calendar':
       return (
         <CalendarTab

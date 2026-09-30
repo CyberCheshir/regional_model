@@ -144,7 +144,7 @@ export function LeftSidebar({
           />
         )}
         <div className="left-sidebar__body">
-          <CollapsibleSection title="Группы элементов">
+          <CollapsibleSection title="Группы элементов" defaultOpen={false}>
             <ObjectTree
               groups={treeGroups}
               selectedId={selectedId}

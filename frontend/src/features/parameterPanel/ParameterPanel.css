@@ -25,9 +25,9 @@
 .pp-wrap__body {
   flex: 1;
   min-height: 0;
-  overflow: hidden;
-  /* Flex-колонка: даёт вложенному .pp__content ограниченную высоту,
-     чтобы внутри работала своя прокрутка при переполнении. */
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* Единая прокрутка правой части панели, без обрезания отдельных секций. */
   display: flex;
   flex-direction: column;
 }
@@ -131,6 +131,65 @@
   background: var(--status-working-dot, #10b981);
 }
 
+.pp-select-wrap {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+.pp-select__text {
+  display: block;
+  width: 100%;
+  padding: 5px 0;
+  overflow: hidden;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--text-main, #0d1526);
+  font: inherit;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.pp-select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  min-width: 0;
+  padding: 5px 0;
+  border: 1px solid var(--border-default, #d9e1ec);
+  border-radius: 4px;
+  background: var(--bg-panel, #ffffff);
+  color: var(--text-main, #0d1526);
+  font: inherit;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.pp-select-wrap:hover .pp-select,
+.pp-select:focus {
+  opacity: 1;
+}
+
+.pp-select-wrap:hover .pp-select__text,
+.pp-select-wrap:focus-within .pp-select__text {
+  visibility: hidden;
+}
+
+.pp-select:focus {
+  outline: 2px solid var(--color-primary, #2563eb);
+  outline-offset: 1px;
+}
+
+.pp-select:disabled {
+  cursor: not-allowed;
+  opacity: 0;
+}
+
+.pp-select-wrap .pp-select:disabled + .pp-select__text {
+  color: var(--text-muted, #8a94a6);
+}
+
 .pp-status.status-badge--warning {
   background: #fdf2e2;
   color: #b06a00;
@@ -151,14 +210,12 @@
 
 /* --- Каркас «рельс + контент» --- */
 .pp__content {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   min-width: 0;
-  /* min-height: 0 — критично: без него flex-колонка растёт от содержимого
-     и полоса прокрутки не появляется. */
-  min-height: 0;
-  /* Прокрутка, когда данные не помещаются в высоту панели. */
-  overflow-y: auto;
-  overflow-x: hidden;
+  min-height: auto;
+  /* Единая прокрутка находится на .pp-wrap__body; контент секций
+     не получает собственной ограниченной высоты. */
+  overflow: visible;
   padding-bottom: 8px;
   /* Колонка-flex: позволяет вложенной секции с `grow` растянуться
      до низа панели (таблица профиля продукции). */
@@ -255,12 +312,12 @@
 .pp-section {
   display: flex;
   flex-direction: column;
-  /* Фиксированная высота секции (заголовок + тело). Настраивается
-     переменной --pp-section-height. */
-  height: var(--pp-section-height, 240px);
+  /* Секция растёт по содержимому и не обрезает тело. */
+  height: auto;
+  flex: 0 0 auto;
   box-sizing: border-box;
   padding: 14px 16px;
-  overflow: hidden;
+  overflow: visible;
   border-bottom: 1px solid var(--border-subtle, #edf2f7);
 }
 
@@ -306,15 +363,66 @@
 .pp-section__body {
   display: flex;
   flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
+  flex: 0 0 auto;
+  min-height: auto;
   gap: 8px;
-  /* Содержимое, не влезающее в фикс-высоту, прокручивается внутри секции. */
-  overflow-y: auto;
-  scrollbar-width: thin;
+  /* Прокрутка выполняется общей областью .pp-wrap__body. */
+  overflow: visible;
 }
 
-/* --- Строка «метка — значение» --- */
+/* --- Табличное представление свойств (стиль Pipesim) --- */
+.pp-properties-table {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow: hidden;
+  border: 1px solid var(--border-default, #d9e1ec);
+  border-radius: var(--radius-sm, 6px);
+}
+
+.pp-properties-table .pp-row {
+  display: grid;
+  grid-template-columns: minmax(112px, 42%) minmax(0, 1fr);
+  align-items: stretch;
+  gap: 0;
+  min-height: 32px;
+  border-bottom: 1px solid var(--border-subtle, #edf2f7);
+}
+
+.pp-properties-table .pp-row:last-child {
+  border-bottom: none;
+}
+
+.pp-properties-table .pp-row__label,
+.pp-properties-table .pp-row__value {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  padding: 6px 8px;
+  text-align: left;
+  white-space: normal;
+}
+
+.pp-properties-table .pp-row__label {
+  background: var(--bg-panel-subtle, #f8fafc);
+  border-right: 1px solid var(--border-subtle, #edf2f7);
+  color: var(--text-muted, #8a94a6);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.pp-properties-table .pp-row__value {
+  background: var(--bg-panel, #ffffff);
+  color: var(--text-main, #0d1526);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
+  justify-content: flex-start;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* --- Строка «метка — значение» вне таблицы --- */
 .pp-row {
   display: flex;
   align-items: baseline;
@@ -364,10 +472,13 @@
 
 /* --- Редактируемое наименование --- */
 .pp-edit {
-  display: inline-flex;
+  display: flex;
   align-items: baseline;
-  justify-content: flex-end;
+  justify-content: flex-start;
+  align-self: flex-start;
   gap: 6px;
+  width: 100%;
+  text-align: left;
   max-width: 100%;
   min-width: 0;
   padding: 1px 4px;
@@ -383,7 +494,10 @@
 
 /* Текст имени — ОДНОЙ строкой, без переносов (лишнее обрезается). */
 .pp-edit__text {
+  flex: 1 1 auto;
+  width: 100%;
   min-width: 0;
+  text-align: left;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -402,6 +516,65 @@
 .pp-edit:hover .pp-edit__pencil,
 .pp-edit:focus-visible .pp-edit__pencil {
   opacity: 1;
+}
+
+.pp-number-wrap {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+.pp-number-text {
+  display: block;
+  width: 100%;
+  padding: 3px 0;
+  color: var(--text-main, #0d1526);
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.pp-number-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  min-width: 0;
+  padding: 3px 0;
+  border: 1px solid var(--border-default, #d9e1ec);
+  border-radius: var(--radius-sm, 4px);
+  background: var(--bg-panel, #ffffff);
+  color: var(--text-main, #0d1526);
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  opacity: 0;
+  cursor: text;
+}
+
+.pp-number-wrap:hover .pp-number-input,
+.pp-number-input:focus {
+  opacity: 1;
+}
+
+.pp-number-wrap:hover .pp-number-text,
+.pp-number-wrap:focus-within .pp-number-text {
+  visibility: hidden;
+}
+
+.pp-number-input:focus {
+  outline: 2px solid var(--color-primary, #2563eb);
+  outline-offset: 1px;
+}
+
+.pp-number-input:disabled {
+  cursor: not-allowed;
+  opacity: 0;
+}
+
+.pp-number-wrap .pp-number-input:disabled + .pp-number-text {
+  color: var(--text-muted, #8a94a6);
 }
 
 .pp-input {

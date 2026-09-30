@@ -108,7 +108,6 @@ export function buildElementGroups({
   vertices,
   pipelines,
   segments,
-  taps,
 }: ElementGroupsInput): ObjectTreeData[] {
   const groups: ObjectTreeData[] = [];
 
@@ -119,18 +118,12 @@ export function buildElementGroups({
         id: v.id,
         label: v.label,
         kind: v.kind as TreeNodeData['kind'],
-        subType: DOMAIN_KIND_META[v.kind]?.typeClass,
+        subType: v.kind === 'wellpad' ? 'Система сбора' : DOMAIN_KIND_META[v.kind]?.typeClass,
       }));
 
   const wellpads = byKind('wellpad');
   const facilities = byKind('facility');
   const deliveryPoints = byKind('delivery-point');
-  const tapNodes: TreeNodeData[] = (taps || []).map((t) => ({
-    id: t.id,
-    label: t.label,
-    kind: 'node' as const,
-    subType: 'Врезка',
-  }));
 
   const appendToGroup = (groupId: string, groupLabel: string, nodes: TreeNodeData[]) => {
     if (nodes.length === 0) return;
@@ -150,7 +143,6 @@ export function buildElementGroups({
   appendToGroup(DOMAIN_KIND_META.wellpad.groupId, DOMAIN_KIND_META.wellpad.defaultGroupLabel, wellpads);
   appendToGroup(DOMAIN_KIND_META.facility.groupId, DOMAIN_KIND_META.facility.defaultGroupLabel, facilities);
   appendToGroup(DOMAIN_KIND_META['delivery-point'].groupId, DOMAIN_KIND_META['delivery-point'].defaultGroupLabel, deliveryPoints);
-  appendToGroup(DOMAIN_KIND_META.node.groupId, DOMAIN_KIND_META.node.defaultGroupLabel, tapNodes);
 
   // Трубопроводы БЕЗ сегментов в дерево не попадают
   const segmentsOfPipeline = (pipelineId: string) =>
