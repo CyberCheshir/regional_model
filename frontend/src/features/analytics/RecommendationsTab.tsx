@@ -1,11 +1,16 @@
-import { useMemo, useState } from 'react';
+﻿import { useMemo, useState } from 'react';
 import { useMapDrawing } from '../map/mapDrawing';
+import { StatGrid, type StatItem } from '../../components/ui/StatGrid';
+import { DataTable, type DataTableColumn } from '../../components/ui/DataTable';
+import { FilterBar } from '../../components/ui/FilterBar';
+import { PropList } from '../../components/ui/PropList';
 import type {
-  CriticalityLevel,
   RecommendationFilterState,
   RecommendationItem,
-  WarningHierarchyNode,
 } from './types';
+import { HierarchyTree } from './HierarchyTree';
+import { enrichWithModelElements } from './modelMatch';
+import '../../components/ui/ui.css';
 import './RecommendationsTab.css';
 
 export type RecommendationsTabProps = {
@@ -13,56 +18,6 @@ export type RecommendationsTabProps = {
   onOpenRoadmap?: () => void;
   /** Идентификатор выбранной рекомендации при открытии */
   initialRecommendationId?: string;
-};
-
-/** Иерархия модели по макету */
-const DEFAULT_HIERARCHY: WarningHierarchyNode = {
-  id: 'lu-severny',
-  label: 'Северный ЛУ',
-  count: 4,
-  criticality: 'critical',
-  children: [
-    {
-      id: 'sys-sbor-severny',
-      label: 'Система сбора Северный',
-      count: 2,
-      criticality: 'high',
-      children: [
-        {
-          id: 'pipe-01',
-          label: 'Нефтепровод 01',
-          count: 1,
-          criticality: 'high',
-        },
-        {
-          id: 'facility-upn-2',
-          label: 'УПН-2',
-          count: 1,
-          criticality: 'critical',
-        },
-      ],
-    },
-    {
-      id: 'sys-podgotovka',
-      label: 'Подготовка',
-      count: 2,
-      criticality: 'high',
-      children: [
-        {
-          id: 'facility-gp-1',
-          label: 'ГП-1',
-          count: 1,
-          criticality: 'medium',
-        },
-        {
-          id: 'deliv-sikn-1525',
-          label: 'СИКН-1525',
-          count: 0,
-          criticality: 'low',
-        },
-      ],
-    },
-  ],
 };
 
 /** Эталонный список рекомендаций по макету */
@@ -188,18 +143,9 @@ export function RecommendationsTab({
   );
 
   // Рекомендации с возможностью переопределения категории
-  const [recommendations, setRecommendations] = useState<RecommendationItem[]>(() => {
-    if (vertices.length === 0 && pipelines.length === 0) {
-      return DEFAULT_RECOMMENDATIONS;
-    }
-    return DEFAULT_RECOMMENDATIONS.map((r) => {
-      const match =
-        vertices.find((v) => v.label.toLowerCase().includes(r.element.toLowerCase())) ??
-        pipelines.find((p) => p.label.toLowerCase().includes(r.element.toLowerCase()));
-      if (match) return { ...r, element: match.label };
-      return r;
-    });
-  });
+  const [recommendations, setRecommendations] = useState<RecommendationItem[]>(() =>
+    enrichWithModelElements(DEFAULT_RECOMMENDATIONS, vertices, pipelines),
+  );
 
   // Выбранная рекомендация
   const activeRec = useMemo(() => {
@@ -213,192 +159,116 @@ export function RecommendationsTab({
     );
   };
 
-  const critColor = (level: CriticalityLevel) =>
-    level === 'critical' ? '#dc2626' : level === 'high' ? '#ea580c' : level === 'medium' ? '#ca8a04' : '#10b981';
+  /** Переключение «все ↔ значение» для фильтра. */
+  const toggleFilter = (key: 'lu' | 'system', value: string) => {
+    setFilters((prev) => ({ ...prev, [key]: prev[key] === 'все' ? value : 'все' }));
+  };
+
+  /** Ручное переопределение категории выбранной рекомендации. */
+  const setManualCategory = (value: string) => {
+    if (!activeRec) return;
+    setRecommendations((prev) =>
+      prev.map((r) => (r.id === activeRec.id ? { ...r, manualCategory: value } : r)),
+    );
+  };
+
+  // Счётчики по макету
+  const statItems: StatItem[] = [
+    { key: 'total', label: 'Всего', value: 31, tone: 'ui-tone-primary' },
+    { key: 'by2033', label: 'К 2033', value: 12, tone: 'ui-tone-high' },
+    { key: 'soon', label: 'Старт ≤ 2 лет', value: 5, tone: 'ui-tone-critical' },
+    { key: 'no-category', label: 'Без категория', value: 1, tone: 'ui-tone-medium' },
+  ];
+
+  const recColumns: DataTableColumn<RecommendationItem>[] = [
+    { key: 'element', header: 'Элемент', cell: (r) => r.element, className: 'ui-table__elem' },
+    { key: 'category', header: 'Категория', cell: (r) => r.category },
+    {
+      key: 'required',
+      header: 'Требуется к',
+      cell: (r) => r.startYear + Math.ceil(r.durationMonths / 12),
+      numeric: true,
+    },
+    { key: 'start', header: 'Старт', cell: (r) => r.startYear, numeric: true },
+    { key: 'stages', header: 'Этапов', cell: (r) => r.stages.length, numeric: true },
+  ];
 
   return (
-    <div className="recommendations-tab">
+    <div className="ui-stack">
       {/* 1. Верхняя полоса фильтров */}
-      <div className="recommendations-tab__filterbar">
-        <span className="recommendations-tab__filter-title">Фильтры</span>
-
-        <button
-          type="button"
-          className={`recommendations-tab__filter-pill ${filters.lu === 'все' ? 'recommendations-tab__filter-pill--active' : ''}`}
-          onClick={() => setFilters((prev) => ({ ...prev, lu: prev.lu === 'все' ? 'Северный' : 'все' }))}
-        >
-          ЛУ: {filters.lu}
-        </button>
-
-        <button
-          type="button"
-          className={`recommendations-tab__filter-pill ${filters.system === 'все' ? 'recommendations-tab__filter-pill--active' : ''}`}
-          onClick={() => setFilters((prev) => ({ ...prev, system: prev.system === 'все' ? 'Сбор' : 'все' }))}
-        >
-          Система: {filters.system}
-        </button>
-
-        <button
-          type="button"
-          className="recommendations-tab__filter-pill"
-          onClick={() => alert('Фильтр по категориям мероприятий')}
-        >
-          Категория
-        </button>
-
-        <button
-          type="button"
-          className="recommendations-tab__filter-pill"
-          onClick={() => alert('Фильтр по критичности')}
-        >
-          Критичность
-        </button>
-
-        <button
-          type="button"
-          className="recommendations-tab__filter-pill"
-          onClick={() => setFilters((prev) => ({ ...prev, showHidden: !prev.showHidden }))}
-        >
-          {filters.showHidden ? '✓ Скрытые включены' : 'Показывать скрытые'}
-        </button>
-      </div>
+      <FilterBar
+        pills={[
+          { key: 'lu', label: 'ЛУ', value: filters.lu, active: filters.lu === 'все', onToggle: () => toggleFilter('lu', 'Северный') },
+          { key: 'system', label: 'Система', value: filters.system, active: filters.system === 'все', onToggle: () => toggleFilter('system', 'Сбор') },
+        ]}
+        trailing={
+          <>
+            <button
+              type="button"
+              className="ui-pill"
+              onClick={() => alert('Фильтр по категориям мероприятий')}
+            >
+              Категория
+            </button>
+            <button
+              type="button"
+              className="ui-pill"
+              onClick={() => alert('Фильтр по критичности')}
+            >
+              Критичность
+            </button>
+            <button
+              type="button"
+              className={`ui-pill${filters.showHidden ? ' ui-pill--active' : ''}`}
+              onClick={() => setFilters((prev) => ({ ...prev, showHidden: !prev.showHidden }))}
+            >
+              {filters.showHidden ? '✓ Скрытые включены' : 'Показывать скрытые'}
+            </button>
+          </>
+        }
+      />
 
       {/* 2. Основная трехколоночная сетка */}
-      <div className="recommendations-tab__grid">
+      <div className="ui-grid ui-grid--3">
         {/* Колонка 1: Иерархия модели */}
-        <div className="recommendations-tab__card">
-          <div className="recommendations-tab__eyebrow">ИЕРАРХИЯ МОДЕЛИ</div>
+        <div className="ui-card">
+          <div className="ui-eyebrow">ИЕРАРХИЯ МОДЕЛИ</div>
 
-          <div className="recommendations-tab__tree">
-            <div
-              className={`recommendations-tab__tree-node ${selectedNodeId === DEFAULT_HIERARCHY.id ? 'recommendations-tab__tree-node--selected' : ''}`}
-              onClick={() => setSelectedNodeId(DEFAULT_HIERARCHY.id)}
-            >
-              <div className="recommendations-tab__tree-left">
-                <span
-                  className="recommendations-tab__tree-dot"
-                  style={{ backgroundColor: critColor(DEFAULT_HIERARCHY.criticality) }}
-                />
-                <span className="recommendations-tab__tree-label">{DEFAULT_HIERARCHY.label}</span>
-              </div>
-              <span className="recommendations-tab__tree-badge">{DEFAULT_HIERARCHY.count}</span>
-            </div>
-
-            <div className="recommendations-tab__tree-children">
-              {DEFAULT_HIERARCHY.children?.map((subNode) => (
-                <div key={subNode.id}>
-                  <div
-                    className={`recommendations-tab__tree-node ${selectedNodeId === subNode.id ? 'recommendations-tab__tree-node--selected' : ''}`}
-                    onClick={() => setSelectedNodeId(subNode.id)}
-                  >
-                    <div className="recommendations-tab__tree-left">
-                      <span
-                        className="recommendations-tab__tree-dot"
-                        style={{ backgroundColor: critColor(subNode.criticality) }}
-                      />
-                      <span className="recommendations-tab__tree-label">{subNode.label}</span>
-                    </div>
-                    <span className="recommendations-tab__tree-badge">{subNode.count}</span>
-                  </div>
-
-                  {subNode.children && (
-                    <div className="recommendations-tab__tree-children">
-                      {subNode.children.map((leaf) => (
-                        <div
-                          key={leaf.id}
-                          className={`recommendations-tab__tree-node ${selectedNodeId === leaf.id ? 'recommendations-tab__tree-node--selected' : ''}`}
-                          onClick={() => {
-                            setSelectedNodeId(leaf.id);
-                            const matchingRec = recommendations.find((r) =>
-                              r.element.toLowerCase().includes(leaf.label.toLowerCase()),
-                            );
-                            if (matchingRec) setSelectedRecId(matchingRec.id);
-                          }}
-                        >
-                          <div className="recommendations-tab__tree-left">
-                            <span
-                              className="recommendations-tab__tree-dot"
-                              style={{ backgroundColor: critColor(leaf.criticality) }}
-                            />
-                            <span className="recommendations-tab__tree-label">{leaf.label}</span>
-                          </div>
-                          <span className="recommendations-tab__tree-badge">{leaf.count}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
+          <HierarchyTree
+            selectedNodeId={selectedNodeId}
+            onSelectNode={setSelectedNodeId}
+            onSelectLeaf={(leaf) => {
+              const matchingRec = recommendations.find((r) =>
+                r.element.toLowerCase().includes(leaf.label.toLowerCase()),
+              );
+              if (matchingRec) setSelectedRecId(matchingRec.id);
+            }}
+          />
         </div>
 
         {/* Колонка 2: Рекомендации и мероприятия */}
-        <div className="recommendations-tab__card">
-          <h2 className="recommendations-tab__heading">Рекомендации и мероприятия</h2>
+        <div className="ui-card">
+          <h2 className="ui-card__heading ui-card__heading--lg">Рекомендации и мероприятия</h2>
 
           {/* Верхние 4 счетчика */}
-          <div className="recommendations-tab__stats-row">
-            <div className="recommendations-tab__stat-box">
-              <span className="recommendations-tab__stat-label">Всего</span>
-              <div className="recommendations-tab__stat-num recommendations-tab__stat-num--blue">31</div>
-            </div>
-
-            <div className="recommendations-tab__stat-box">
-              <span className="recommendations-tab__stat-label">К 2033</span>
-              <div className="recommendations-tab__stat-num recommendations-tab__stat-num--orange">12</div>
-            </div>
-
-            <div className="recommendations-tab__stat-box">
-              <span className="recommendations-tab__stat-label">Старт ≤ 2 лет</span>
-              <div className="recommendations-tab__stat-num recommendations-tab__stat-num--red">5</div>
-            </div>
-
-            <div className="recommendations-tab__stat-box">
-              <span className="recommendations-tab__stat-label">Без категории</span>
-              <div className="recommendations-tab__stat-num recommendations-tab__stat-num--yellow">1</div>
-            </div>
-          </div>
+          <StatGrid items={statItems} ariaLabel="Сводка по рекомендациям" />
 
           {/* Таблица рекомендаций */}
-          <div className="recommendations-tab__table-wrap">
-            <table className="recommendations-tab__table">
-              <thead>
-                <tr>
-                  <th>Элемент</th>
-                  <th>Категория</th>
-                  <th>Требуется к</th>
-                  <th>Старт</th>
-                  <th>Этапов</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recommendations.map((r) => {
-                  const isSelected = r.id === activeRec?.id;
-                  return (
-                    <tr
-                      key={r.id}
-                      className={isSelected ? 'is-selected' : ''}
-                      onClick={() => setSelectedRecId(r.id)}
-                    >
-                      <td className="recommendations-tab__col-elem">{r.element}</td>
-                      <td>{r.category}</td>
-                      <td className="recommendations-tab__col-num">{r.startYear + Math.ceil(r.durationMonths / 12)}</td>
-                      <td className="recommendations-tab__col-num">{r.startYear}</td>
-                      <td className="recommendations-tab__col-num">{r.stages.length}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <DataTable
+            columns={recColumns}
+            rows={recommendations}
+            rowKey={(r) => r.id}
+            selectedId={activeRec?.id}
+            onSelect={(r) => setSelectedRecId(r.id)}
+            ariaLabel="Список рекомендаций"
+          />
 
           {/* Блок категоризации */}
-          <div className="recommendations-tab__eyebrow">КАТЕГОРИЗАЦИЯ</div>
-          <div className="recommendations-tab__categorization-box">
+          <div className="ui-eyebrow">КАТЕГОРИЗАЦИЯ</div>
+          <div className="ui-note ui-note--box">
             <div className="recommendations-tab__cat-row">
               <span className="recommendations-tab__cat-label">Авто-категория:</span>
-              <span className="recommendations-tab__cat-code">{activeRec?.autoCategoryCode}</span>
+              <span className="ui-note--code">{activeRec?.autoCategoryCode}</span>
             </div>
             <div className="recommendations-tab__cat-row">
               <span className="recommendations-tab__cat-label">Результат:</span>
@@ -411,98 +281,87 @@ export function RecommendationsTab({
           </div>
 
           {/* Сетка типовых категорий */}
-          <div className="recommendations-tab__eyebrow">ТИПОВЫЕ КАТЕГОРИИ</div>
+          <div className="ui-eyebrow">ТИПОВЫЕ КАТЕГОРИИ</div>
           <div className="recommendations-tab__categories-grid">
-            {TYPICAL_CATEGORIES.map((cat) => {
-              const isSelected = activeRec?.category === cat;
-              return (
-                <button
-                  type="button"
-                  key={cat}
-                  className={`recommendations-tab__cat-btn ${isSelected ? 'recommendations-tab__cat-btn--selected' : ''}`}
-                  onClick={() => handleSelectCategory(cat)}
-                >
-                  {cat}
-                </button>
-              );
-            })}
+            {TYPICAL_CATEGORIES.map((cat) => (
+              <button
+                type="button"
+                key={cat}
+                className={`ui-pill${activeRec?.category === cat ? ' ui-pill--active' : ''}`}
+                onClick={() => handleSelectCategory(cat)}
+              >
+                {cat}
+              </button>
+            ))}
           </div>
         </div>
 
         {/* Колонка 3: Выбранная рекомендация */}
-        <div className="recommendations-tab__card">
-          <div className="recommendations-tab__eyebrow">ВЫБРАННАЯ РЕКОМЕНДАЦИЯ</div>
+        <div className="ui-card">
+          <div className="ui-eyebrow">ВЫБРАННАЯ РЕКОМЕНДАЦИЯ</div>
 
           {activeRec && (
             <>
               <h2 className="recommendations-tab__card-title">{activeRec.title}</h2>
               <div className="recommendations-tab__card-sub">
-                {activeRec.isLinkedToCritical ? 'связано с критичным предупреждением' : 'плановое развитие актива'}
+                {activeRec.isLinkedToCritical
+                  ? 'связано с критичным предупреждением'
+                  : 'плановое развитие актива'}
               </div>
 
-              <div className="recommendations-tab__prop-block">
-                <span className="recommendations-tab__prop-label">Категория</span>
-                <span className="recommendations-tab__cat-badge">Авто: {activeRec.category}</span>
-                <input
-                  type="text"
-                  className="recommendations-tab__cat-input"
-                  placeholder="Вручную: не задано"
-                  value={activeRec.manualCategory || ''}
-                  onChange={(e) =>
-                    setRecommendations((prev) =>
-                      prev.map((r) =>
-                        r.id === activeRec.id ? { ...r, manualCategory: e.target.value } : r,
-                      ),
-                    )
-                  }
+              <PropList
+                items={[
+                  {
+                    key: 'category',
+                    label: 'Категория',
+                    value: (
+                      <>
+                        <span className="ui-badge--tag">Авто: {activeRec.category}</span>
+                        <input
+                          type="text"
+                          className="ui-input"
+                          placeholder="Вручную: не задано"
+                          value={activeRec.manualCategory || ''}
+                          onChange={(e) => setManualCategory(e.target.value)}
+                        />
+                      </>
+                    ),
+                  },
+                  { key: 'ready', label: 'Требуется готовность', value: activeRec.requiredByDate },
+                ]}
+              />
+
+              <div className="recommendations-tab__timing-row">
+                <PropList
+                  layout="grid"
+                  items={[
+                    { key: 'duration', label: 'Суммарная длительность', value: `${activeRec.durationMonths} месяца` },
+                    { key: 'start', label: 'Рекомендуемый старт', value: `${activeRec.startMonth} ${activeRec.startYear}` },
+                  ]}
                 />
               </div>
 
-              <div className="recommendations-tab__prop-block">
-                <span className="recommendations-tab__prop-label">Требуется готовность</span>
-                <span className="recommendations-tab__prop-val">{activeRec.requiredByDate}</span>
-              </div>
-
-              <div className="recommendations-tab__timing-row">
-                <div className="recommendations-tab__timing-col">
-                  <span className="recommendations-tab__timing-label">Суммарная длительность</span>
-                  <span className="recommendations-tab__timing-val">{activeRec.durationMonths} месяца</span>
-                </div>
-                <div className="recommendations-tab__timing-col">
-                  <span className="recommendations-tab__timing-label">Рекомендуемый старт</span>
-                  <span className="recommendations-tab__timing-val recommendations-tab__timing-val--blue">
-                    {activeRec.startMonth} {activeRec.startYear}
-                  </span>
-                </div>
-              </div>
-
-              <div className="recommendations-tab__prop-block">
-                <span className="recommendations-tab__prop-label">Этапы ({activeRec.stages.length})</span>
-                <div className="recommendations-tab__stages-list">
-                  {activeRec.stages.map((stg) => (
-                    <div key={stg.id} className="recommendations-tab__stage-row">
-                      <span className="recommendations-tab__stage-name">{stg.name}</span>
-                      <span className="recommendations-tab__stage-dur">{stg.durationMonths} мес.</span>
-                    </div>
-                  ))}
-                </div>
+              <div className="ui-eyebrow ui-eyebrow--tight">ЭТАПЫ ({activeRec.stages.length})</div>
+              <div className="recommendations-tab__stages-list">
+                {activeRec.stages.map((stg) => (
+                  <div key={stg.id} className="recommendations-tab__stage-row">
+                    <span className="recommendations-tab__stage-name">{stg.name}</span>
+                    <span className="recommendations-tab__stage-dur">{stg.durationMonths} мес.</span>
+                  </div>
+                ))}
               </div>
 
               {/* Нижние кнопки */}
-              <div className="recommendations-tab__actions-row">
+              <div className="ui-btn-row ui-btn-row--inline">
                 <button
                   type="button"
-                  className="recommendations-tab__btn recommendations-tab__btn--outline"
+                  className="ui-btn ui-btn--outline"
                   onClick={() => alert(`Редактирование этапов для «${activeRec.title}»`)}
                 >
                   Редактировать этапы
                 </button>
 
-                <button
-                  type="button"
-                  className="recommendations-tab__btn recommendations-tab__btn--primary"
-                  onClick={onOpenRoadmap}
-                >
+                <button type="button" className="ui-btn ui-btn--primary" onClick={onOpenRoadmap}>
                   В дорожную карту
                 </button>
               </div>

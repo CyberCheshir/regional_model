@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Modal } from '../../components/ui/Modal';
 import type { AnalyticsTabId } from './types';
 import { OverviewTab } from './OverviewTab';
 import { WarningsTab } from './WarningsTab';
@@ -6,6 +7,7 @@ import { RecommendationsTab } from './RecommendationsTab';
 import { ScenariosTab } from './ScenariosTab';
 import { RoadmapsTab } from './RoadmapsTab';
 import { downloadJsonFile } from '../../domain';
+import '../../components/ui/ui.css';
 import './AnalyticsView.css';
 
 export type AnalyticsViewProps = {
@@ -13,15 +15,41 @@ export type AnalyticsViewProps = {
   onNavigateToMap?: () => void;
 };
 
+/** Вкладки модуля: подписи и порядок в одном месте (вместо пяти копий разметки). */
+const TABS: ReadonlyArray<{ id: AnalyticsTabId; label: string }> = [
+  { id: 'overview', label: 'Обзор' },
+  { id: 'warnings', label: 'Предупреждения' },
+  { id: 'recommendations', label: 'Рекомендации' },
+  { id: 'scenarios', label: 'Сравнение сценариев' },
+  { id: 'roadmaps', label: 'Дорожные карты' },
+];
+
+/** Состав выгружаемого отчёта. */
+type ExportSections = { risks: boolean; roadmap: boolean; profiles: boolean };
+
+const EXPORT_SECTIONS: ReadonlyArray<{ key: keyof ExportSections; label: string }> = [
+  { key: 'risks', label: 'Отчет по предупреждениям и рискам' },
+  { key: 'roadmap', label: 'Дорожная карта мероприятий' },
+  { key: 'profiles', label: 'Производственные профили сценариев' },
+];
+
+const EXPORT_FORMATS = [
+  { value: 'excel' as const, label: 'Excel (.xlsx / .json)' },
+  { value: 'pdf' as const, label: 'PDF документ' },
+];
+
+
 export function AnalyticsView({ onNavigateToMap }: AnalyticsViewProps) {
   const [activeTab, setActiveTab] = useState<AnalyticsTabId>('overview');
   const [selectedRecommendationId, setSelectedRecommendationId] = useState<string>('rec-1');
 
   // Состояние модального окна «Выгрузить результаты»
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-  const [exportRisks, setExportRisks] = useState(true);
-  const [exportRoadmap, setExportRoadmap] = useState(true);
-  const [exportProfiles, setExportProfiles] = useState(true);
+  const [exportSections, setExportSections] = useState<ExportSections>({
+    risks: true,
+    roadmap: true,
+    profiles: true,
+  });
   const [exportFormat, setExportFormat] = useState<'excel' | 'pdf'>('excel');
 
   const handleExecuteExport = () => {
@@ -29,14 +57,18 @@ export function AnalyticsView({ onNavigateToMap }: AnalyticsViewProps) {
       title: 'Аналитический отчет по сценарию',
       generatedAt: new Date().toLocaleString('ru-RU'),
       includedSections: {
-        risksAndWarnings: exportRisks,
-        roadmap: exportRoadmap,
-        productionProfiles: exportProfiles,
+        risksAndWarnings: exportSections.risks,
+        roadmap: exportSections.roadmap,
+        productionProfiles: exportSections.profiles,
       },
       format: exportFormat,
     };
     downloadJsonFile(reportData, `Аналитический_отчет_${Date.now()}`);
     setIsExportModalOpen(false);
+  };
+
+  const toggleExportSection = (key: keyof ExportSections) => {
+    setExportSections((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
   return (
@@ -72,60 +104,22 @@ export function AnalyticsView({ onNavigateToMap }: AnalyticsViewProps) {
 
         {/* Навигационные вкладки подраздела */}
         <nav className="analytics-module__tabs" role="tablist">
-          <button
-            type="button"
-            className={`analytics-module__tab-btn${activeTab === 'overview' ? ' is-active' : ''}`}
-            onClick={() => setActiveTab('overview')}
-            role="tab"
-            aria-selected={activeTab === 'overview'}
-          >
-            Обзор
-            {activeTab === 'overview' && <span className="analytics-module__tab-indicator" />}
-          </button>
-
-          <button
-            type="button"
-            className={`analytics-module__tab-btn${activeTab === 'warnings' ? ' is-active' : ''}`}
-            onClick={() => setActiveTab('warnings')}
-            role="tab"
-            aria-selected={activeTab === 'warnings'}
-          >
-            Предупреждения
-            {activeTab === 'warnings' && <span className="analytics-module__tab-indicator" />}
-          </button>
-
-          <button
-            type="button"
-            className={`analytics-module__tab-btn${activeTab === 'recommendations' ? ' is-active' : ''}`}
-            onClick={() => setActiveTab('recommendations')}
-            role="tab"
-            aria-selected={activeTab === 'recommendations'}
-          >
-            Рекомендации
-            {activeTab === 'recommendations' && <span className="analytics-module__tab-indicator" />}
-          </button>
-
-          <button
-            type="button"
-            className={`analytics-module__tab-btn${activeTab === 'scenarios' ? ' is-active' : ''}`}
-            onClick={() => setActiveTab('scenarios')}
-            role="tab"
-            aria-selected={activeTab === 'scenarios'}
-          >
-            Сравнение сценариев
-            {activeTab === 'scenarios' && <span className="analytics-module__tab-indicator" />}
-          </button>
-
-          <button
-            type="button"
-            className={`analytics-module__tab-btn${activeTab === 'roadmaps' ? ' is-active' : ''}`}
-            onClick={() => setActiveTab('roadmaps')}
-            role="tab"
-            aria-selected={activeTab === 'roadmaps'}
-          >
-            Дорожные карты
-            {activeTab === 'roadmaps' && <span className="analytics-module__tab-indicator" />}
-          </button>
+          {TABS.map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                className={`analytics-module__tab-btn${isActive ? ' is-active' : ''}`}
+                onClick={() => setActiveTab(tab.id)}
+                role="tab"
+                aria-selected={isActive}
+              >
+                {tab.label}
+                {isActive && <span className="analytics-module__tab-indicator" />}
+              </button>
+            );
+          })}
         </nav>
       </header>
 
@@ -169,100 +163,58 @@ export function AnalyticsView({ onNavigateToMap }: AnalyticsViewProps) {
       </main>
 
       {/* 3. Модальное окно «Выгрузить результаты» */}
-      {isExportModalOpen && (
-        <div className="analytics-dialog-overlay" onClick={() => setIsExportModalOpen(false)}>
-          <div className="analytics-dialog" onClick={(e) => e.stopPropagation()}>
-            <div className="analytics-dialog__header">
-              <h3 className="analytics-dialog__title">Выгрузить результаты</h3>
-              <button
-                type="button"
-                className="analytics-dialog__close"
-                onClick={() => setIsExportModalOpen(false)}
-                aria-label="Закрыть"
-              >
-                ✕
-              </button>
-            </div>
+      <Modal
+        open={isExportModalOpen}
+        title="Выгрузить результаты"
+        onClose={() => setIsExportModalOpen(false)}
+        footer={
+          <>
+            <button
+              type="button"
+              className="ui-btn ui-btn--secondary"
+              onClick={() => setIsExportModalOpen(false)}
+            >
+              Отмена
+            </button>
+            <button type="button" className="ui-btn ui-btn--primary" onClick={handleExecuteExport}>
+              Выгрузить отчет
+            </button>
+          </>
+        }
+      >
+        <p className="ui-modal__desc">
+          Выберите состав аналитического пакета для формирования итогового отчета:
+        </p>
 
-            <div className="analytics-dialog__body">
-              <p className="analytics-dialog__desc">
-                Выберите состав аналитического пакета для формирования итогового отчета:
-              </p>
-
-              <div className="analytics-dialog__checkbox-group">
-                <label className="analytics-dialog__label">
-                  <input
-                    type="checkbox"
-                    className="analytics-dialog__checkbox"
-                    checked={exportRisks}
-                    onChange={(e) => setExportRisks(e.target.checked)}
-                  />
-                  <span>Отчет по предупреждениям и рискам</span>
-                </label>
-
-                <label className="analytics-dialog__label">
-                  <input
-                    type="checkbox"
-                    className="analytics-dialog__checkbox"
-                    checked={exportRoadmap}
-                    onChange={(e) => setExportRoadmap(e.target.checked)}
-                  />
-                  <span>Дорожная карта мероприятий</span>
-                </label>
-
-                <label className="analytics-dialog__label">
-                  <input
-                    type="checkbox"
-                    className="analytics-dialog__checkbox"
-                    checked={exportProfiles}
-                    onChange={(e) => setExportProfiles(e.target.checked)}
-                  />
-                  <span>Производственные профили сценариев</span>
-                </label>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <span style={{ fontSize: '13px', fontWeight: 500, color: '#64748b' }}>Формат:</span>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', cursor: 'pointer' }}>
-                  <input
-                    type="radio"
-                    name="export-format"
-                    checked={exportFormat === 'excel'}
-                    onChange={() => setExportFormat('excel')}
-                  />
-                  <span>Excel (.xlsx / .json)</span>
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', cursor: 'pointer' }}>
-                  <input
-                    type="radio"
-                    name="export-format"
-                    checked={exportFormat === 'pdf'}
-                    onChange={() => setExportFormat('pdf')}
-                  />
-                  <span>PDF документ</span>
-                </label>
-              </div>
-            </div>
-
-            <div className="analytics-dialog__footer">
-              <button
-                type="button"
-                className="analytics-dialog__btn-cancel"
-                onClick={() => setIsExportModalOpen(false)}
-              >
-                Отмена
-              </button>
-              <button
-                type="button"
-                className="analytics-dialog__btn-submit"
-                onClick={handleExecuteExport}
-              >
-                Выгрузить отчет
-              </button>
-            </div>
-          </div>
+        <div className="ui-choice-group">
+          {EXPORT_SECTIONS.map((section) => (
+            <label key={section.key} className="ui-choice">
+              <input
+                type="checkbox"
+                className="ui-checkbox"
+                checked={exportSections[section.key]}
+                onChange={() => toggleExportSection(section.key)}
+              />
+              <span>{section.label}</span>
+            </label>
+          ))}
         </div>
-      )}
+
+        <div className="ui-choice-group--inline">
+          <span className="ui-stat__label">Формат:</span>
+          {EXPORT_FORMATS.map((format) => (
+            <label key={format.value} className="ui-choice">
+              <input
+                type="radio"
+                name="export-format"
+                checked={exportFormat === format.value}
+                onChange={() => setExportFormat(format.value)}
+              />
+              <span>{format.label}</span>
+            </label>
+          ))}
+        </div>
+      </Modal>
     </div>
   );
 }

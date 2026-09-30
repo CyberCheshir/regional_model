@@ -1,4 +1,9 @@
-import { useState, useMemo } from 'react';
+﻿import { useState, useMemo } from 'react';
+import { SegmentedControl } from '../../components/ui/SegmentedControl';
+import { StatGrid, type StatItem } from '../../components/ui/StatGrid';
+import { DataTable, type DataTableColumn } from '../../components/ui/DataTable';
+import { FilterBar } from '../../components/ui/FilterBar';
+import { PropList } from '../../components/ui/PropList';
 import type {
   ScenarioComparisonSubMode,
   ScenarioProductionIndicatorItem,
@@ -7,6 +12,7 @@ import type {
   ScenarioLuSystemWarningRow,
   ScenarioDetailChangeItem,
 } from './types';
+import '../../components/ui/ui.css';
 import './ScenariosTab.css';
 
 /* ================================================================== */
@@ -171,6 +177,11 @@ const DEFAULT_PROD_DATA: Record<string, ScenarioProductionComparisonData> = {
   },
 };
 
+/** Форматирование числа в русской локали (запятая как разделитель). */
+function fmtRu(value: number, digits = 1): string {
+  return value.toFixed(digits).replace('.', ',');
+}
+
 export function ScenariosTab() {
   // Выбор сценариев
   const [currentScenario, setCurrentScenario] = useState('КПРА_v1');
@@ -231,16 +242,115 @@ export function ScenariosTab() {
     return { pathV0: lineV0, pathV1: lineV1, zeroY };
   }, [activeProdData]);
 
+  /* --- Производные представления для примитивов UI --- */
+
+  /** Сводка изменений (7 плашек). */
+  const summaryItems: StatItem[] = [
+    { key: 'new', label: 'Новые', value: DEFAULT_SUMMARY.newWarnings, sub: 'предупреждений' },
+    { key: 'resolved', label: 'Устранены', value: DEFAULT_SUMMARY.resolvedWarnings, sub: 'предупреждений', tone: 'ui-tone-low' },
+    { key: 'maxUp', label: 'MAX выросла', value: DEFAULT_SUMMARY.maxIncreased, sub: 'объекта', tone: 'ui-tone-high' },
+    { key: 'maxDown', label: 'MAX снизилась', value: DEFAULT_SUMMARY.maxDecreased, sub: 'объекта', tone: 'ui-tone-low' },
+    { key: 'crit', label: 'Критичность', value: DEFAULT_SUMMARY.criticalityChanges, sub: 'изменений' },
+    { key: 'year', label: 'Год реализации', value: DEFAULT_SUMMARY.implementationYearChanges, sub: 'изменений' },
+    { key: 'rec', label: 'Рекомендация', value: DEFAULT_SUMMARY.recommendationChanges, sub: 'изменений' },
+  ];
+
+  /** Классы тона для статуса детального изменения. */
+  const changeTone: Record<ScenarioDetailChangeItem['status'], string> = {
+    'Устранено': 'ui-tone-low',
+    'MAX снизилась': 'ui-tone-low',
+    'MAX выросла': 'ui-tone-high',
+    'Без изменений': 'ui-tone-medium',
+  };
+
+  const luSystemColumns: DataTableColumn<ScenarioLuSystemWarningRow>[] = [
+    { key: 'lu', header: 'ЛУ', cell: (r) => r.lu },
+    { key: 'gathering', header: 'Сбор', cell: (r) => r.gathering },
+    { key: 'preparation', header: 'Подготовка', cell: (r) => r.preparation },
+    { key: 'transport', header: 'Внеш. тр.', cell: (r) => r.transport },
+    {
+      key: 'total',
+      header: 'Итог',
+      cell: (r) => (
+        <span className={r.totalDelta < 0 ? 'ui-tone-low' : undefined}>
+          {r.totalDelta !== 0 ? r.totalDelta : 0}
+        </span>
+      ),
+      numeric: true,
+      className: 'ui-table__level',
+    },
+  ];
+
+  const detailColumns: DataTableColumn<ScenarioDetailChangeItem>[] = [
+    { key: 'luSystem', header: 'ЛУ / система', cell: (r) => r.luSystem },
+    { key: 'object', header: 'Объект', cell: (r) => r.objectName, className: 'ui-table__elem' },
+    {
+      key: 'status',
+      header: 'Статус',
+      cell: (r) => <span className={`ui-table__level ${changeTone[r.status]}`}>{r.status}</span>,
+    },
+    { key: 'max', header: 'MAX база → сцен.', cell: (r) => r.maxLoadBaseToScen, numeric: true },
+    { key: 'crit', header: 'Критичность', cell: (r) => r.criticalityBaseToScen },
+    { key: 'year', header: 'Год', cell: (r) => r.yearBaseToScen, numeric: true },
+  ];
+
+  const controlYearsColumns: DataTableColumn<ScenarioProductionComparisonData['controlYears'][number]>[] = [
+    { key: 'year', header: 'Год', cell: (r) => r.year, numeric: true },
+    { key: 'base', header: 'КПРА_v0', cell: (r) => fmtRu(r.baseVal), numeric: true },
+    { key: 'current', header: 'КПРА_v1', cell: (r) => fmtRu(r.currentVal), numeric: true },
+    { key: 'delta', header: 'Δ', cell: (r) => fmtRu(r.delta), numeric: true },
+  ];
+
+  const kpiItems: StatItem[] = [
+    {
+      key: 'accumulated',
+      label: 'Накопленный объём',
+      value: activeProdData.accumulatedTotal.toLocaleString('ru-RU'),
+      sub: `${activeProdData.accumulatedUnit} · без изменений`,
+      size: 'md',
+    },
+    {
+      key: 'peak',
+      label: 'Пиковый объём',
+      value: activeProdData.peakTotal.toLocaleString('ru-RU'),
+      sub: activeProdData.peakUnit,
+      size: 'md',
+    },
+    {
+      key: 'peakYear',
+      label: 'Год пика',
+      value: activeProdData.peakYear,
+      sub: 'без изменений',
+      size: 'md',
+    },
+    {
+      key: 'dAccum',
+      label: 'Δ накопленного',
+      value: fmtRu(activeProdData.deltaAccumulated, 1),
+      sub: activeProdData.accumulatedUnit,
+      tone: 'ui-tone-low',
+      size: 'md',
+    },
+    {
+      key: 'dPeak',
+      label: 'Δ пика',
+      value: fmtRu(activeProdData.deltaPeak, 1),
+      sub: activeProdData.peakUnit,
+      tone: 'ui-tone-low',
+      size: 'md',
+    },
+  ];
+
   return (
-    <div className="scenarios-tab">
+    <div className="ui-stack">
       {/* 1. Верхняя панель управления */}
-      <section className="scenarios-tab__control-card" aria-label="Панель сравнения">
+      <section className="ui-card ui-card--flat" aria-label="Панель сравнения">
         <div className="scenarios-tab__control-row">
           <div className="scenarios-tab__selectors">
-            <div className="scenarios-tab__field">
-              <label className="scenarios-tab__label">Текущий сценарий</label>
+            <div className="ui-field">
+              <label className="ui-field__label">Текущий сценарий</label>
               <select
-                className="scenarios-tab__select"
+                className="ui-select"
                 value={currentScenario}
                 onChange={(e) => setCurrentScenario(e.target.value)}
               >
@@ -249,10 +359,10 @@ export function ScenariosTab() {
               </select>
             </div>
 
-            <div className="scenarios-tab__field">
-              <label className="scenarios-tab__label">Сравнить с</label>
+            <div className="ui-field">
+              <label className="ui-field__label">Сравнить с</label>
               <select
-                className="scenarios-tab__select"
+                className="ui-select"
                 value={compareScenario}
                 onChange={(e) => setCompareScenario(e.target.value)}
               >
@@ -262,30 +372,17 @@ export function ScenariosTab() {
             </div>
           </div>
 
-          <div className="scenarios-tab__segmented" role="tablist">
-            <button
-              type="button"
-              className={`scenarios-tab__seg-btn${subMode === 'restrictions' ? ' scenarios-tab__seg-btn--active' : ''
-                }`}
-              onClick={() => setSubMode('restrictions')}
-              role="tab"
-              aria-selected={subMode === 'restrictions'}
-            >
-              Ограничения и рекомендации
-            </button>
-            <button
-              type="button"
-              className={`scenarios-tab__seg-btn${subMode === 'production' ? ' scenarios-tab__seg-btn--active' : ''
-                }`}
-              onClick={() => setSubMode('production')}
-              role="tab"
-              aria-selected={subMode === 'production'}
-            >
-              Производственные показатели
-            </button>
-          </div>
+          <SegmentedControl<ScenarioComparisonSubMode>
+            ariaLabel="Режим сравнения"
+            value={subMode}
+            onChange={setSubMode}
+            options={[
+              { value: 'restrictions', label: 'Ограничения и рекомендации' },
+              { value: 'production', label: 'Производственные показатели' },
+            ]}
+          />
 
-          <button type="button" className="scenarios-tab__btn-compare">
+          <button type="button" className="ui-btn ui-btn--primary">
             Сравнить
           </button>
         </div>
@@ -294,172 +391,50 @@ export function ScenariosTab() {
       {/* 2. Подрежим: Ограничения и рекомендации */}
       {subMode === 'restrictions' && (
         <>
-          {/* Сводка изменений: 7 блоков */}
-          <section className="scenarios-tab__summary-card" aria-label="Сводка изменений">
-            <div className="scenarios-tab__summary-row">
-              <div className="scenarios-tab__summary-box">
-                <span className="scenarios-tab__summary-label">Новые</span>
-                <span className="scenarios-tab__summary-val">
-                  {DEFAULT_SUMMARY.newWarnings}
-                </span>
-                <span className="scenarios-tab__summary-sub">предупреждений</span>
-              </div>
-
-              <div className="scenarios-tab__summary-box">
-                <span className="scenarios-tab__summary-label">Устранены</span>
-                <span className="scenarios-tab__summary-val scenarios-tab__summary-val--green">
-                  {DEFAULT_SUMMARY.resolvedWarnings}
-                </span>
-                <span className="scenarios-tab__summary-sub">предупреждений</span>
-              </div>
-
-              <div className="scenarios-tab__summary-box">
-                <span className="scenarios-tab__summary-label">MAX выросла</span>
-                <span className="scenarios-tab__summary-val scenarios-tab__summary-val--orange">
-                  {DEFAULT_SUMMARY.maxIncreased}
-                </span>
-                <span className="scenarios-tab__summary-sub">объекта</span>
-              </div>
-
-              <div className="scenarios-tab__summary-box">
-                <span className="scenarios-tab__summary-label">MAX снизилась</span>
-                <span className="scenarios-tab__summary-val scenarios-tab__summary-val--green">
-                  {DEFAULT_SUMMARY.maxDecreased}
-                </span>
-                <span className="scenarios-tab__summary-sub">объекта</span>
-              </div>
-
-              <div className="scenarios-tab__summary-box">
-                <span className="scenarios-tab__summary-label">Критичность</span>
-                <span className="scenarios-tab__summary-val">
-                  {DEFAULT_SUMMARY.criticalityChanges}
-                </span>
-                <span className="scenarios-tab__summary-sub">изменений</span>
-              </div>
-
-              <div className="scenarios-tab__summary-box">
-                <span className="scenarios-tab__summary-label">Год реализации</span>
-                <span className="scenarios-tab__summary-val">
-                  {DEFAULT_SUMMARY.implementationYearChanges}
-                </span>
-                <span className="scenarios-tab__summary-sub">изменений</span>
-              </div>
-
-              <div className="scenarios-tab__summary-box">
-                <span className="scenarios-tab__summary-label">Рекомендация</span>
-                <span className="scenarios-tab__summary-val">
-                  {DEFAULT_SUMMARY.recommendationChanges}
-                </span>
-                <span className="scenarios-tab__summary-sub">изменений</span>
-              </div>
-            </div>
+          {/* Сводка изменения: 7 плашек */}
+          <section className="ui-card ui-card--flat" aria-label="Сводка изменений">
+            <StatGrid items={summaryItems} columns={7} flat stackSub />
           </section>
 
           {/* Полоса фильтров подрежима ограничений */}
-          <nav className="scenarios-tab__filterbar" aria-label="Фильтры">
-            <span className="scenarios-tab__filter-title">Фильтры</span>
-            <span className="scenarios-tab__filter-pill scenarios-tab__filter-pill--active">
-              ЛУ: все
-            </span>
-            <span className="scenarios-tab__filter-pill scenarios-tab__filter-pill--active">
-              Владелец: все
-            </span>
-            <span className="scenarios-tab__filter-pill scenarios-tab__filter-pill--active">
-              Система: все
-            </span>
-            <span className="scenarios-tab__filter-pill">Статус изменения</span>
-            <span className="scenarios-tab__filter-pill">Критичность</span>
-          </nav>
+          <FilterBar
+            pills={[
+              { key: 'lu', label: 'ЛУ', value: 'все', active: true },
+              { key: 'owner', label: 'Владелец', value: 'все', active: true },
+              { key: 'system', label: 'Система', value: 'все', active: true },
+              { key: 'status', label: 'Статус изменения', value: 'все' },
+              { key: 'crit', label: 'Критичность', value: 'все' },
+            ]}
+          />
 
           {/* Сетка: Предупреждения по ЛУ и системам + Детальные изменения */}
-          <section className="scenarios-tab__limits-grid">
+          <section className="ui-grid ui-grid--list-detail">
             {/* Левая карточка: таблица ЛУ / системы */}
-            <div className="scenarios-tab__card">
-              <h2 className="scenarios-tab__heading">Предупреждения по ЛУ и системам</h2>
-              <p className="scenarios-tab__desc">критичные / некритичные · база → выбранный сценарий</p>
+            <div className="ui-card">
+              <h2 className="ui-card__heading">Предупреждения по ЛУ и системам</h2>
+              <p className="ui-card__desc">критичные / некритичные · база → выбранный сценарий</p>
 
-              <div className="scenarios-tab__table-wrap">
-                <table className="scenarios-tab__table">
-                  <thead>
-                    <tr>
-                      <th>ЛУ</th>
-                      <th>Сбор</th>
-                      <th>Подготовка</th>
-                      <th>Внеш. тр.</th>
-                      <th>Итог</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {DEFAULT_LU_SYSTEM_ROWS.map((row) => (
-                      <tr key={row.id}>
-                        <td>{row.lu}</td>
-                        <td>{row.gathering}</td>
-                        <td>{row.preparation}</td>
-                        <td>{row.transport}</td>
-                        <td
-                          style={{
-                            color: row.totalDelta < 0 ? '#10b981' : undefined,
-                            fontWeight: 600,
-                          }}
-                        >
-                          {row.totalDelta !== 0 ? row.totalDelta : 0}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <DataTable
+                columns={luSystemColumns}
+                rows={DEFAULT_LU_SYSTEM_ROWS}
+                rowKey={(r) => r.id}
+                wrapClassName="ui-table-wrap"
+                ariaLabel="Предупреждения по ЛУ и системам"
+              />
             </div>
 
             {/* Правая карточка: детальные изменения */}
-            <div className="scenarios-tab__card">
-              <h2 className="scenarios-tab__heading">Детальные изменения</h2>
+            <div className="ui-card">
+              <h2 className="ui-card__heading">Детальные изменения</h2>
 
-              <div className="scenarios-tab__table-wrap">
-                <table className="scenarios-tab__table">
-                  <thead>
-                    <tr>
-                      <th>ЛУ / система</th>
-                      <th>Объект</th>
-                      <th>Статус</th>
-                      <th>MAX база → сцен.</th>
-                      <th>Критичность</th>
-                      <th>Год</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {DEFAULT_DETAIL_CHANGES.map((row) => {
-                      const isSelected = row.id === selectedChangeId;
-                      return (
-                        <tr
-                          key={row.id}
-                          className={isSelected ? 'scenarios-tab__row-highlight' : ''}
-                          onClick={() => setSelectedChangeId(row.id)}
-                          style={{ cursor: 'pointer' }}
-                        >
-                          <td>{row.luSystem}</td>
-                          <td>{row.objectName}</td>
-                          <td>
-                            <span
-                              className={`scenarios-tab__badge-status ${row.status === 'Устранено'
-                                  ? 'scenarios-tab__badge-status--resolved'
-                                  : row.status === 'MAX снизилась'
-                                    ? 'scenarios-tab__badge-status--decreased'
-                                    : 'scenarios-tab__badge-status--grown'
-                                }`}
-                            >
-                              {row.status}
-                            </span>
-                          </td>
-                          <td>{row.maxLoadBaseToScen}</td>
-                          <td>{row.criticalityBaseToScen}</td>
-                          <td>{row.yearBaseToScen}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+              <DataTable
+                columns={detailColumns}
+                rows={DEFAULT_DETAIL_CHANGES}
+                rowKey={(r) => r.id}
+                selectedId={selectedChangeId}
+                onSelect={(r) => setSelectedChangeId(r.id)}
+                ariaLabel="Детальные изменения"
+              />
 
               {/* Выбранное изменение */}
               {selectedChange && (
@@ -470,28 +445,18 @@ export function ScenariosTab() {
                     Предупреждение: {selectedChange.warningTitle}
                   </p>
 
-                  <div className="scenarios-tab__detail-grid">
-                    <div className="scenarios-tab__detail-prop">
-                      <span className="scenarios-tab__detail-label">MAX загрузка:</span>
-                      <span className="scenarios-tab__detail-value scenarios-tab__detail-value--green">
-                        {selectedChange.maxLoadInfo}
-                      </span>
-                    </div>
-
-                    <div className="scenarios-tab__detail-prop">
-                      <span className="scenarios-tab__detail-label">Рекомендация:</span>
-                      <span className="scenarios-tab__detail-value">
-                        {selectedChange.recommendationInfo}
-                      </span>
-                    </div>
-
-                    <div className="scenarios-tab__detail-prop">
-                      <span className="scenarios-tab__detail-label">Длительность:</span>
-                      <span className="scenarios-tab__detail-value">
-                        {selectedChange.durationInfo}
-                      </span>
-                    </div>
-                  </div>
+                  <PropList
+                    layout="grid"
+                    items={[
+                      {
+                        key: 'max',
+                        label: 'MAX загрузка:',
+                        value: <span className="ui-tone-low">{selectedChange.maxLoadInfo}</span>,
+                      },
+                      { key: 'rec', label: 'Рекомендация:', value: selectedChange.recommendationInfo },
+                      { key: 'dur', label: 'Длительность:', value: selectedChange.durationInfo },
+                    ]}
+                  />
                 </div>
               )}
             </div>
@@ -503,99 +468,56 @@ export function ScenariosTab() {
       {subMode === 'production' && (
         <>
           {/* Полоса фильтров подрежима показателей */}
-          <nav className="scenarios-tab__filterbar" aria-label="Фильтры">
-            <span className="scenarios-tab__filter-title">Фильтры</span>
-            <span className="scenarios-tab__filter-pill scenarios-tab__filter-pill--active">
-              ЛУ: Верхневилючанский
-            </span>
-            <span className="scenarios-tab__filter-pill scenarios-tab__filter-pill--active">
-              Владелец: ГПН-Заполярье
-            </span>
-            <span className="scenarios-tab__filter-pill scenarios-tab__filter-pill--active">
-              Признак: Добыча
-            </span>
-            <span className="scenarios-tab__filter-pill scenarios-tab__filter-pill--active">
-              Объект: Верхневилючанское НФ
-            </span>
-            <span className="scenarios-tab__filter-pill scenarios-tab__filter-pill--active">
-              Продукт: Нефть
-            </span>
-          </nav>
+          {/* Полоса фильтров подрежима показателей */}
+          <FilterBar
+            pills={[
+              { key: 'lu', label: 'ЛУ', value: 'Верхневилючанский', active: true },
+              { key: 'owner', label: 'Владелец', value: 'ГПН-Заполярье', active: true },
+              { key: 'feature', label: 'Признак', value: 'Добыча', active: true },
+              { key: 'object', label: 'Объект', value: 'Верхневилючанское НФ', active: true },
+              { key: 'product', label: 'Продукт', value: 'Нефть', active: true },
+            ]}
+          />
 
           {/* Карточка выбранного показателя */}
-          <section className="scenarios-tab__selected-kpi-card" aria-label="Выбранный показатель">
+          <section className="ui-card ui-card--flat" aria-label="Выбранный показатель">
             <div className="scenarios-tab__selected-info">
               <span className="scenarios-tab__selected-eyebrow">ВЫБРАННЫЙ ПОКАЗАТЕЛЬ</span>
               <span className="scenarios-tab__selected-title">
                 {activeProdData.objectName} · {activeProdData.feature} · {activeProdData.product}
               </span>
             </div>
-
-            <div className="scenarios-tab__kpi-box">
-              <span className="scenarios-tab__kpi-label">Накопленный объём</span>
-              <span className="scenarios-tab__kpi-value">
-                {activeProdData.accumulatedTotal.toLocaleString('ru-RU')}
-              </span>
-              <span className="scenarios-tab__kpi-sub">{activeProdData.accumulatedUnit} · без изменений</span>
-            </div>
-
-            <div className="scenarios-tab__kpi-box">
-              <span className="scenarios-tab__kpi-label">Пиковый объём</span>
-              <span className="scenarios-tab__kpi-value">
-                {activeProdData.peakTotal.toLocaleString('ru-RU')}
-              </span>
-              <span className="scenarios-tab__kpi-sub">{activeProdData.peakUnit}</span>
-            </div>
-
-            <div className="scenarios-tab__kpi-box">
-              <span className="scenarios-tab__kpi-label">Год пика</span>
-              <span className="scenarios-tab__kpi-value">{activeProdData.peakYear}</span>
-              <span className="scenarios-tab__kpi-sub">без изменений</span>
-            </div>
-
-            <div className="scenarios-tab__kpi-box">
-              <span className="scenarios-tab__kpi-label">Δ накопленного</span>
-              <span className="scenarios-tab__kpi-value scenarios-tab__kpi-value--green">
-                {activeProdData.deltaAccumulated.toFixed(1).replace('.', ',')}
-              </span>
-              <span className="scenarios-tab__kpi-sub">{activeProdData.accumulatedUnit}</span>
-            </div>
-
-            <div className="scenarios-tab__kpi-box">
-              <span className="scenarios-tab__kpi-label">Δ пика</span>
-              <span className="scenarios-tab__kpi-value scenarios-tab__kpi-value--green">
-                {activeProdData.deltaPeak.toFixed(1).replace('.', ',')}
-              </span>
-              <span className="scenarios-tab__kpi-sub">{activeProdData.peakUnit}</span>
-            </div>
+            <StatGrid items={kpiItems} flat />
           </section>
 
           {/* Двухколоночная сетка: График + Список доступных показателей */}
-          <section className="scenarios-tab__prod-grid">
+          <section className="ui-grid ui-grid--wide-left">
             {/* Левая карточка: График динамики + таблица контрольных годов */}
-            <div className="scenarios-tab__card">
-              <h2 className="scenarios-tab__heading">Динамика показателя</h2>
-              <p className="scenarios-tab__desc">КПРА_v0 / КПРА_v1 / разница</p>
+            <div className="ui-card">
+              <h2 className="ui-card__heading">Динамика показателя</h2>
+              <p className="ui-card__desc">KПРА_v0 / KПРА_v1 / разница</p>
 
               {/* Векторный график SVG */}
               <div className="scenarios-tab__chart-wrap">
                 <svg
-                  className="scenarios-tab__chart-svg"
+                  className="ui-chart scenarios-tab__chart-svg"
                   viewBox="0 0 800 200"
                   preserveAspectRatio="none"
+                  role="img"
+                  aria-label="Динамика показателя по сценариям"
                 >
-                  <defs>
-                    <linearGradient id="gridLine" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#e2e8f0" stopOpacity="0.4" />
-                      <stop offset="100%" stopColor="#e2e8f0" stopOpacity="0.1" />
-                    </linearGradient>
-                  </defs>
-
                   {/* Горизонтальные направляющие сетки */}
-                  <line x1="20" y1="30" x2="780" y2="30" stroke="#f1f5f9" strokeWidth="1" />
-                  <line x1="20" y1="75" x2="780" y2="75" stroke="#f1f5f9" strokeWidth="1" />
-                  <line x1="20" y1="120" x2="780" y2="120" stroke="#f1f5f9" strokeWidth="1" />
-                  <line x1="20" y1="165" x2="780" y2="165" stroke="#f1f5f9" strokeWidth="1" />
+                  {[30, 75, 120, 165].map((y) => (
+                    <line
+                      key={y}
+                      x1="20"
+                      y1={y}
+                      x2="780"
+                      y2={y}
+                      stroke="var(--slate-100)"
+                      strokeWidth="1"
+                    />
+                  ))}
 
                   {/* Нулевая пунктирная линия разницы */}
                   <line
@@ -603,7 +525,7 @@ export function ScenariosTab() {
                     y1="165"
                     x2="780"
                     y2="165"
-                    stroke="#94a3b8"
+                    stroke="var(--slate-400)"
                     strokeWidth="1.5"
                     strokeDasharray="4 4"
                   />
@@ -613,7 +535,7 @@ export function ScenariosTab() {
                     <path
                       d={chartPaths.pathV0}
                       fill="none"
-                      stroke="#0066cc"
+                      stroke="var(--color-primary)"
                       strokeWidth="2.5"
                       strokeLinecap="round"
                     />
@@ -622,7 +544,7 @@ export function ScenariosTab() {
                     <path
                       d={chartPaths.pathV1}
                       fill="none"
-                      stroke="#7c3aed"
+                      stroke="var(--marker-delivery)"
                       strokeWidth="2.5"
                       strokeDasharray="6 3"
                       strokeLinecap="round"
@@ -631,79 +553,53 @@ export function ScenariosTab() {
                 </svg>
 
                 {/* Легенда графика */}
-                <div className="scenarios-tab__chart-legend">
-                  <div className="scenarios-tab__legend-item">
-                    <span
-                      className="scenarios-tab__legend-marker"
-                      style={{ backgroundColor: '#0066cc' }}
-                    />
+                <div className="ui-legend">
+                  <div className="ui-legend__item">
+                    <span className="ui-legend__line" style={{ backgroundColor: 'var(--color-primary)' }} />
                     <span>КПРА_v0</span>
                   </div>
-                  <div className="scenarios-tab__legend-item">
-                    <span
-                      className="scenarios-tab__legend-marker"
-                      style={{ backgroundColor: '#7c3aed' }}
-                    />
+                  <div className="ui-legend__item">
+                    <span className="ui-legend__line" style={{ backgroundColor: 'var(--marker-delivery)' }} />
                     <span>КПРА_v1</span>
                   </div>
-                  <div className="scenarios-tab__legend-item">
-                    <span className="scenarios-tab__legend-marker scenarios-tab__legend-marker--dashed" />
+                  <div className="ui-legend__item">
+                    <span className="ui-legend__line ui-legend__line--dashed" />
                     <span>Разница</span>
                   </div>
                 </div>
               </div>
 
               {/* Таблица контрольных годов */}
-              <h3 className="scenarios-tab__section-title">КОНТРОЛЬНЫЕ ГОДЫ</h3>
-              <div className="scenarios-tab__table-wrap">
-                <table className="scenarios-tab__table">
-                  <thead>
-                    <tr>
-                      <th>Год</th>
-                      <th>КПРА_v0</th>
-                      <th>КПРА_v1</th>
-                      <th>Δ</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {activeProdData.controlYears.map((row) => (
-                      <tr key={row.year}>
-                        <td>{row.year}</td>
-                        <td>{row.baseVal.toFixed(1).replace('.', ',')}</td>
-                        <td>{row.currentVal.toFixed(1).replace('.', ',')}</td>
-                        <td>{row.delta.toFixed(1).replace('.', ',')}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <div className="ui-eyebrow ui-eyebrow--tight">КОНТРОЛЬНЫЕ ГОДЫ</div>
+              <DataTable
+                columns={controlYearsColumns}
+                rows={activeProdData.controlYears}
+                rowKey={(r) => r.year}
+                wrapClassName="ui-table-wrap"
+                ariaLabel="Контрольные годы"
+              />
             </div>
 
             {/* Правая карточка: Доступные показатели */}
-            <div className="scenarios-tab__card">
-              <h2 className="scenarios-tab__heading" style={{ fontSize: '13px', color: '#64748b' }}>
-                ДОСТУПНЫЕ ПОКАЗАТЕЛИ
-              </h2>
+            <div className="ui-card">
+              <h2 className="ui-eyebrow">ДОСТУПНЫЕ ПОКАЗАТЕЛИ</h2>
 
               <div className="scenarios-tab__indicators-list">
-                {DEFAULT_INDICATORS.map((ind) => {
-                  const isActive = ind.id === selectedIndicatorId;
-                  return (
-                    <div
-                      key={ind.id}
-                      className={`scenarios-tab__indicator-item${isActive ? ' scenarios-tab__indicator-item--active' : ''
-                        }`}
-                      onClick={() => setSelectedIndicatorId(ind.id)}
-                    >
-                      <span className="scenarios-tab__indicator-name">{ind.name}</span>
-                      <span className="scenarios-tab__indicator-unit">{ind.unit}</span>
-                      <span className="scenarios-tab__indicator-peak">пик {ind.peakYear}</span>
-                    </div>
-                  );
-                })}
+                {DEFAULT_INDICATORS.map((ind) => (
+                  <button
+                    key={ind.id}
+                    type="button"
+                    className={`ui-pill${selectedIndicatorId === ind.id ? ' ui-pill--active' : ''}`}
+                    onClick={() => setSelectedIndicatorId(ind.id)}
+                  >
+                    {ind.name}
+                    <span className="scenarios-tab__indicator-unit">{ind.unit}</span>
+                    <span className="scenarios-tab__indicator-peak">пик {ind.peakYear}</span>
+                  </button>
+                ))}
               </div>
 
-              <button type="button" className="scenarios-tab__btn-graph">
+              <button type="button" className="ui-btn ui-btn--secondary ui-btn--block">
                 Сравнить на графике
               </button>
             </div>

@@ -83,3 +83,9 @@ export type EntityKind = DomainEntity['kind'];
 
 /** Краткая ссылка на выбранную сущность (components.md §3.1). */
 export type SelectedEntity = { id: string; kind: EntityKind };
+
+/**
+ * Уровень критичности предупреждения/риска.
+ * Единый тип для аналитики, UI-примитивов и цветовой палитры (.ui-tone-*).
+ */
+export type CriticalityLevel = 'critical' | 'high' | 'medium' | 'low';

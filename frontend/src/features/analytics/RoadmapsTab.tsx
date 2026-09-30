@@ -1,9 +1,16 @@
-import { useState, useMemo } from 'react';
+﻿import { useState, useMemo } from 'react';
+import { criticalityToneClass } from '../../domain';
+import { SegmentedControl } from '../../components/ui/SegmentedControl';
+import { StatGrid, type StatItem } from '../../components/ui/StatGrid';
+import { FilterBar } from '../../components/ui/FilterBar';
+import { PropList } from '../../components/ui/PropList';
+import { CriticalityDot } from '../../components/ui/CriticalityDot';
 import type {
   RoadmapEventItem,
   RoadmapKpiSummary,
-  CriticalityLevel,
+  RoadmapFilterState,
 } from './types';
+import '../../components/ui/ui.css';
 import './RoadmapsTab.css';
 
 export type RoadmapsTabProps = {
@@ -110,20 +117,23 @@ const TIMELINE_YEARS = Array.from({ length: 21 }, (_, i) => 2026 + i); // 2026�
 export function RoadmapsTab({ onOpenRecommendation, onShowOnMap }: RoadmapsTabProps) {
 
   const [selectedEventId, setSelectedEventId] = useState<string>('event-1');
-  const [filterLu, setFilterLu] = useState<string>('Все');
-  const [filterSystem, setFilterSystem] = useState<string>('Все');
-  const [filterCriticality, setFilterCriticality] = useState<string>('Все');
-  const [viewScale, setViewScale] = useState<'years' | 'quarters'>('years');
+  const [filters, setFilters] = useState<RoadmapFilterState>({
+    lu: 'Все',
+    system: 'Все',
+    criticality: 'Все',
+    category: 'Все',
+    viewScale: 'years',
+  });
 
   // Обогащаем список мероприятий
   const events = useMemo(() => {
     return DEFAULT_ROADMAP_EVENTS.filter((ev) => {
-      if (filterLu !== 'Все' && ev.lu !== filterLu) return false;
-      if (filterSystem !== 'Все' && ev.system !== filterSystem) return false;
-      if (filterCriticality !== 'Все' && ev.criticalityLabel !== filterCriticality) return false;
+      if (filters.lu !== 'Все' && ev.lu !== filters.lu) return false;
+      if (filters.system !== 'Все' && ev.system !== filters.system) return false;
+      if (filters.criticality !== 'Все' && ev.criticalityLabel !== filters.criticality) return false;
       return true;
     });
-  }, [filterLu, filterSystem, filterCriticality]);
+  }, [filters.lu, filters.system, filters.criticality]);
 
   // Выбранное мероприятие
   const activeEvent = useMemo(() => {
@@ -161,110 +171,54 @@ export function RoadmapsTab({ onOpenRecommendation, onShowOnMap }: RoadmapsTabPr
     };
   };
 
-  const critColor = (level: CriticalityLevel) =>
-    level === 'critical' ? '#dc2626' : level === 'high' ? '#ea580c' : level === 'medium' ? '#ca8a04' : '#10b981';
+  /** Переключение «Все ↔ значение» для фильтра. */
+  const toggleFilter = (key: 'lu' | 'system' | 'criticality', value: string) => {
+    setFilters((prev) => ({ ...prev, [key]: prev[key] === 'Все' ? value : 'Все' }));
+  };
+
+  const kpiItems: StatItem[] = [
+    { key: 'total', label: 'Всего мероприятий', value: kpiSummary.totalEvents, sub: 'в активном сценарии' },
+    { key: 'critical', label: 'Критичные', value: kpiSummary.criticalEvents, sub: 'прямой риск недостижения', tone: 'ui-tone-critical' },
+    { key: 'planning', label: 'В планировании', value: kpiSummary.inPlanning, sub: 'требуют запуска ТЭО', tone: 'ui-tone-primary' },
+    { key: 'capex', label: 'Оценка CAPEX', value: kpiSummary.totalInvestmentEstimated, sub: 'ориентировочный объём' },
+    { key: 'start', label: 'Ближайший старт', value: `${kpiSummary.nearestStartYear} г.`, sub: 'первое проектное решение' },
+  ];
 
   return (
-    <div className="roadmaps-tab">
+    <div className="ui-stack">
       {/* 1. Верхняя панель KPI дорожной карты */}
-      <section className="roadmaps-tab__kpi-card" aria-label="Сводка дорожной карты">
-        <div className="roadmaps-tab__kpi-box">
-          <span className="roadmaps-tab__kpi-label">Всего мероприятий</span>
-          <span className="roadmaps-tab__kpi-val">{kpiSummary.totalEvents}</span>
-          <span className="roadmaps-tab__kpi-sub">в активном сценарии</span>
-        </div>
-
-        <div className="roadmaps-tab__kpi-box">
-          <span className="roadmaps-tab__kpi-label">Критичные</span>
-          <span className="roadmaps-tab__kpi-val roadmaps-tab__kpi-val--red">
-            {kpiSummary.criticalEvents}
-          </span>
-          <span className="roadmaps-tab__kpi-sub">прямой риск недостижения</span>
-        </div>
-
-        <div className="roadmaps-tab__kpi-box">
-          <span className="roadmaps-tab__kpi-label">В планировании</span>
-          <span className="roadmaps-tab__kpi-val roadmaps-tab__kpi-val--blue">
-            {kpiSummary.inPlanning}
-          </span>
-          <span className="roadmaps-tab__kpi-sub">требуют запуска ТЭО</span>
-        </div>
-
-        <div className="roadmaps-tab__kpi-box">
-          <span className="roadmaps-tab__kpi-label">Оценка CAPEX</span>
-          <span className="roadmaps-tab__kpi-val">
-            {kpiSummary.totalInvestmentEstimated}
-          </span>
-          <span className="roadmaps-tab__kpi-sub">ориентировочный объём</span>
-        </div>
-
-        <div className="roadmaps-tab__kpi-box">
-          <span className="roadmaps-tab__kpi-label">Ближайший старт</span>
-          <span className="roadmaps-tab__kpi-val">
-            {kpiSummary.nearestStartYear} г.
-          </span>
-          <span className="roadmaps-tab__kpi-sub">первое проектное решение</span>
-        </div>
-      </section>
+      <StatGrid items={kpiItems} columns={5} flat stackSub ariaLabel="Сводка дорожной карты" />
 
       {/* 2. Полоса фильтров и масштаба шкалы */}
-      <nav className="roadmaps-tab__filterbar" aria-label="Параметры фильтрации">
-        <div className="roadmaps-tab__filters-group">
-          <span className="roadmaps-tab__filter-title">Фильтры</span>
-
-          <button
-            type="button"
-            className={`roadmaps-tab__filter-pill ${filterLu === 'Все' ? 'roadmaps-tab__filter-pill--active' : ''}`}
-            onClick={() => setFilterLu((prev) => (prev === 'Все' ? 'Северный ЛУ' : 'Все'))}
-          >
-            ЛУ: {filterLu}
-          </button>
-
-          <button
-            type="button"
-            className={`roadmaps-tab__filter-pill ${filterSystem === 'Все' ? 'roadmaps-tab__filter-pill--active' : ''}`}
-            onClick={() => setFilterSystem((prev) => (prev === 'Все' ? 'Подготовка' : 'Все'))}
-          >
-            Система: {filterSystem}
-          </button>
-
-          <button
-            type="button"
-            className={`roadmaps-tab__filter-pill ${filterCriticality === 'Все' ? 'roadmaps-tab__filter-pill--active' : ''}`}
-            onClick={() => setFilterCriticality((prev) => (prev === 'Все' ? 'Критичная' : 'Все'))}
-          >
-            Критичность: {filterCriticality}
-          </button>
-        </div>
-
-        <div className="roadmaps-tab__scale-group">
-          <span className="roadmaps-tab__scale-label">Масштаб:</span>
-          <div className="roadmaps-tab__segmented">
-            <button
-              type="button"
-              className={`roadmaps-tab__seg-btn ${viewScale === 'years' ? 'roadmaps-tab__seg-btn--active' : ''}`}
-              onClick={() => setViewScale('years')}
-            >
-              По годам
-            </button>
-            <button
-              type="button"
-              className={`roadmaps-tab__seg-btn ${viewScale === 'quarters' ? 'roadmaps-tab__seg-btn--active' : ''}`}
-              onClick={() => setViewScale('quarters')}
-            >
-              Кварталы
-            </button>
+      <FilterBar
+        pills={[
+          { key: 'lu', label: 'ЛУ', value: filters.lu, active: filters.lu === 'Все', onToggle: () => toggleFilter('lu', 'Северный ЛУ') },
+          { key: 'system', label: 'Система', value: filters.system, active: filters.system === 'Все', onToggle: () => toggleFilter('system', 'Подготовка') },
+          { key: 'criticality', label: 'Критичность', value: filters.criticality, active: filters.criticality === 'Все', onToggle: () => toggleFilter('criticality', 'Критичная') },
+        ]}
+        trailing={
+          <div className="ui-scale-group">
+            <span className="ui-scale-label">Масштаб:</span>
+            <SegmentedControl
+              ariaLabel="Масштаб шкалы"
+              value={filters.viewScale}
+              onChange={(viewScale) => setFilters((prev) => ({ ...prev, viewScale }))}
+              options={[
+                { value: 'years', label: 'По годам' },
+                { value: 'quarters', label: 'Кварталы' },
+              ]}
+            />
           </div>
-        </div>
-      </nav>
+        }
+      />
 
       {/* 3. Двухколоночная рабочая зона: Диаграмма Ганта + Карточка выбранного мероприятия */}
-      <section className="roadmaps-tab__grid">
+      <section className="ui-grid ui-grid--wide-right">
         {/* Левая колонка: Календарный план Ганта */}
-        <div className="roadmaps-tab__card">
-          <div className="roadmaps-tab__header-row">
+        <div className="ui-card">
+          <div className="ui-header-row">
             <div>
-              <div className="roadmaps-tab__eyebrow">КАЛЕНДАРНЫЙ ГРАФИК РЕАЛИЗАЦИИ</div>
+              <div className="ui-eyebrow ui-eyebrow--tight">КАЛЕНДАРНЫЙ ГРАФИК РЕАЛИЗАЦИИ</div>
               <h2 className="roadmaps-tab__heading">Мероприятия по устранению узких мест</h2>
             </div>
           </div>
@@ -298,15 +252,7 @@ export function RoadmapsTab({ onOpenRecommendation, onShowOnMap }: RoadmapsTabPr
                       {ev.title}
                     </span>
                     <span className="roadmaps-tab__row-sub">
-                      <span
-                        style={{
-                          width: '6px',
-                          height: '6px',
-                          borderRadius: '50%',
-                          backgroundColor: critColor(ev.criticality),
-                          display: 'inline-block',
-                        }}
-                      />
+                      <CriticalityDot level={ev.criticality} />
                       {ev.element} · готовность к {ev.readinessYear}
                     </span>
                   </div>
@@ -321,12 +267,7 @@ export function RoadmapsTab({ onOpenRecommendation, onShowOnMap }: RoadmapsTabPr
 
                     {/* Полоса мероприятия */}
                     <div
-                      className={`roadmaps-tab__bar ${ev.criticality === 'critical'
-                          ? 'roadmaps-tab__bar--critical'
-                          : ev.criticality === 'medium'
-                            ? 'roadmaps-tab__bar--medium'
-                            : ''
-                        }`}
+                      className={`roadmaps-tab__bar${criticalityToneClass(ev.criticality)}`}
                       style={barPos}
                       title={`${ev.title}: ${ev.startYear} - ${ev.readinessYear} (${ev.durationMonths} мес.)`}
                     >
@@ -341,61 +282,36 @@ export function RoadmapsTab({ onOpenRecommendation, onShowOnMap }: RoadmapsTabPr
         </div>
 
         {/* Правая колонка: Детали выбранного мероприятия */}
-        <div className="roadmaps-tab__card">
-          <div className="roadmaps-tab__eyebrow">ПАСПОРТ МЕРОПРИЯТИЯ</div>
+        <div className="ui-card">
+          <div className="ui-eyebrow">ПАСПОРТ МЕРОПРИЯТИЯ</div>
 
           {activeEvent ? (
             <div className="roadmaps-tab__details">
               <div>
                 <h3 className="roadmaps-tab__detail-title">{activeEvent.title}</h3>
                 <span
-                  className={`roadmaps-tab__badge-status ${activeEvent.criticality === 'critical'
-                      ? 'roadmaps-tab__badge-status--critical'
-                      : 'roadmaps-tab__badge-status--planning'
-                    }`}
+                  className={`ui-badge ui-badge--${activeEvent.criticality === 'critical' ? 'danger' : 'info'}`}
                   style={{ marginTop: '6px' }}
                 >
                   {activeEvent.status} · {activeEvent.criticalityLabel} важность
                 </span>
               </div>
 
-              <div className="roadmaps-tab__props-grid">
-                <div className="roadmaps-tab__prop-item">
-                  <span className="roadmaps-tab__prop-label">Объект:</span>
-                  <span className="roadmaps-tab__prop-val">{activeEvent.element}</span>
-                </div>
-
-                <div className="roadmaps-tab__prop-item">
-                  <span className="roadmaps-tab__prop-label">ЛУ / Система:</span>
-                  <span className="roadmaps-tab__prop-val">{activeEvent.lu}</span>
-                </div>
-
-                <div className="roadmaps-tab__prop-item">
-                  <span className="roadmaps-tab__prop-label">Период:</span>
-                  <span className="roadmaps-tab__prop-val">
-                    {activeEvent.startYear} — {activeEvent.readinessYear} гг.
-                  </span>
-                </div>
-
-                <div className="roadmaps-tab__prop-item">
-                  <span className="roadmaps-tab__prop-label">Длительность:</span>
-                  <span className="roadmaps-tab__prop-val">{activeEvent.durationMonths} мес.</span>
-                </div>
-
-                {activeEvent.totalCost && (
-                  <div className="roadmaps-tab__prop-item">
-                    <span className="roadmaps-tab__prop-label">Оценка CAPEX:</span>
-                    <span className="roadmaps-tab__prop-val">{activeEvent.totalCost}</span>
-                  </div>
-                )}
-
-                {activeEvent.warningSource && (
-                  <div className="roadmaps-tab__prop-item roadmaps-tab__prop-item--full">
-                    <span className="roadmaps-tab__prop-label">Основание (дефицит):</span>
-                    <span className="roadmaps-tab__prop-val">{activeEvent.warningSource}</span>
-                  </div>
-                )}
-              </div>
+              <PropList
+                panel
+                items={[
+                  { key: 'object', label: 'Объект', value: activeEvent.element },
+                  { key: 'lu', label: 'ЛУ / Система', value: activeEvent.lu },
+                  { key: 'period', label: 'Период', value: `${activeEvent.startYear} — ${activeEvent.readinessYear} гг.` },
+                  { key: 'duration', label: 'Длительность', value: `${activeEvent.durationMonths} мес.` },
+                  ...(activeEvent.totalCost
+                    ? [{ key: 'capex', label: 'Оценка CAPEX', value: activeEvent.totalCost }]
+                    : []),
+                  ...(activeEvent.warningSource
+                    ? [{ key: 'basis', label: 'Основание (дефицит)', value: activeEvent.warningSource }]
+                    : []),
+                ]}
+              />
 
               {/* Декомпозиция этапов */}
               <div className="roadmaps-tab__stages-title">
@@ -413,11 +329,11 @@ export function RoadmapsTab({ onOpenRecommendation, onShowOnMap }: RoadmapsTabPr
               </div>
 
               {/* Нижние кнопки взаимодействия */}
-              <div className="roadmaps-tab__actions">
+              <div className="ui-btn-row ui-btn-row--inline">
                 {onOpenRecommendation && (
                   <button
                     type="button"
-                    className="roadmaps-tab__btn roadmaps-tab__btn--outline"
+                    className="ui-btn ui-btn--secondary"
                     onClick={() => onOpenRecommendation(activeEvent.id)}
                   >
                     К рекомендации
@@ -427,7 +343,7 @@ export function RoadmapsTab({ onOpenRecommendation, onShowOnMap }: RoadmapsTabPr
                 {onShowOnMap && (
                   <button
                     type="button"
-                    className="roadmaps-tab__btn roadmaps-tab__btn--primary"
+                    className="ui-btn ui-btn--primary"
                     onClick={() => onShowOnMap(activeEvent.element)}
                   >
                     Показать на карте
@@ -436,7 +352,7 @@ export function RoadmapsTab({ onOpenRecommendation, onShowOnMap }: RoadmapsTabPr
               </div>
             </div>
           ) : (
-            <p style={{ color: '#64748b' }}>Мероприятие не выбрано</p>
+            <p className="ui-card__desc">Мероприятие не выбрано</p>
           )}
         </div>
       </section>

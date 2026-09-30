@@ -1,12 +1,19 @@
-import { useMemo, useState } from 'react';
+﻿import { useMemo, useState } from 'react';
 import { useMapDrawing } from '../map/mapDrawing';
+import { criticalityToneClass } from '../../domain';
+import { StatGrid, type StatItem } from '../../components/ui/StatGrid';
+import { DataTable, type DataTableColumn } from '../../components/ui/DataTable';
+import { FilterBar, type FilterPill } from '../../components/ui/FilterBar';
+import { PropList, type PropItem } from '../../components/ui/PropList';
+import { CriticalityDot } from '../../components/ui/CriticalityDot';
 import type {
-  CriticalityLevel,
   WarningDetailItem,
-  WarningHierarchyNode,
   WarningTypeSummaryItem,
   WarningsFilterState,
 } from './types';
+import { HierarchyTree } from './HierarchyTree';
+import { enrichWithModelElements } from './modelMatch';
+import '../../components/ui/ui.css';
 import './WarningsTab.css';
 
 export type WarningsTabProps = {
@@ -14,56 +21,6 @@ export type WarningsTabProps = {
   onOpenRecommendations?: (recId?: string) => void;
   /** Показать элемент на карте */
   onShowOnMap?: (elementName: string) => void;
-};
-
-/** Иерархия модели по макету */
-const DEFAULT_HIERARCHY: WarningHierarchyNode = {
-  id: 'lu-severny',
-  label: 'Северный ЛУ',
-  count: 4,
-  criticality: 'critical',
-  children: [
-    {
-      id: 'sys-sbor-severny',
-      label: 'Система сбора Северный',
-      count: 2,
-      criticality: 'high',
-      children: [
-        {
-          id: 'pipe-01',
-          label: 'Нефтепровод 01',
-          count: 1,
-          criticality: 'high',
-        },
-        {
-          id: 'facility-upn-2',
-          label: 'УПН-2',
-          count: 1,
-          criticality: 'critical',
-        },
-      ],
-    },
-    {
-      id: 'sys-podgotovka',
-      label: 'Подготовка',
-      count: 2,
-      criticality: 'high',
-      children: [
-        {
-          id: 'facility-gp-1',
-          label: 'ГП-1',
-          count: 1,
-          criticality: 'medium',
-        },
-        {
-          id: 'deliv-sikn-1525',
-          label: 'СИКН-1525',
-          count: 0,
-          criticality: 'low',
-        },
-      ],
-    },
-  ],
 };
 
 /** Эталонный список детальных предупреждений по макету */
@@ -185,25 +142,10 @@ export function WarningsTab({ onOpenRecommendations, onShowOnMap }: WarningsTabP
   const [selectedWarningId, setSelectedWarningId] = useState<string>('warn-3');
 
   // Формируем список предупреждений (обогащая реальными объектами, если они есть)
-  const warningsList = useMemo<WarningDetailItem[]>(() => {
-    if (vertices.length === 0 && pipelines.length === 0) {
-      return DEFAULT_WARNINGS;
-    }
-
-    // Сохраняем макетные предупреждения и привязываем к реальным объектам
-    return DEFAULT_WARNINGS.map((w) => {
-      const match =
-        vertices.find((v) => v.label.toLowerCase().includes(w.element.toLowerCase())) ??
-        pipelines.find((p) => p.label.toLowerCase().includes(w.element.toLowerCase()));
-      if (match) {
-        return {
-          ...w,
-          element: match.label,
-        };
-      }
-      return w;
-    });
-  }, [vertices, pipelines]);
+  const warningsList = useMemo<WarningDetailItem[]>(
+    () => enrichWithModelElements(DEFAULT_WARNINGS, vertices, pipelines),
+    [vertices, pipelines],
+  );
 
   // Фильтрация предупреждений
   const filteredWarnings = useMemo(() => {
@@ -219,222 +161,124 @@ export function WarningsTab({ onOpenRecommendations, onShowOnMap }: WarningsTabP
     return warningsList.find((w) => w.id === selectedWarningId) ?? warningsList[0];
   }, [warningsList, selectedWarningId]);
 
-  const critColor = (level: CriticalityLevel) =>
-    level === 'critical' ? '#dc2626' : level === 'high' ? '#ea580c' : level === 'medium' ? '#ca8a04' : '#10b981';
+  /** Переключение «все ↔ значение» для фильтра. */
+  const toggleFilter = (key: 'lu' | 'owner' | 'system' | 'criticality', value: string) => {
+    setFilters((prev) => ({ ...prev, [key]: prev[key] === 'все' ? value : 'все' }));
+  };
+
+  const filterPills: FilterPill<'lu' | 'owner' | 'system' | 'criticality'>[] = [
+    { key: 'lu', label: 'ЛУ', value: filters.lu, active: filters.lu === 'все', onToggle: () => toggleFilter('lu', 'Северный') },
+    { key: 'owner', label: 'Владелец', value: filters.owner, active: filters.owner === 'все', onToggle: () => toggleFilter('owner', 'ГПН-3') },
+    { key: 'system', label: 'Система', value: filters.system, active: filters.system === 'все', onToggle: () => toggleFilter('system', 'Сбор') },
+    { key: 'criticality', label: 'Критичность', value: filters.criticality, active: filters.criticality !== 'все', onToggle: () => toggleFilter('criticality', 'Критична') },
+  ];
+
+  const statItems: StatItem[] = [
+    { key: 'critical', label: 'Критичных', value: 4, tone: 'ui-tone-critical' },
+    { key: 'high', label: 'Высоких', value: 8, tone: 'ui-tone-high' },
+    { key: 'medium', label: 'Средних', value: 10, tone: 'ui-tone-medium' },
+    { key: 'linked', label: 'С рекомендацией', value: 16, sub: 'из 22', tone: 'ui-tone-low' },
+  ];
+
+  const warningColumns: DataTableColumn<WarningDetailItem>[] = [
+    { key: 'level', header: 'Уровень', cell: (w) => w.levelType, className: 'ui-table__level' },
+    { key: 'element', header: 'Элемент', cell: (w) => w.element, className: 'ui-table__elem' },
+    { key: 'type', header: 'Тип', cell: (w) => w.type },
+    { key: 'period', header: 'Период', cell: (w) => w.period, numeric: true },
+    {
+      key: 'criticality',
+      header: 'Критичность',
+      cell: (w) => <span className={criticalityToneClass(w.level)}>{w.criticality}</span>,
+      className: 'ui-table__level',
+    },
+  ];
+
+  const warningProps: PropItem[] = activeWarning
+    ? [
+        { key: 'hierarchy', label: 'Иерархия', value: activeWarning.hierarchyPath },
+        { key: 'period', label: 'Период', value: `${activeWarning.period} · ${activeWarning.duration}` },
+        {
+          key: 'kpi',
+          label: 'Расчётный показатель',
+          value: (
+            <div className="warnings-tab__kpi-box">
+              <div className="warnings-tab__kpi-box-head">
+                <span className="warnings-tab__kpi-box-label">{activeWarning.kpiLabel}</span>
+                <span className="warnings-tab__kpi-box-limit">{activeWarning.kpiLimit}</span>
+              </div>
+              <div className="warnings-tab__kpi-box-num">{activeWarning.kpiValue}</div>
+            </div>
+          ),
+        },
+        { key: 'source', label: 'Источник', value: activeWarning.source },
+      ]
+    : [];
 
   return (
-    <div className="warnings-tab">
+    <div className="ui-stack">
       {/* 1. Верхняя полоса фильтров */}
-      <div className="warnings-tab__filterbar">
-        <span className="warnings-tab__filter-title">Фильтры</span>
-
-        <button
-          type="button"
-          className={`warnings-tab__filter-pill ${filters.lu === 'все' ? 'warnings-tab__filter-pill--active' : ''}`}
-          onClick={() => setFilters((prev) => ({ ...prev, lu: prev.lu === 'все' ? 'Северный' : 'все' }))}
-        >
-          ЛУ: {filters.lu}
-        </button>
-
-        <button
-          type="button"
-          className={`warnings-tab__filter-pill ${filters.owner === 'все' ? 'warnings-tab__filter-pill--active' : ''}`}
-          onClick={() => setFilters((prev) => ({ ...prev, owner: prev.owner === 'все' ? 'ГПН-3' : 'все' }))}
-        >
-          Владелец: {filters.owner}
-        </button>
-
-        <button
-          type="button"
-          className={`warnings-tab__filter-pill ${filters.system === 'все' ? 'warnings-tab__filter-pill--active' : ''}`}
-          onClick={() => setFilters((prev) => ({ ...prev, system: prev.system === 'все' ? 'Сбор' : 'все' }))}
-        >
-          Система: {filters.system}
-        </button>
-
-        <button
-          type="button"
-          className={`warnings-tab__filter-pill ${filters.criticality !== 'все' ? 'warnings-tab__filter-pill--active' : ''}`}
-          onClick={() =>
-            setFilters((prev) => ({
-              ...prev,
-              criticality: prev.criticality === 'все' ? 'Критичная' : 'все',
-            }))
-          }
-        >
-          Критичность {filters.criticality !== 'все' ? `(${filters.criticality})` : ''}
-        </button>
-
-        <button
-          type="button"
-          className="warnings-tab__filter-pill"
-          onClick={() => alert('Фильтр по периоду: 2026–2046')}
-        >
-          Период
-        </button>
-
-        <button
-          type="button"
-          className="warnings-tab__filter-pill"
-          onClick={() => alert('Фильтр по типу предупреждения')}
-        >
-          Тип предупреждения
-        </button>
-      </div>
+      <FilterBar
+        pills={filterPills}
+        trailing={
+          <>
+            <button
+              type="button"
+              className="ui-pill"
+              onClick={() => alert('Фильтр по периоду: 2026–2046')}
+            >
+              Период
+            </button>
+            <button
+              type="button"
+              className="ui-pill"
+              onClick={() => alert('Фильтр по типу предупреждения')}
+            >
+              Тип предупреждения
+            </button>
+          </>
+        }
+      />
 
       {/* 2. Основная трехколоночная сетка */}
-      <div className="warnings-tab__grid">
+      <div className="ui-grid ui-grid--3">
         {/* Колонка 1: Иерархия модели */}
-        <div className="warnings-tab__card">
-          <div className="warnings-tab__eyebrow">ИЕРАРХИЯ МОДЕЛИ</div>
+        <div className="ui-card">
+          <div className="ui-eyebrow">ИЕРАРХИЯ МОДЕЛИ</div>
 
-          <div className="warnings-tab__tree">
-            {/* Корневой узел: Северный ЛУ */}
-            <div
-              className={`warnings-tab__tree-node ${selectedNodeId === DEFAULT_HIERARCHY.id ? 'warnings-tab__tree-node--selected' : ''}`}
-              onClick={() => setSelectedNodeId(DEFAULT_HIERARCHY.id)}
-            >
-              <div className="warnings-tab__tree-left">
-                <span
-                  className="warnings-tab__tree-dot"
-                  style={{ backgroundColor: critColor(DEFAULT_HIERARCHY.criticality) }}
-                />
-                <span className="warnings-tab__tree-label">{DEFAULT_HIERARCHY.label}</span>
-              </div>
-              <span className="warnings-tab__tree-badge">{DEFAULT_HIERARCHY.count}</span>
-            </div>
-
-            {/* Вложенные узлы */}
-            <div className="warnings-tab__tree-children">
-              {DEFAULT_HIERARCHY.children?.map((subNode) => (
-                <div key={subNode.id}>
-                  <div
-                    className={`warnings-tab__tree-node ${selectedNodeId === subNode.id ? 'warnings-tab__tree-node--selected' : ''}`}
-                    onClick={() => setSelectedNodeId(subNode.id)}
-                  >
-                    <div className="warnings-tab__tree-left">
-                      <span
-                        className="warnings-tab__tree-dot"
-                        style={{ backgroundColor: critColor(subNode.criticality) }}
-                      />
-                      <span className="warnings-tab__tree-label">{subNode.label}</span>
-                    </div>
-                    <span className="warnings-tab__tree-badge">{subNode.count}</span>
-                  </div>
-
-                  {subNode.children && (
-                    <div className="warnings-tab__tree-children">
-                      {subNode.children.map((leaf) => (
-                        <div
-                          key={leaf.id}
-                          className={`warnings-tab__tree-node ${selectedNodeId === leaf.id ? 'warnings-tab__tree-node--selected' : ''}`}
-                          onClick={() => {
-                            setSelectedNodeId(leaf.id);
-                            // Если кликнули по УПН-2 или Нефтепроводу, активируем соответствующее предупреждение
-                            const matchingWarn = warningsList.find((w) =>
-                              w.element.toLowerCase().includes(leaf.label.toLowerCase()),
-                            );
-                            if (matchingWarn) setSelectedWarningId(matchingWarn.id);
-                          }}
-                        >
-                          <div className="warnings-tab__tree-left">
-                            <span
-                              className="warnings-tab__tree-dot"
-                              style={{ backgroundColor: critColor(leaf.criticality) }}
-                            />
-                            <span className="warnings-tab__tree-label">{leaf.label}</span>
-                          </div>
-                          <span className="warnings-tab__tree-badge">{leaf.count}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
+          <HierarchyTree
+            selectedNodeId={selectedNodeId}
+            onSelectNode={setSelectedNodeId}
+            onSelectLeaf={(leaf) => {
+              const matchingWarn = warningsList.find((w) =>
+                w.element.toLowerCase().includes(leaf.label.toLowerCase()),
+              );
+              if (matchingWarn) setSelectedWarningId(matchingWarn.id);
+            }}
+          />
         </div>
 
         {/* Колонка 2: Предупреждения (таблица + счетчики) */}
-        <div className="warnings-tab__card">
-          <h2 className="warnings-tab__heading">Предупреждения</h2>
+        <div className="ui-card">
+          <h2 className="ui-card__heading ui-card__heading--lg">Предупреждения</h2>
 
           {/* Верхние 4 счетчика критичности */}
-          <div className="warnings-tab__stats-row">
-            <div className="warnings-tab__stat-box">
-              <span className="warnings-tab__stat-label">Критичных</span>
-              <div className="warnings-tab__stat-val-row">
-                <span className="warnings-tab__stat-num warnings-tab__stat-num--critical">4</span>
-              </div>
-            </div>
-
-            <div className="warnings-tab__stat-box">
-              <span className="warnings-tab__stat-label">Высоких</span>
-              <div className="warnings-tab__stat-val-row">
-                <span className="warnings-tab__stat-num warnings-tab__stat-num--high">8</span>
-              </div>
-            </div>
-
-            <div className="warnings-tab__stat-box">
-              <span className="warnings-tab__stat-label">Средних</span>
-              <div className="warnings-tab__stat-val-row">
-                <span className="warnings-tab__stat-num warnings-tab__stat-num--medium">10</span>
-              </div>
-            </div>
-
-            <div className="warnings-tab__stat-box">
-              <span className="warnings-tab__stat-label">С рекомендацией</span>
-              <div className="warnings-tab__stat-val-row">
-                <span className="warnings-tab__stat-num warnings-tab__stat-num--green">16</span>
-                <span className="warnings-tab__stat-sub">из 22</span>
-              </div>
-            </div>
-          </div>
+          <StatGrid items={statItems} ariaLabel="Сводка по критичности" />
 
           {/* Таблица предупреждений */}
-          <div className="warnings-tab__table-wrap">
-            <table className="warnings-tab__table">
-              <thead>
-                <tr>
-                  <th>Уровень</th>
-                  <th>Элемент</th>
-                  <th>Тип</th>
-                  <th>Период</th>
-                  <th>Критичность</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredWarnings.map((w) => {
-                  const isSelected = w.id === activeWarning?.id;
-                  return (
-                    <tr
-                      key={w.id}
-                      className={isSelected ? 'is-selected' : ''}
-                      onClick={() => setSelectedWarningId(w.id)}
-                    >
-                      <td className="warnings-tab__col-level">{w.levelType}</td>
-                      <td className="warnings-tab__col-elem">{w.element}</td>
-                      <td>{w.type}</td>
-                      <td style={{ fontVariantNumeric: 'tabular-nums' }}>{w.period}</td>
-                      <td>
-                        <span
-                          className={`warnings-tab__crit-tag warnings-tab__crit-tag--${w.level}`}
-                        >
-                          {w.criticality}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <DataTable
+            columns={warningColumns}
+            rows={filteredWarnings}
+            rowKey={(w) => w.id}
+            selectedId={activeWarning?.id}
+            onSelect={(w) => setSelectedWarningId(w.id)}
+            ariaLabel="Список предупреждений"
+          />
 
           {/* Сводка по типам */}
-          <div className="warnings-tab__eyebrow">СВОДКА ПО ТИПАМ</div>
+          <div className="ui-eyebrow">СВОДКА ПО ТИПАМ</div>
           <div className="warnings-tab__type-summary-row">
             {DEFAULT_TYPE_SUMMARIES.map((item) => (
-              <span key={item.id} className="warnings-tab__type-pill">
+              <span key={item.id} className="ui-badge--chip">
                 <span>{item.label}:</span>
                 <b>{item.count}</b>
               </span>
@@ -442,24 +286,21 @@ export function WarningsTab({ onOpenRecommendations, onShowOnMap }: WarningsTabP
           </div>
 
           {/* Принцип агрегации */}
-          <div className="warnings-tab__aggregation-note">
+          <div className="ui-note warnings-tab__aggregation-note">
             Первичная причина хранится на конкретном объекте. На уровне системы и ЛУ предупреждения
             агрегируются для навигации и сводки, но не теряют связь с исходным расчётом.
           </div>
         </div>
 
         {/* Колонка 3: Карточка предупреждения */}
-        <div className="warnings-tab__card">
-          <div className="warnings-tab__eyebrow">КАРТОЧКА ПРЕДУПРЕЖДЕНИЯ</div>
+        <div className="ui-card">
+          <div className="ui-eyebrow">КАРТОЧКА ПРЕДУПРЕЖДЕНИЯ</div>
 
           {activeWarning && (
             <>
               <div className="warnings-tab__card-head">
-                <span className="warnings-tab__card-crit-badge">
-                  <span
-                    className="warnings-tab__tree-dot"
-                    style={{ backgroundColor: critColor(activeWarning.level) }}
-                  />
+                <span className="ui-badge">
+                  <CriticalityDot level={activeWarning.level} />
                   <span>{activeWarning.criticality}</span>
                 </span>
               </div>
@@ -467,39 +308,13 @@ export function WarningsTab({ onOpenRecommendations, onShowOnMap }: WarningsTabP
               <h2 className="warnings-tab__card-title">{activeWarning.element}</h2>
               <p className="warnings-tab__card-desc">{activeWarning.description}</p>
 
-              <div className="warnings-tab__prop-block">
-                <span className="warnings-tab__prop-label">Иерархия</span>
-                <span className="warnings-tab__prop-val">{activeWarning.hierarchyPath}</span>
-              </div>
-
-              <div className="warnings-tab__prop-block">
-                <span className="warnings-tab__prop-label">Период</span>
-                <span className="warnings-tab__prop-val">
-                  {activeWarning.period} · {activeWarning.duration}
-                </span>
-              </div>
-
-              <div className="warnings-tab__prop-block">
-                <span className="warnings-tab__prop-label">Расчётный показатель</span>
-                <div className="warnings-tab__kpi-box">
-                  <div className="warnings-tab__kpi-box-head">
-                    <span className="warnings-tab__kpi-box-label">{activeWarning.kpiLabel}</span>
-                    <span className="warnings-tab__kpi-box-limit">{activeWarning.kpiLimit}</span>
-                  </div>
-                  <div className="warnings-tab__kpi-box-num">{activeWarning.kpiValue}</div>
-                </div>
-              </div>
-
-              <div className="warnings-tab__prop-block">
-                <span className="warnings-tab__prop-label">Источник</span>
-                <span className="warnings-tab__prop-val">{activeWarning.source}</span>
-              </div>
+              <PropList items={warningProps} />
 
               {/* Стек кнопок действий */}
-              <div className="warnings-tab__actions-stack">
+              <div className="ui-btn-row">
                 <button
                   type="button"
-                  className="warnings-tab__btn-action warnings-tab__btn-action--secondary"
+                  className="ui-btn ui-btn--secondary ui-btn--block"
                   onClick={() => alert(`Открытие расчета для ${activeWarning.element}`)}
                 >
                   Открыть расчёт объекта
@@ -507,9 +322,10 @@ export function WarningsTab({ onOpenRecommendations, onShowOnMap }: WarningsTabP
 
                 <button
                   type="button"
-                  className="warnings-tab__btn-action warnings-tab__btn-action--primary"
+                  className="ui-btn ui-btn--primary ui-btn--block"
                   onClick={() =>
-                    onOpenRecommendations && onOpenRecommendations(activeWarning.relatedRecommendationId)
+                    onOpenRecommendations &&
+                    onOpenRecommendations(activeWarning.relatedRecommendationId)
                   }
                 >
                   Связанная рекомендация
@@ -517,7 +333,7 @@ export function WarningsTab({ onOpenRecommendations, onShowOnMap }: WarningsTabP
 
                 <button
                   type="button"
-                  className="warnings-tab__btn-action warnings-tab__btn-action--secondary"
+                  className="ui-btn ui-btn--secondary ui-btn--block"
                   onClick={() => onShowOnMap && onShowOnMap(activeWarning.element)}
                 >
                   Показать на карте

@@ -3,9 +3,11 @@
  * Источник макетов: UI images/Activity bar/Аналитика/
  */
 
+import type { CriticalityLevel } from '../../domain/types';
+
 export type AnalyticsTabId = 'overview' | 'warnings' | 'recommendations' | 'scenarios' | 'roadmaps';
 
-export type CriticalityLevel = 'critical' | 'high' | 'medium' | 'low';
+export type { CriticalityLevel };
 
 export type OverviewKpiData = {
   criticalWarnings: number;

@@ -63,6 +63,46 @@
   --bg-map-satellite: #223018; /* Космоснимки */
   --radius-panel: 8px; /* Радиус панельных блоков карты */
 
+  /* Нейтральная палитра интерфейса (вместо хардкода в CSS компонентов) */
+  --slate-50: #f8fafc;
+  --slate-100: #f1f5f9;
+  --slate-200: #e2e8f0;
+  --slate-300: #cbd5e1;
+  --slate-400: #94a3b8;
+  --slate-500: #64748b;
+  --slate-600: #475569;
+  --slate-700: #334155;
+  --slate-800: #1e293b;
+  --slate-900: #0f172a;
+  --border-strong: #d0d7de;
+
+  /* Палитра уровней критичности (единый источник для всех вкладок) */
+  --level-critical: #dc2626;
+  --level-high: #ea580c;
+  --level-medium: #ca8a04;
+  --level-low: #10b981;
+  --level-critical-soft: #fef2f2;
+
+  /* Состояния (успех / нейтральное) */
+  --state-success: #10b981;
+  --state-success-soft: #e6f9f0;
+  --state-success-text: #0e8345;
+
+  /* Акцент графиков */
+  --chart-accent: #0284c7;
+  --chart-accent-soft: #e0f2fe;
+
+  /* Поверхности карточек/панелей аналитики */
+  --surface-card: #ffffff;
+  --surface-subtle: var(--slate-50);
+  --radius-surface: 20px;
+  --shadow-card-raised: 0 2px 10px rgba(0, 0, 0, 0.08);
+  --shadow-card-flat: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-primary: 0 4px 10px rgba(0, 102, 204, 0.2);
+  --overlay-scrim: rgba(15, 23, 42, 0.5);
+  --surface-selected: #eff6ff;
+  --surface-selected-strong: #eef5ff;
+
   /* Скругления */
   --radius-sm: 4px;
   --radius-md: 6px;
