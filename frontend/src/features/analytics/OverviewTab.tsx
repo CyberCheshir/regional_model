@@ -232,6 +232,18 @@ export function OverviewTab({ onOpenWarnings, onOpenRoadmap }: OverviewTabProps)
     };
 
     const yForVal = (val: number) => bottomY - (val / maxVal) * height;
+
+    const curvePoints = CHART_CURVE;
+    const mappedCurve = curvePoints.map((p) => ({
+      year: p.year,
+      cx: xForYear(p.year),
+      cy: yForVal(p.val),
+    }));
+    const linePath = mappedCurve.map((p) => `${p.cx},${p.cy}`).join(' ');
+    const first = mappedCurve[0];
+    const last = mappedCurve[mappedCurve.length - 1];
+    const areaPath = `${first.cx},${bottomY} ${linePath} ${last.cx},${bottomY}`;
+
     return {
       mappedCurve,
       linePath,

@@ -226,7 +226,6 @@ export type DomainEntityAttributes = {
   routeCondition?: 'unspecified' | 'dryland' | 'permafrost' | 'dryland30-permafrost70' | 'dryland70-permafrost30';
   additivesEfficiency?: boolean;
   pipelineStatus?: 'approved' | 'new';
-  owner?: string;
   attributes?: Record<string, unknown>;
 };
 
