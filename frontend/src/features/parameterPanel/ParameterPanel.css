@@ -385,7 +385,10 @@
   grid-template-columns: minmax(112px, 42%) minmax(0, 1fr);
   align-items: stretch;
   gap: 0;
-  min-height: 32px;
+  height: 25px;
+  min-height: 25px;
+  max-height: 25px;
+  overflow: hidden;
   border-bottom: 1px solid var(--border-subtle, #edf2f7);
 }
 
@@ -398,28 +401,60 @@
   display: flex;
   align-items: center;
   min-width: 0;
-  padding: 6px 8px;
+  height: 25px;
+  box-sizing: border-box;
+  padding: 3px 8px;
   text-align: left;
-  white-space: normal;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .pp-properties-table .pp-row__label {
-  background: var(--bg-panel-subtle, #f8fafc);
-  border-right: 1px solid var(--border-subtle, #edf2f7);
-  color: var(--text-muted, #8a94a6);
+  background: #e5e7eb;
+  border-right: 1px solid #d1d5db;
+  color: #6b7280;
   font-size: 11px;
   font-weight: 600;
 }
 
 .pp-properties-table .pp-row__value {
-  background: var(--bg-panel, #ffffff);
-  color: var(--text-main, #0d1526);
+  /* Неизменяемые значения используют тот же серый фон, что и первый столбец. */
+  background: #e5e7eb;
+  color: #6b7280;
   font-size: 12px;
   font-weight: 600;
   text-align: left;
   justify-content: flex-start;
-  overflow: hidden;
+ overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Ячейки с элементами редактирования сохраняют белый фон и обычный текст. */
+.pp-properties-table .pp-row__value:has(.pp-edit),
+.pp-properties-table .pp-row__value:has(.pp-select-wrap),
+.pp-properties-table .pp-row__value:has(.pp-number-wrap),
+.pp-properties-table .pp-row__value:has(.pp-number-input),
+.pp-properties-table .pp-row__value:has(.pp-input) {
+  background: var(--bg-panel, #ffffff);
+  color: var(--text-main, #0d1526);
+}
+
+.pp__content--multi {
+  padding: 0;
+}
+
+.pp-multi-selection__summary {
+  margin-bottom: 10px;
+  padding: 8px 10px;
+  border: 1px solid #cfe0f5;
+  border-radius: 6px;
+  background: #f7fbff;
+  color: var(--text-main, #0d1526);
+  font-size: 12px;
+}
+
+.pp-multi-selection__hint {
+  white-space: normal;
 }
 
 /* --- Строка «метка — значение» вне таблицы --- */
@@ -729,20 +764,60 @@
   bottom: 0;
   border-radius: var(--radius-pill, 9999px);
   background: var(--color-primary, #0066cc);
+  box-shadow: 0 0 0 1px rgb(0 102 204 / 18%);
+}
+
+.pp-timeline__shutdown {
+  position: absolute;
+  top: -3px;
+  height: 14px;
+  min-width: 5px;
+  border-radius: 3px;
+  background: repeating-linear-gradient(135deg, #f59e0b 0 4px, #fff4d6 4px 8px);
+  border: 1px solid #c77800;
+  box-sizing: border-box;
+  z-index: 2;
+  cursor: help;
+}
+
+.pp-timeline__shutdown-label {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  z-index: 1;
+  transform: translateX(-50%);
+  padding: 3px 6px;
+  border-radius: 4px;
+  background: #fff7e6;
+  color: #9a5b00;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgb(15 23 42 / 12%);
+}
+
+.pp-timeline__shutdown--bottom .pp-timeline__shutdown-label {
+  top: 18px;
+  bottom: auto;
+}
+
+.pp-timeline__shutdown:hover,
+.pp-timeline__shutdown:focus-within {
+  z-index: 20;
+}
+
+.pp-timeline__shutdown:hover .pp-timeline__shutdown-label,
+.pp-timeline__shutdown:focus-within .pp-timeline__shutdown-label,
+.pp-timeline__shutdown-label:hover {
+  z-index: 21;
+  background: #ffedbf;
+  box-shadow: 0 3px 10px rgb(15 23 42 / 22%);
 }
 
 .pp-timeline__marker {
   position: absolute;
   top: -6px;
   transform: translateX(-1px);
-}
-
-.pp-timeline__marker::before {
-  content: '';
-  display: block;
-  width: 2px;
-  height: 20px;
-  background: #94a3b8;
 }
 
 .pp-timeline__marker-label {
@@ -782,6 +857,15 @@
   background: var(--color-primary-light, #ebf3fc);
 }
 
+.pp-period-add {
+  align-self: flex-start;
+  width: 26px;
+  height: 24px;
+  padding: 0;
+  margin: -2px 0 8px;
+  justify-content: center;
+}
+
 /* Кнопки «Импорт / Экспорт / Сбросить» в шапке профиля продукции */
 .pp-profile-actions {
   display: inline-flex;
@@ -811,7 +895,7 @@
 .pp-shutdown-table__head,
 .pp-shutdown-table__row {
   display: grid;
-  grid-template-columns: 1.1fr 1.1fr 1.4fr;
+  grid-template-columns: 1.1fr 1.1fr 1.4fr 24px;
   gap: 8px;
   padding: 7px 10px;
   font-size: 11px;
@@ -839,6 +923,106 @@
 
 .pp-shutdown-table__row--empty {
   color: var(--text-muted, #a9b2c2);
+}
+
+.pp-shutdown-table__delete {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #a34d4d;
+  font-size: 18px;
+  line-height: 20px;
+  cursor: pointer;
+}
+
+.pp-shutdown-table__delete:hover {
+  background: #fff0f0;
+  color: #c53030;
+}
+
+.pp-shutdown-form {
+  display: grid;
+  grid-template-columns: 58px 58px minmax(0, 1fr) auto;
+  gap: 6px;
+  align-items: end;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  margin-bottom: 10px;
+  padding: 8px;
+  border: 1px solid #cfe0f5;
+  border-radius: var(--radius-md, 6px);
+  background: #f7fbff;
+}
+
+.pp-shutdown-form label {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--text-muted, #8a94a6);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.pp-shutdown-form input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 5px 4px;
+  border: 1px solid var(--border-default, #d9e1ec);
+  border-radius: 4px;
+  color: var(--text-main, #0d1526);
+  font: inherit;
+  font-size: 11px;
+}
+
+.pp-shutdown-form__actions {
+  display: flex;
+  min-width: 0;
+  gap: 5px;
+}
+
+.pp-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--color-primary-border, #99c2f0);
+  border-radius: var(--radius-md, 6px);
+  background: #fff;
+  color: var(--color-primary, #0066cc);
+  cursor: pointer;
+}
+
+.pp-icon-btn:hover {
+  background: var(--color-primary-light, #ebf3fc);
+}
+
+.pp-shutdown-form__error {
+  grid-column: 1 / -1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: #c53030;
+  font-size: 10px;
+}
+
+@media (max-width: 390px) {
+  .pp-shutdown-form {
+    grid-template-columns: 52px 52px minmax(0, 1fr);
+  }
+
+  .pp-shutdown-form__actions {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+  }
 }
 
 /* --- Профиль продукции: сегмент-переключатель --- */
@@ -912,18 +1096,20 @@
 
 /* --- Продукты (чекбоксы) --- */
 .pp-products {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 16px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 16px;
   padding: 10px 16px;
   /* Верхний блок вкладки — фикс. высота (не сжимается flex-колонкой). */
   flex: 0 0 auto;
 }
 
 .pp-product {
-  display: inline-flex;
+  display: grid;
+  grid-template-columns: 16px 11px minmax(0, 1fr) auto;
   align-items: center;
   gap: 6px;
+  min-width: 0;
   font-size: 12px;
   cursor: pointer;
 }
@@ -932,18 +1118,36 @@
   width: 11px;
   height: 11px;
   border-radius: 3px;
+  grid-column: 2;
+}
+
+.pp-product input {
+  grid-column: 1;
+  margin: 0;
 }
 
 .pp-product__name {
+  grid-column: 3;
+  min-width: 0;
   color: var(--text-main, #0d1526);
   font-weight: 600;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .pp-product__unit {
+  grid-column: 4;
   color: var(--text-muted, #8a94a6);
   white-space: nowrap;
   font-size: 11px;
+  text-align: right;
+}
+
+@media (max-width: 420px) {
+  .pp-products {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 /* --- Таблица профиля --- */

@@ -45,6 +45,7 @@ export type IconName =
   | 'chevron-down'
   | 'plus'
   | 'pencil'
+  | 'save'
   // Misc actions
   | 'close'
   | 'search'
@@ -324,6 +325,13 @@ const ICONS: Record<IconName, IconDefinition> = {
     strokeWidth: 1.4,
     paths:
       '<path d="M11.2 2.6 13.4 4.8 5.6 12.6 2.6 13.4l.8-3z"/><path d="M9.9 3.9l2.2 2.2"/>',
+  },
+  save: {
+    viewBox: '0 0 16 16',
+    stroke: true,
+    strokeWidth: 1.4,
+    paths:
+      '<path d="M2.5 2.5h9l2 2v9h-11z"/><path d="M5 2.5v4h5v-4M5 13.5v-3h6v3"/>',
   },
 
   // --- Status & flows ---

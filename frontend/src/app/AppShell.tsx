@@ -22,6 +22,8 @@ export type AppShellProps = {
   bottom?: ReactNode;
   /** Полноэкранный модуль-оверлей (например, «Данные», «Расчёты») */
   overlayModule?: ReactNode;
+  /** Временное системное уведомление поверх рабочего пространства */
+  toast?: ReactNode;
   /** Текущая ширина левой панели (контролируемая, при expanded) */
   leftWidth?: number;
   /** Текущая ширина правой панели (контролируемая, при expanded) */
@@ -53,6 +55,7 @@ export function AppShell({
   right,
   bottom,
   overlayModule,
+  toast,
   leftWidth = SHELL_COLUMNS.left,
   rightWidth = SHELL_COLUMNS.right,
   onLeftWidthChange,
@@ -109,6 +112,7 @@ export function AppShell({
     <div className="app-shell" style={shellStyle}>
       {/* Слой 0: карта на весь экран (фиксированный размер контейнера) */}
       <main className="app-shell__map">{center}</main>
+      {toast}
 
       {/* Слой 1: панели поверх карты */}
       <aside className="app-shell__activity">{activity}</aside>

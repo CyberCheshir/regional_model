@@ -11,7 +11,7 @@
 import { useEffect } from 'react';
 import { AppIcon } from '../../components/AppIcon';
 import { AsyncState } from '../../components/AsyncState';
-import type { EntityDetails, ParameterTabId } from '../../domain/types';
+import type { EntityDetails, ParameterTabId, ShutdownPeriod } from '../../domain/types';
 import { buildParameterPanelData } from './buildPanelData';
 import { tabsForKind, firstTabForKind } from './tabs';
 import { PanelTabRail } from './parts';
@@ -21,11 +21,14 @@ import { CalendarTab } from './CalendarTab';
 import { ProductTab, type ProfileImportHandler } from './ProductTab';
 import { HydraulicTab } from './HydraulicTab';
 import { AnalyticsTab } from './AnalyticsTab';
+import { MultiSelectionPanel } from './MultiSelectionPanel';
 import './ParameterPanel.css';
 
 export type ParameterPanelProps = {
   /** Детали выбранного объекта (null — ничего не выбрано) */
   entity: EntityDetails | null;
+  /** Детали всех выбранных элементов карты; при длине больше одного показываются общие свойства. */
+  selectedEntities?: EntityDetails[];
   /** Активная вкладка */
   activeTab: ParameterTabId;
   onTabChange: (tab: ParameterTabId) => void;
@@ -54,8 +57,8 @@ export type ParameterPanelProps = {
     pipelineStatus?: import('../../domain/types').PipelineStatus;
     owner?: import('../../domain/types').PipelineOwner;
   }) => void;
-  /** Добавить период вывода из эксплуатации (заготовка) */
-  onAddShutdown?: () => void;
+  /** Изменить периоды вывода из эксплуатации */
+  onChangeShutdowns?: (shutdowns: ShutdownPeriod[]) => void;
   /** Перейти в гидравлический расчёт (заготовка) */
   onOpenCalc?: () => void;
   /** Загрузить профиль продукции из файла для выбранного объекта (вкладка «Профиль продукции») */
@@ -68,6 +71,7 @@ export type ParameterPanelProps = {
 
 export function ParameterPanel({
   entity,
+  selectedEntities = [],
   activeTab,
   onTabChange,
   onNavigateToRelation,
@@ -78,7 +82,7 @@ export function ParameterPanel({
   onPipelineWallThicknessChange,
   onPipelineRoughnessChange,
   onPipelineAdvancedChange,
-  onAddShutdown,
+  onChangeShutdowns,
   onOpenCalc,
   onImportProfile,
   loading = false,
@@ -87,7 +91,8 @@ export function ParameterPanel({
   onCollapse,
   onPipelineClassChange,
 }: ParameterPanelProps) {
-  const data = entity ? buildParameterPanelData(entity) : null;
+  const isMultiSelection = selectedEntities.length > 1;
+  const data = entity && !isMultiSelection ? buildParameterPanelData(entity) : null;
   const panelKind = data?.panelKind ?? null;
   // У сегмента нет собственного профиля продукции — вкладка не показывается.
   const availableTabs = panelKind
@@ -98,9 +103,21 @@ export function ParameterPanel({
 
   // Если у объекта нет активной вкладки — переключаемся на первую доступную.
   useEffect(() => {
-    if (!panelKind) return;
+    if (!panelKind || isMultiSelection) return;
     if (!hasAvailableTab) onTabChange(firstAvailableTab);
-  }, [panelKind, hasAvailableTab, firstAvailableTab, onTabChange]);
+  }, [panelKind, isMultiSelection, hasAvailableTab, firstAvailableTab, onTabChange]);
+
+  if (isMultiSelection) {
+    return (
+      <div className="pp-wrap">
+        <div className="pp-main">
+          <div className="pp-wrap__body">
+            <MultiSelectionPanel entities={selectedEntities} />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Рельс вкладок — отдельная колонка НА ВСЮ ВЫСОТУ панели: левая часть
   // шапки объекта лежит поверх рельса (по макету). Поэтому шапка рендерится
@@ -138,7 +155,7 @@ export function ParameterPanel({
           onPipelineRoughnessChange={onPipelineRoughnessChange}
           onPipelineAdvancedChange={onPipelineAdvancedChange}
           onNavigateToRelation={onNavigateToRelation}
-          onAddShutdown={onAddShutdown}
+          onChangeShutdowns={onChangeShutdowns}
           onOpenCalc={onOpenCalc}
           onImportProfile={onImportProfile}
         />
@@ -192,7 +209,7 @@ function TabContent({
   onPipelineRoughnessChange,
   onPipelineAdvancedChange,
   onNavigateToRelation,
-  onAddShutdown,
+  onChangeShutdowns,
   onOpenCalc,
   onImportProfile,
 }: {
@@ -214,7 +231,7 @@ function TabContent({
     owner?: import('../../domain/types').PipelineOwner;
   }) => void;
   onNavigateToRelation: (id: string) => void;
-  onAddShutdown?: () => void;
+  onChangeShutdowns?: (shutdowns: ShutdownPeriod[]) => void;
   onOpenCalc?: () => void;
   onImportProfile?: ProfileImportHandler;
 }) {
@@ -239,7 +256,7 @@ function TabContent({
         <CalendarTab
           period={data.workPeriod}
           panelKind={data.panelKind}
-          onAddShutdown={onAddShutdown}
+          onChangeShutdowns={onChangeShutdowns}
         />
       );
     case 'product':

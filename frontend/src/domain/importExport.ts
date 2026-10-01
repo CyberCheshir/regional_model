@@ -373,7 +373,7 @@ export type EntityProfileParseResult =
   | {
       ok: true;
       item: ProfileImportItem;
-      /** Строки с нераспознанным «Продуктом» (давление, температура и т.п.) — в профиль не вошли */
+      /** Строки с нераспознанным значением «Продукт» — в профиль не вошли */
       skippedProducts: string[];
     }
   | {
@@ -459,23 +459,33 @@ export async function parseEntityProfileFile(
   }
 
   const skippedProducts = rowList
-    .filter((r) => classifyProfileProduct(r.product) === null)
+    .filter((r) => classifyProfileProduct(r.product, r.unit) === null)
     .map((r) => r.product);
 
   return { ok: true, item: buildProfileImportItem(entityName, rowList, yearCols), skippedProducts };
 }
 
 /**
- * Распознавание продукта по подписи строки профиля.
- * null — строка не относится к флюидам (давление, температура и т.п.) и в профиль не входит.
+ * Распознавание ряда по подписи строки профиля.
+ * Помимо флюидов поддерживаются технологические параметры давления и температуры.
  */
-function classifyProfileProduct(product: string): ProductType | null {
+function classifyProfileProduct(product: string, unit = ''): ProductType | null {
   const pLower = product.toLowerCase();
+  const unitLower = unit.toLowerCase().replace(/\s/g, '');
+  if (pLower.includes('давлен') || pLower.includes('pressure') || /^(p|р)$/.test(pLower) || unitLower.includes('мпа') || unitLower.includes('бар')) return 'pressure';
+  if (pLower.includes('температур') || pLower.includes('темп.') || pLower.includes('temperature') || /^(t|т)$/.test(pLower) || unitLower.includes('°c') || unitLower === 'c') return 'temperature';
   if (pLower.includes('нефть')) return 'oil';
   if (pLower.includes('газ') || pLower.includes('пг') || pLower.includes('пнг') || pLower.includes('сог')) return 'gas';
   if (pLower.includes('вод')) return 'water';
   if (pLower.includes('сгк') || pLower.includes('жидк')) return 'liquid';
   return null;
+}
+
+function defaultUnitForProduct(product: ProductType): string {
+  if (product === 'pressure') return 'бар';
+  if (product === 'temperature') return '°C';
+  if (product === 'gas') return 'млн м³/год';
+  return product === 'water' ? 'тыс. м³/год' : 'тыс. т/год';
 }
 
 /** Сборка профиля объекта из его строк исходной таблицы. */
@@ -491,13 +501,13 @@ function buildProfileImportItem(
   const products: ProductProfile['products'] = [];
 
   for (const r of rowList) {
-    const prodType = classifyProfileProduct(r.product);
-    if (prodType === null) continue; // Пропускаем давление/температуру для графика профилей флюидов
+    const prodType = classifyProfileProduct(r.product, r.unit);
+    if (prodType === null) continue;
 
     if (!products.some((p) => p.product === prodType)) {
       products.push({
         product: prodType,
-        unit: r.unit || (prodType === 'gas' ? 'млн м³/год' : 'тыс. т/год'),
+        unit: r.unit || defaultUnitForProduct(prodType),
         enabled: true,
       });
     }
@@ -521,12 +531,14 @@ function buildProfileImportItem(
     }
   }
 
-  // Если нет стандартных флюидов (например, только технологические строки), берем базовый список
+  // Если нет распознанных рядов, берём базовый список флюидов и технологических параметров
   if (products.length === 0) {
     products.push(
       { product: 'oil', unit: 'тыс. т/год', enabled: true },
       { product: 'gas', unit: 'млн м³/год', enabled: true },
-      { product: 'water', unit: 'тыс. т/год', enabled: true },
+      { product: 'water', unit: 'тыс. м³/год', enabled: true },
+      { product: 'pressure', unit: 'бар', enabled: true },
+      { product: 'temperature', unit: '°C', enabled: true },
     );
   }
 

@@ -11,9 +11,11 @@ export type DataModuleViewProps = {
   onShowOnMap?: (obj: ModelObject) => void;
   /** Колбэк открытия карточки/инспектора объекта */
   onOpenObject?: (obj: ModelObject) => void;
+  /** Показать временное системное уведомление */
+  onNotify?: (message: string) => void;
 };
 
-export function DataModuleView({ onShowOnMap, onOpenObject }: DataModuleViewProps) {
+export function DataModuleView({ onShowOnMap, onOpenObject, onNotify }: DataModuleViewProps) {
   const [activeTab, setActiveTab] = useState<DataTabId>('objects');
 
   return (
@@ -78,7 +80,7 @@ export function DataModuleView({ onShowOnMap, onOpenObject }: DataModuleViewProp
         {activeTab === 'objects' && (
           <ObjectsTab onShowOnMap={onShowOnMap} onOpenObject={onOpenObject} />
         )}
-        {activeTab === 'profiles' && <ProfilesTab />}
+        {activeTab === 'profiles' && <ProfilesTab onNotify={onNotify} />}
         {activeTab === 'connections' && <ConnectionsTab />}
         {activeTab === 'import-export' && <ImportExportTab />}
       </main>

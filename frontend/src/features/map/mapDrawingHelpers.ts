@@ -11,6 +11,7 @@ import type {
   MapFitting,
   MapTap,
   MapVertex,
+  LicenceArea,
 } from './drawingTypes';
 
 /**
@@ -62,6 +63,7 @@ export type ProjectSnapshotInput = {
     lng: number;
     width_m?: number;
     height_m?: number;
+    angle_deg?: number;
   }>;
   nodes: Array<{
     id: string;
@@ -96,12 +98,19 @@ export type ProjectSnapshotInput = {
     pipeline_class?: string;
     segment_ids: string[];
   }>;
-  licence_areas: Array<{ id: string; uid?: string; name: string; polygon: Array<[number, number]> }>;
+  licence_areas: Array<{
+    id: string;
+    uid?: string;
+    name: string;
+    polygon: Array<[number, number]>;
+    locked?: boolean;
+  }>;
 };
 
 /** Снимок состояния графа для undo/redo. */
 export type GraphSnapshot = {
   segments: DrawnSegment[];
+  areas: LicenceArea[];
   pipelines: PipelineRecord[];
   vertices: MapVertex[];
   fittings: MapFitting[];

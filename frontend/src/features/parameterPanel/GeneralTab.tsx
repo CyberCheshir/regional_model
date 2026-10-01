@@ -289,14 +289,14 @@ function SectionIdentification({
               />
             </PropertyRow>
             <PipelineSelectRow
-              label="Тип прокладки (Условия трассы)"
+              label="Тип прокладки"
               value={entity.routeCondition ?? 'unspecified'}
               labels={PIPELINE_ROUTE_CONDITION_LABELS}
               disabled={!onPipelineAdvancedChange}
               onChange={(routeCondition) => onPipelineAdvancedChange?.({ routeCondition })}
             />
             <PipelineSelectRow
-              label="Использование присадок эффективность, мp"
+              label="Эффективность присадок"
               value={entity.additivesEfficiency ? 'yes' : 'no'}
               labels={{ yes: 'Да', no: 'Нет' }}
               disabled={!onPipelineAdvancedChange}

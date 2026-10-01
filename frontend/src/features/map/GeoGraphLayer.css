@@ -96,10 +96,42 @@
   box-shadow: 0 0 0 2px var(--color-primary, #0066cc), 0 1px 4px rgba(16, 26, 48, 0.3);
 }
 
+/* Полупрозрачный вид во время перетаскивания элемента. */
+.geo-graph-layer__vertex.is-dragging {
+  opacity: 0.52;
+}
+
 /* Объект — цель снапа ребра (подсветка при рисовании рядом) */
 .geo-graph-layer__vertex.is-snap-target {
   box-shadow: 0 0 0 3px var(--color-primary, #0066cc), 0 1px 4px rgba(16, 26, 48, 0.3);
 }
+
+/* Ручка вращения отключена. */
+/* .geo-graph-layer__rotate-handle {
+  position: absolute;
+  left: 50%;
+  top: -26px;
+  z-index: 3;
+  width: 12px;
+  height: 12px;
+  transform: translateX(-50%);
+  border: 2px solid #0066cc;
+  border-radius: 50%;
+  background: #ffffff;
+  cursor: grab;
+  pointer-events: auto;
+}
+
+/* .geo-graph-layer__rotate-handle::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 12px;
+  width: 1px;
+  height: 12px;
+  background: #0066cc;
+  transform: translateX(-50%);
+} */
 
 /* Иконка типа объекта внутри плитки — светлый цвет по типу объекта
    (системы сбора — оранжевый, подготовка — зелёный, поставка — синий). */
@@ -191,6 +223,7 @@
 /* --- Руки ресайза объектов (показываются на выделенном) --- */
 .geo-graph-layer__handle {
   position: absolute;
+  z-index: 5;
   width: 9px;
   height: 9px;
   box-sizing: border-box;
@@ -243,6 +276,7 @@
   left: -5px;
   transform: translateY(-50%);
 }
+
 /* --- Лицензионный участок (замкнутый полигон территории) — серый --- */
 .geo-graph-layer__area {
   fill: rgba(100, 116, 139, 0.15);
@@ -254,11 +288,30 @@
   cursor: move;
 }
 
-/* Выделенный участок — акцентная обводка */
+.geo-graph-layer__area.is-locked {
+  fill: none;
+  stroke: #2563eb;
+  stroke-width: 2;
+  stroke-dasharray: 7 5;
+  cursor: default;
+}
+
+/* Выделенный участок — мягкая подсветка границы без перехода в режим редактирования. */
 .geo-graph-layer__area.is-selected {
-  fill: rgba(0, 102, 204, 0.12);
-  stroke: #0066cc;
-  stroke-dasharray: none;
+  fill: rgba(0, 102, 204, 0.06);
+  stroke: #3b82c4;
+  stroke-width: 3;
+  stroke-dasharray: 6 4;
+  filter: drop-shadow(0 0 2px rgb(37 99 235 / 28%));
+}
+
+/* Зафиксированный участок остаётся без заливки даже при выделении. */
+.geo-graph-layer__area.is-locked.is-selected {
+  fill: none;
+  stroke: #3b82c4;
+  stroke-width: 3;
+  stroke-dasharray: 7 5;
+  filter: drop-shadow(0 0 2px rgb(37 99 235 / 32%));
 }
 
 /* Ручки вершин участка (правка формы полигона) */

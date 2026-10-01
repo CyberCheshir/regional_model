@@ -414,9 +414,9 @@ const PROFILE_START = 2026;
 const PROFILE_END = 2040;
 
 function productsFor(kind: ParameterPanelKind): ProductType[] {
-  if (kind === 'wellpad') return ['oil', 'gas', 'water', 'liquid'];
-  if (kind === 'pipeline') return ['oil', 'gas', 'water'];
-  return ['oil', 'gas', 'water'];
+  if (kind === 'wellpad') return ['oil', 'gas', 'water', 'liquid', 'pressure', 'temperature'];
+  if (kind === 'pipeline') return ['oil', 'gas', 'water', 'pressure', 'temperature'];
+  return ['oil', 'gas', 'water', 'pressure', 'temperature'];
 }
 
 const PRODUCT_UNIT: Record<ProductType, string> = {
@@ -424,6 +424,8 @@ const PRODUCT_UNIT: Record<ProductType, string> = {
   gas: 'млн м³/год',
   water: 'тыс. м³/год',
   liquid: 'тыс. т/год',
+  pressure: 'бар',
+  temperature: '°C',
 };
 
 function measureLabelFor(kind: ParameterPanelKind): string {
@@ -464,8 +466,15 @@ function parsePeriodYears(periodStr?: string): { start: number; end: number } {
 }
 
 /** Период работы объекта (таймлайн + периоды вывода). */
-export function buildWorkPeriod(kind: ParameterPanelKind, periodStr?: string): WorkPeriod {
+export function buildWorkPeriod(kind: ParameterPanelKind, periodStr?: string, attributes?: Record<string, unknown>): WorkPeriod {
   const { start, end } = parsePeriodYears(periodStr);
+  const shutdowns = Array.isArray(attributes?.shutdowns)
+    ? attributes.shutdowns.filter((item): item is { start: string; end: string; reason: string } => {
+        if (!item || typeof item !== 'object') return false;
+        const value = item as Record<string, unknown>;
+        return typeof value.start === 'string' && typeof value.end === 'string' && typeof value.reason === 'string';
+      })
+    : [];
   return {
     source:
       kind === 'pipeline'
@@ -476,7 +485,7 @@ export function buildWorkPeriod(kind: ParameterPanelKind, periodStr?: string): W
     startYear: start,
     endYear: end,
     activeRanges: [{ start, end }],
-    shutdowns: [],
+    shutdowns,
   };
 }
 
@@ -537,7 +546,7 @@ export function buildParameterPanelData(entity: EntityDetails): ParameterPanelDa
     panelKind: kind,
     objectClass: objectClassFor(entity, kind),
     modelStatus: entity.modelStatus,
-    workPeriod: buildWorkPeriod(kind, entity.period),
+    workPeriod: buildWorkPeriod(kind, entity.period, entity.attributes),
     productProfile: buildProductProfile(kind, entity),
     hydraulic: buildHydraulic(kind, entity),
     analytics: buildAnalytics(entity),

@@ -9,6 +9,8 @@ export const PRODUCT_LABEL: Record<ProductType, string> = {
   gas: 'Газ',
   water: 'Вода',
   liquid: 'Жидкость',
+  pressure: 'Давление',
+  temperature: 'Температура',
 };
 
 /** Цвет-маркер продукта (совпадает с палитрой подписей в макете). */
@@ -17,4 +19,6 @@ export const PRODUCT_COLOR: Record<ProductType, string> = {
   gas: '#10b981',
   water: '#0ea5e9',
   liquid: '#7c3aed',
+  pressure: '#dc2626',
+  temperature: '#ea580c',
 };

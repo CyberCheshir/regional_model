@@ -84,6 +84,7 @@ export type MapSavePayload = {
     uid: string;
     name: string;
     polygon: Array<[number, number]>;
+    locked?: boolean;
   }>;
 };
 
@@ -144,6 +145,7 @@ export function buildSavePayload(input: MapSaveInput): MapSavePayload {
     lng: v.lng,
     ...(v.w !== undefined ? { width_m: v.w } : {}),
     ...(v.h !== undefined ? { height_m: v.h } : {}),
+    ...(v.angle !== undefined ? { angle_deg: (v.angle * 180) / Math.PI } : {}),
     status: 'running',
   }));
 
@@ -282,6 +284,7 @@ export function buildSavePayload(input: MapSaveInput): MapSavePayload {
     uid: a.uid,
     name: a.label,
     polygon: a.lngLat.map((g) => [g.lng, g.lat] as [number, number]),
+    locked: a.locked ?? false,
   }));
 
   return {

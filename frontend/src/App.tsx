@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Toast, type ToastTone } from './components/Toast';
 import { AppShell, PANEL_WIDTH_LIMITS, SHELL_COLUMNS } from './app/AppShell';
 import { ActivityBar } from './app/ActivityBar';
 import { LeftSidebar } from './features/objectTree/LeftSidebar';
@@ -59,6 +60,7 @@ function App() {
   const [rightWidth, setRightWidth] = useState<number>(SHELL_COLUMNS.right);
   /** Демонстрируемый период — нижняя панель (BottomPanel). */
   const [timeRange, setTimeRange] = useState<TimeRangeState>(DEFAULT_TIME_RANGE);
+  const [toast, setToast] = useState<{ message: string; tone: ToastTone } | null>(null);
   const {
     activeModule,
     setActiveModule,
@@ -180,6 +182,32 @@ function App() {
   } = useEntityDetailsQuery(localEntity ? null : selectedId);
 
   const selectedDetails = localEntity ?? entityDetails ?? null;
+  const selectedEntities = useMemo(() => {
+    // Двойной клик по сегменту выбирает весь трубопровод: его сегменты
+    // остаются во внутреннем выделении для подсветки, но инспектор показывает
+    // одну карточку трубопровода, а не режим множественного выбора.
+    if (selectedDetails?.kind === 'pipeline') return [selectedDetails];
+
+    const selectedIds = drawSelections
+      .filter((selection) => selection.kind !== 'area' && selection.kind !== 'edgeVertex')
+      .map((selection) => selection.id);
+    return selectedIds
+      .filter((id) => id !== selectedId)
+      .map((id) => buildEntityDetails({
+        id,
+        vertices: drawVertices,
+        pipelines: drawPipelines,
+        segments: drawSegments,
+        taps: drawTaps,
+      }))
+      .filter((details): details is NonNullable<typeof details> => details !== null)
+      .concat(selectedDetails ? [selectedDetails] : []);
+  }, [drawSelections, drawVertices, drawPipelines, drawSegments, drawTaps, selectedId, selectedDetails]);
+
+  const showToast = (message: string, tone: ToastTone = 'success') => {
+    setToast({ message, tone });
+    window.setTimeout(() => setToast(null), 3200);
+  };
 
   /** Переименовать выбранный объект из инспектора (поле «Наименование»). */
   const handleRenameSelected = (nextLabel: string) => {
@@ -236,6 +264,11 @@ function App() {
     }
   };
 
+  const handleShutdownsChange = (shutdowns: Array<{ start: string; end: string; reason: string }>) => {
+    const id = selectedEntity?.id;
+    if (id) updateEntityParams(id, { shutdowns });
+  };
+
   const handlePipelineAdvancedChange = (patch: {
     installation?: 'underground' | 'overground' | 'embankment' | 'underwater';
     depthM?: number;
@@ -276,8 +309,9 @@ function App() {
     }
     const skippedNote =
       skippedProducts.length > 0
-        ? ` Не вошли в профиль (продукт не распознан): ${skippedProducts.map((p) => `«${p}»`).join(', ')}.`
+        ? ` Не вошли в профиль (ряд не распознан): ${skippedProducts.map((p) => `«${p}»`).join(', ')}.`
         : '';
+    showToast(`Профиль загружен: «${localEntity.label}»`);
     return {
       ok: true,
       message: `Профиль загружен из «${file.name}» (${item.period} гг., рядов: ${item.profile.series.length}).${skippedNote}`,
@@ -383,6 +417,7 @@ function App() {
   /** Экспорт всей модели в JSON-файл (объекты/сегменты/трубопроводы/участки) через domain layer. */
   const handleExportModel = () => {
     downloadDomainModel(exportModel());
+    showToast('Модель выгружена');
     console.info('[model] модель экспортирована через domain layer');
   };
 
@@ -393,6 +428,7 @@ function App() {
       loadSnapshot(snapshot);
       setDrawTool('none');
       selectEntity(null);
+      showToast('Модель загружена');
       console.info('[model] модель импортирована через domain layer');
     } catch (error) {
       console.error('[model] не удалось прочитать файл модели:', error);
@@ -557,6 +593,7 @@ function App() {
             onApplyPipelineTool={handleApplyPipelineTool}
           />
         }
+        toast={toast ? <Toast message={toast.message} tone={toast.tone} /> : null}
         center={
           <MapViewport
             displaySettings={mapDisplaySettings}
@@ -564,6 +601,7 @@ function App() {
             selectedId={selectedId}
             onSelect={(id, kind) => selectEntity(id, kind)}
             devMode={devMode}
+            onMergeComplete={(count) => showToast(`Трубопроводы объединены (${count} сегм.)`)}
           >
             <MapDiagramModal
               isOpen={diagramEntityId !== null}
@@ -584,6 +622,7 @@ function App() {
         right={
           <ParameterPanel
             entity={selectedDetails}
+            selectedEntities={selectedEntities}
             loading={entityLoading}
             error={entityError}
             onRetry={refetchEntity}
@@ -599,6 +638,7 @@ function App() {
             onPipelineWallThicknessChange={handlePipelineWallThicknessChange}
             onPipelineRoughnessChange={handlePipelineRoughnessChange}
             onPipelineAdvancedChange={handlePipelineAdvancedChange}
+            onChangeShutdowns={handleShutdownsChange}
             onImportProfile={handleImportProfile}
           />
         }
@@ -615,6 +655,7 @@ function App() {
                 setActiveModule('map');
                 setRightCollapsed(false);
               }}
+              onNotify={showToast}
             />
           ) : activeModule === 'calc' ? (
             <HydraulicCalcView onNavigateToMap={() => setActiveModule('map')} />

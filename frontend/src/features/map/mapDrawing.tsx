@@ -109,6 +109,8 @@ type MapDrawingState = {
   setVertexSize: (id: string, w: number, h: number) => void;
   /** Изменить и позицию, и размеры куста за один шаг (ресайз за угол) */
   setVertexBox: (id: string, box: { x: number; y: number; w: number; h: number }) => void;
+  /** Изменить угол поворота площадного объекта. */
+  setVertexAngle: (id: string, angle: number) => void;
 
   /** Флюид для новых сегментов (по умолчанию — нефть) */
   fluid: DrainFluid;
@@ -227,6 +229,8 @@ type MapDrawingState = {
   moveAreaPoint: (areaId: string, pointIndex: number, x: number, y: number) => void;
   /** Переместить участок целиком на дельту (dx, dy) в мировых единицах. */
   moveArea: (areaId: string, dx: number, dy: number) => void;
+  /** Зафиксировать/разблокировать участок. */
+  toggleAreaLocked: (areaId: string) => void;
   /**
    * ПРОПОРЦИОНАЛЬНО масштабировать участок относительно точки-якоря.
    * @param areaId id участка
@@ -383,6 +387,7 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
   /** Снимок текущего состояния графа. */
   const snapshotNow = useCallback((): GraphSnapshot => ({
     segments: segmentsRef.current,
+    areas: areasRef.current,
     pipelines: pipelinesRef.current,
     vertices: verticesRef.current,
     fittings: fittingsRef.current,
@@ -392,6 +397,7 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
   /** Применить снимок (восстановление состояния графа). */
   const applySnapshot = useCallback((snap: GraphSnapshot) => {
     setSegments(snap.segments);
+    setAreas(snap.areas);
     setPipelines(snap.pipelines);
     setVertices(snap.vertices);
     setFittings(snap.fittings);
@@ -767,8 +773,8 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
       y,
       lng: geoVertex.lng,
       lat: geoVertex.lat,
-      ...(isBoxVertex(kind) ? { ...DEFAULT_VERTEX_SIZE[kind] } : {}),
-    };
+        ...(isBoxVertex(kind) ? { ...DEFAULT_VERTEX_SIZE[kind], angle: 0 } : {}),
+      };
     setVertices((cur) => [...cur, vertex]);
   }, [pushHistory]);
 
@@ -777,7 +783,7 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
    * границе вершины рёбер (тип 'box') в новом положении.
    */
   const commitBox = useCallback(
-    (id: string, box: { x: number; y: number; w: number; h: number }) => {
+    (id: string, box: { x: number; y: number; w: number; h: number; angle?: number }) => {
       const geo = graphPointToLngLat(box.x, box.y);
       setVertices((cur) =>
         cur.map((v) => (v.id === id ? { ...v, ...box, lng: geo.lng, lat: geo.lat } : v)),
@@ -890,6 +896,13 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
     },
     [commitBox],
   );
+
+  /** Изменить угол поворота площадного объекта. */
+  const setVertexAngle = useCallback((id: string, angle: number) => {
+    const v = verticesRef.current.find((item) => item.id === id);
+    if (!v) return;
+    commitBox(id, { x: v.x, y: v.y, w: v.w ?? 0, h: v.h ?? 0, angle });
+  }, [commitBox]);
 
   /** Изменить позицию и размеры куста за один шаг (ресайз за угол). */
   const setVertexBox = useCallback(
@@ -1228,9 +1241,10 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
       uid: newUid(),
       label: `Лицензионный участок ${areaSeqRef.current}`,
       points: pts,
-      lngLat,
-    };
-    setAreas((cur) => [...cur, area]);
+        lngLat,
+        locked: false,
+      };
+      setAreas((cur) => [...cur, area]);
     setAreaDraft([]);
   }, []);
 
@@ -1254,8 +1268,9 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
           uid: newUid(),
           label: name || `Лицензионный участок ${areaSeqRef.current}`,
           points,
-          lngLat: polygon,
-        },
+            lngLat: polygon,
+            locked: false,
+          },
       ]);
     },
     [pushHistory],
@@ -1278,6 +1293,7 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
           label: area.name || `Лицензионный участок ${areaSeqRef.current}`,
           points: area.points.map((p) => lngLatToGraphPoint(p.lng, p.lat)),
           lngLat: area.points.map((p) => ({ lng: p.lng, lat: p.lat })),
+          locked: false,
         };
       });
       setAreas((cur) => [...cur, ...created]);
@@ -1718,12 +1734,20 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
     [pushHistory],
   );
 
+  /** Зафиксировать или разблокировать участок. */
+  const toggleAreaLocked = useCallback((areaId: string) => {
+    const area = areasRef.current.find((item) => item.id === areaId);
+    if (!area) return;
+    pushHistory();
+    setAreas((cur) => cur.map((item) => item.id === areaId ? { ...item, locked: !item.locked } : item));
+  }, [pushHistory]);
+
   /** Переместить одну вершину участка (индекс pointIndex) в мировую точку. */
   const moveAreaPoint = useCallback((areaId: string, pointIndex: number, x: number, y: number) => {
     const geo = graphPointToLngLat(x, y);
     setAreas((cur) =>
       cur.map((a) => {
-        if (a.id !== areaId) return a;
+        if (a.id !== areaId || a.locked) return a;
         const points = a.points.map((p, i) => (i === pointIndex ? { x, y } : p));
         const lngLat = a.lngLat.map((g, i) => (i === pointIndex ? geo : g));
         return { ...a, points, lngLat };
@@ -1735,7 +1759,7 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
   const moveArea = useCallback((areaId: string, dx: number, dy: number) => {
     setAreas((cur) =>
       cur.map((a) => {
-        if (a.id !== areaId) return a;
+        if (a.id !== areaId || a.locked) return a;
         const points = a.points.map((p) => ({ x: p.x + dx, y: p.y + dy }));
         const lngLat = points.map((p) => graphPointToLngLat(p.x, p.y));
         return { ...a, points, lngLat };
@@ -1752,7 +1776,7 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
       const clamped = Math.max(0.05, Math.min(50, scale));
       setAreas((cur) =>
         cur.map((a) => {
-          if (a.id !== areaId) return a;
+          if (a.id !== areaId || a.locked) return a;
           const points = a.points.map((p) => ({
             x: anchorX + (p.x - anchorX) * clamped,
             y: anchorY + (p.y - anchorY) * clamped,
@@ -1772,7 +1796,7 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
       const sin = Math.sin(deltaRad);
       setAreas((cur) =>
         cur.map((a) => {
-          if (a.id !== areaId) return a;
+          if (a.id !== areaId || a.locked) return a;
           const points = a.points.map((p) => {
             const dx = p.x - ox;
             const dy = p.y - oy;
@@ -1812,6 +1836,7 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
         lat: f.lat,
         w,
         h,
+        angle: f.angle_deg ? (f.angle_deg * Math.PI) / 180 : 0,
       };
     });
     // Восстановить мировые координаты (x/y) из lng/lat.
@@ -1877,6 +1902,7 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
       label: a.name,
       points: a.polygon.map(([lng, lat]) => lngLatToGraphPoint(lng, lat)),
       lngLat: a.polygon.map(([lng, lat]) => ({ lng, lat })),
+      locked: a.locked ?? false,
     }));
 
     setVertices(nextVertices);
@@ -1913,6 +1939,7 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
       setVertexPosition,
       setVertexSize,
       setVertexBox,
+      setVertexAngle,
       fluid,
       setFluid,
       pipelineClass,
@@ -1939,6 +1966,7 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
       cancelAreaDraft,
       moveAreaPoint,
       moveArea,
+      toggleAreaLocked,
       addImportedArea,
       addImportedAreas,
       renameVertex,
@@ -1982,6 +2010,7 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
       setVertexPosition,
       setVertexSize,
       setVertexBox,
+      setVertexAngle,
       fluid,
       pipelineClass,
       placePoint,
@@ -2005,6 +2034,7 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
       cancelAreaDraft,
       moveAreaPoint,
       moveArea,
+      toggleAreaLocked,
       addImportedArea,
       addImportedAreas,
       renameVertex,

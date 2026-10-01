@@ -212,6 +212,10 @@ export type DomainEntityAttributes = {
   source?: string;
   status?: 'running' | 'warning' | 'stopped';
   licenseArea?: string;
+  /** Периоды вывода из эксплуатации, хранятся вместе с параметрами сущности. */
+  shutdowns?: Array<{ start: string; end: string; reason: string }>;
+  /** Класс трубопровода в общих параметрах. */
+  pipelineClass?: PipelineClass;
   /** Тип трубопровода в общих параметрах. */
   pipelineType?: 'npp' | 'gp' | 'water';
   /** Протяжённость трубопровода в километрах. */
@@ -350,6 +354,8 @@ export type MapVertex = {
   w?: number;
   /** Высота прямоугольника (только для wellpad) */
   h?: number;
+  /** Угол поворота площадного объекта в радианах. */
+  angle?: number;
   owner?: string;
   condition?: string;
   period?: string;
@@ -459,6 +465,8 @@ export type LicenceArea = {
   points: { x: number; y: number }[];
   /** Гео-координаты вершин (для API/экспорта) */
   lngLat: { lng: number; lat: number }[];
+  /** Зафиксированный участок нельзя редактировать; старые данные считаются false. */
+  locked?: boolean;
 };
 
 /** Минимум вершин для замыкания полигона участка. */

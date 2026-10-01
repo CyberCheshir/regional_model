@@ -250,8 +250,8 @@ export type EntityDetails = z.infer<typeof EntityDetailsSchema>;
 export const ParameterPanelKindSchema = z.enum(['pipeline', 'facility', 'wellpad', 'node']);
 export type ParameterPanelKind = z.infer<typeof ParameterPanelKindSchema>;
 
-/** Тип продукта (колонки профиля продукции). */
-export const ProductTypeSchema = z.enum(['oil', 'gas', 'water', 'liquid']);
+/** Тип ряда профиля: флюид или технологический параметр. */
+export const ProductTypeSchema = z.enum(['oil', 'gas', 'water', 'liquid', 'pressure', 'temperature']);
 export type ProductType = z.infer<typeof ProductTypeSchema>;
 
 /** Вкладки панели параметров (иконки на левом рельсе). */

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react';
 import type { Network, Node, Options } from 'vis-network';
 import { useVisNetwork } from './useVisNetwork';
 import {
@@ -39,7 +39,7 @@ import { GhostPreview } from './GhostPreview';
 import { BasemapTiles } from './BasemapTiles';
 import { GeoMapOnly } from './GeoMapOnly';
 import { GeoGraphLayer } from './GeoGraphLayer';
-import { SelectionActionsBar } from './SelectionActionsBar';
+import { SelectionContextMenu } from './SelectionContextMenu';
 import { GeoGhostPreview } from './GeoGhostPreview';
 import { GeoFlowAnimation } from './GeoFlowAnimation';
 import { lngLatToGraphPoint, screenToGraphPoint } from './geo';
@@ -268,6 +268,8 @@ export type MapViewportProps = {
   children?: ReactNode;
   /** Режим разработчика (dev-оверлеи: координаты и т.п.) */
   devMode?: boolean;
+  /** Уведомить интерфейс после успешного объединения сегментов */
+  onMergeComplete?: (segmentCount: number) => void;
 };
 
 /**
@@ -282,9 +284,11 @@ export function MapViewport({
   onSelect,
   children,
   devMode = false,
+  onMergeComplete,
 }: MapViewportProps) {
   const { showLabels } = displaySettings;
   const directedGraph = displaySettings.directedGraph;
+  const [selectionMenu, setSelectionMenu] = useState<{ x: number; y: number } | null>(null);
   const {
     tool,
     setTool,
@@ -318,6 +322,7 @@ export function MapViewport({
     cancelAreaDraft,
     moveAreaPoint,
     moveArea,
+    toggleAreaLocked,
     selections,
     setSelections,
     toggleSelection,
@@ -1126,19 +1131,43 @@ export function MapViewport({
     groupDragRef.current = null;
   }, []);
 
-  // Число выделенных сегментов — для контекстной панели над картой.
+  // Контекстное меню по ПКМ: объединение сегментов или фиксация участка.
   const selectedSegmentCount = selections.filter((s) => s.kind === 'segment').length;
+  const selectedArea = selections.length === 1 && selections[0].kind === 'area'
+    ? areas.find((area) => area.id === selections[0].id)
+    : undefined;
+  const openSelectionMenu = (event: ReactMouseEvent<HTMLDivElement>) => {
+    if (event.button !== 2 || (selectedSegmentCount === 0 && !selectedArea) || isDrawing) return;
+    event.preventDefault();
+    setSelectionMenu({ x: event.clientX, y: event.clientY });
+  };
 
   return (
-    <div className="map-viewport" data-basemap={displaySettings.basemap} data-drawing={isDrawing ? tool : undefined}>
-      {/* Контекстная панель действий над выделением (над картой, сверху) */}
-      <SelectionActionsBar
-        segmentCount={selectedSegmentCount}
-        onMergeIntoPipeline={() => {
-          const ids = selections.filter((s) => s.kind === 'segment').map((s) => s.id);
-          mergeSegments(ids);
-        }}
-      />
+    <div
+      className="map-viewport"
+      data-basemap={displaySettings.basemap}
+      data-drawing={isDrawing ? tool : undefined}
+      onContextMenu={openSelectionMenu}
+      onClick={() => setSelectionMenu(null)}
+    >
+      {selectionMenu && (
+        <SelectionContextMenu
+          segmentCount={selectedSegmentCount}
+          areaLocked={selectedArea?.locked}
+          x={selectionMenu.x}
+          y={selectionMenu.y}
+          onToggleAreaLock={selectedArea ? () => {
+            toggleAreaLocked(selectedArea.id);
+            setSelectionMenu(null);
+          } : undefined}
+          onMerge={() => {
+            const ids = selections.filter((s) => s.kind === 'segment').map((s) => s.id);
+            const mergedId = mergeSegments(ids);
+            if (mergedId) onMergeComplete?.(ids.length);
+            setSelectionMenu(null);
+          }}
+        />
+      )}
       {/* ВРЕМЕННО: демонстрация ЧИСТОЙ карты (тайлы) без vis-network.
          Чтобы вернуть граф — переключите MAP_ONLY в false. */}
       {MAP_ONLY && (
@@ -1173,8 +1202,15 @@ export function MapViewport({
                 ? toggleSelection({ kind: 'area', id })
                 : setSelections([{ kind: 'area', id }])
             }
+            onAreaContextMenu={(id, x, y) => {
+              const area = areas.find((item) => item.id === id);
+              if (!area) return;
+              setSelections([{ kind: 'area', id }]);
+              setSelectionMenu({ x, y });
+            }}
             onAreaPointMove={(areaId, index, x, y) => moveAreaPoint(areaId, index, x, y)}
             onAreaMove={(areaId, dx, dy) => moveArea(areaId, dx, dy)}
+            onResize={(id, box) => setVertexBox(id, box)}
             selectedIds={highlightedVertexIds}
             selectedSegmentIds={highlightedSegmentIds}
             selectedTapIds={selections.filter((s) => s.kind === 'tap').map((s) => s.id)}
@@ -1276,7 +1312,6 @@ export function MapViewport({
             directed={displaySettings.directedGraph}
             showJoints={displaySettings.showEdgeJoints}
             showLabels={showLabels}
-            onResize={(id, box) => setVertexBox(id, box)}
           />
           {/* Призрак создаваемого элемента под курсором */}
           <GeoGhostPreview

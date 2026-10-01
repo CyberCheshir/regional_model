@@ -24,7 +24,7 @@ function formatNum(value: number | undefined): string {
   return value.toLocaleString('ru-RU', { maximumFractionDigits: 1 });
 }
 
-export function ProfilesTab() {
+export function ProfilesTab({ onNotify }: { onNotify?: (message: string) => void }) {
   const { vertices, pipelines, segments, taps } = useMapDrawing();
 
   // Список объектов добычи, подготовки и трубопроводов из «Групп элементов»
@@ -198,6 +198,7 @@ export function ProfilesTab() {
           onClick={() => {
             if (activeProfile) {
               downloadDomainProfile(activeProfile, `Профиль_${currentEntity}.json`);
+              onNotify?.(`Профиль выгружен: «${currentEntity}»`);
             }
           }}
         >

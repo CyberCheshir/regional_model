@@ -33,7 +33,7 @@ export function ProductTab({
 }: {
   profile: ProductProfile | null;
   showSideAxis?: boolean;
-  /** Загрузить профиль из файла (.xlsx/.xls/.csv) для выбранного объекта */
+  /** Загрузить профиль из файла (.xlsx/.xls/.csv): флюиды, давление и температура */
   onImportProfile?: ProfileImportHandler;
 }) {
   const [view, setView] = useState<View>('table');
@@ -182,7 +182,7 @@ function ProfileImportBar({ onImport }: { onImport: ProfileImportHandler }) {
         className="pp-add-btn"
         onClick={() => inputRef.current?.click()}
         disabled={loading}
-        title="Файл профиля этого объекта: столбцы Тип, Продукт, Ед.изм, далее годы (2026, 2027, …)"
+        title="Файл профиля: Тип, Продукт (Нефть/Газ/Вода/Давление/Температура), Ед.изм, далее годы (2026, 2027, …)"
       >
         {loading ? 'Загрузка…' : 'Загрузить профиль'}
       </button>
@@ -245,7 +245,7 @@ function ProfileTable({
   if (uniqueSeries.length === 0) {
     return (
       <div className="pp-muted" style={{ padding: '32px 16px', textAlign: 'center' }}>
-        Табличные данные профиля продукции пока не заполнены
+        Табличные данные профиля пока не заполнены
       </div>
     );
   }

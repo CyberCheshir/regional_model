@@ -59,6 +59,8 @@ export type GeoGraphLayerProps = {
   onSelectFitting?: (id: string, withShift: boolean) => void;
   /** Выбор участка кликом (withShift — добавить к выделению) */
   onSelectArea?: (id: string, withShift: boolean) => void;
+  /** ПКМ по участку открывает его контекстные действия без снятия выделения. */
+  onAreaContextMenu?: (id: string, x: number, y: number) => void;
   /** Перетаскивание ВЕРШИНЫ участка: id, индекс точки, новая мировая точка */
   onAreaPointMove?: (areaId: string, pointIndex: number, x: number, y: number) => void;
   /** Перетаскивание ВСЕГО участка на дельту (dx, dy) в мировых единицах */
@@ -202,6 +204,7 @@ export function GeoGraphLayer({
   selectedFittingIds = [],
   onSelectFitting,
   onSelectArea,
+  onAreaContextMenu,
   onAreaPointMove,
   onAreaMove,
   onAreaScale,
@@ -231,6 +234,7 @@ export function GeoGraphLayer({
   // Лассо выделения (Shift + ЛКМ): экранные точки рисуем, при отпускании —
   // конвертируем в мировые и отдаём наружу.
   const [lasso, setLasso] = useState<{ x: number; y: number }[] | null>(null);
+  const [draggingVertexId, setDraggingVertexId] = useState<string | null>(null);
   // Актуальные camera/onLasso для лассо-эффекта (навешивается один раз).
   const cameraRef = useRef(camera);
   cameraRef.current = camera;
@@ -327,6 +331,7 @@ export function GeoGraphLayer({
         selectedIds.includes(v.id) && selectedIds.length > 1
           ? vertices.filter((it) => selectedIds.includes(it.id)).map((it) => ({ id: it.id, x: it.x, y: it.y }))
           : null;
+      setDraggingVertexId(v.id);
       const originX = v.x;
       const originY = v.y;
       const target = e.currentTarget as HTMLElement;
@@ -349,6 +354,7 @@ export function GeoGraphLayer({
         target.removeEventListener('pointerup', finish);
         target.removeEventListener('pointercancel', finish);
         target.releasePointerCapture(ev.pointerId);
+        setDraggingVertexId(null);
       };
       target.addEventListener('pointermove', onMovePtr);
       target.addEventListener('pointerup', finish);
@@ -444,6 +450,54 @@ export function GeoGraphLayer({
   );
 
   // --- Ресайз за ручку (размеры в метрах/мировых единицах) ---
+  /* Вращение площадных объектов отключено по требованиям интерфейса. */
+  /* const startRotate = useCallback(
+    (e: ReactPointerEvent, v: MapVertex) => {
+      if (!camera || !onRotate) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const host = (e.currentTarget as HTMLElement).closest('.geo-graph-layer') as HTMLElement | null;
+      const rect = host?.getBoundingClientRect();
+      if (!rect) return;
+      // Центр объекта уже хранится в мировых координатах; не передаём его
+      // в screenToWorld как экранную координату.
+      const center = { x: v.x, y: v.y };
+      const first = screenToWorld(e.clientX, e.clientY, rect);
+      if (!center || !first) return;
+      const initialPointerAngle = Math.atan2(first.y - center.y, first.x - center.x);
+      const initialObjectAngle = v.angle ?? 0;
+      onBeginAction?.();
+      const target = e.currentTarget as HTMLElement;
+      target.setPointerCapture(e.pointerId);
+      const move = (ev: PointerEvent) => {
+        const current = screenToWorld(ev.clientX, ev.clientY, rect);
+        if (!current) return;
+        const currentPointerAngle = Math.atan2(current.y - center.y, current.x - center.x);
+        // Считаем угол всегда от исходного положения, а не от предыдущего
+        // кадра. Это исключает накопление ошибки и визуальный «тремор».
+        let delta = currentPointerAngle - initialPointerAngle;
+        if (delta > Math.PI) delta -= Math.PI * 2;
+        if (delta < -Math.PI) delta += Math.PI * 2;
+        let nextAngle = initialObjectAngle + delta;
+        if (ev.shiftKey) {
+          const step = Math.PI / 12;
+          nextAngle = Math.round(nextAngle / step) * step;
+        }
+        onRotate(v.id, nextAngle);
+      };
+      const finish = (ev: PointerEvent) => {
+        target.removeEventListener('pointermove', move);
+        target.removeEventListener('pointerup', finish);
+        target.removeEventListener('pointercancel', finish);
+        target.releasePointerCapture(ev.pointerId);
+      };
+      target.addEventListener('pointermove', move);
+      target.addEventListener('pointerup', finish);
+      target.addEventListener('pointercancel', finish);
+    },
+    [camera, onRotate, onBeginAction, screenToWorld],
+  ); */
+
   const startResize = useCallback(
     (e: ReactPointerEvent, v: MapVertex, dir: HandleDir) => {
       if (!camera || !onResize) return;
@@ -459,6 +513,7 @@ export function GeoGraphLayer({
         bottom: v.y + (v.h ?? 0) / 2,
       };
       onBeginAction?.(); // один снимок истории на весь ресайз
+      setDraggingVertexId(v.id);
       const target = e.currentTarget as HTMLElement;
       target.setPointerCapture(e.pointerId);
       const onMovePtr = (ev: PointerEvent) => {
@@ -482,6 +537,7 @@ export function GeoGraphLayer({
         target.removeEventListener('pointerup', finish);
         target.removeEventListener('pointercancel', finish);
         target.releasePointerCapture(ev.pointerId);
+        setDraggingVertexId(null);
       };
       target.addEventListener('pointermove', onMovePtr);
       target.addEventListener('pointerup', finish);
@@ -607,16 +663,45 @@ export function GeoGraphLayer({
             .join(' ');
           const selected = selectedAreaIds.includes(area.id);
           return (
-            <polygon
-              key={area.id}
-              className={`geo-graph-layer__area${selected ? ' is-selected' : ''}`}
+            <g key={area.id}>
+              {area.locked && (
+                <polygon
+                  className="geo-graph-layer__area-hit-area"
+                  points={pts}
+                  fill="none"
+                  stroke="transparent"
+                  strokeWidth={14}
+                  pointerEvents="stroke"
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onAreaContextMenu?.(area.id, e.clientX, e.clientY);
+                  }}
+                  onPointerDown={(e) => {
+                    e.stopPropagation();
+                    if (e.button === 0) onSelectArea?.(area.id, e.shiftKey);
+                  }}
+                />
+              )}
+              <polygon
+              className={`geo-graph-layer__area${selected ? ' is-selected' : ''}${area.locked ? ' is-locked' : ''}`}
               points={pts}
               // Клик — выделить участок (для редактирования/удаления).
+              // Зафиксированный участок выбирается только по линии границы.
+              // Внутренняя область не перехватывает клики, чтобы не менять выделение.
+              fill={area.locked ? 'none' : undefined}
+              pointerEvents={area.locked ? 'stroke' : 'all'}
+              strokeDasharray={area.locked ? '7 5' : undefined}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onAreaContextMenu?.(area.id, e.clientX, e.clientY);
+              }}
               onPointerDown={(e) => {
                 e.stopPropagation();
                 onSelectArea?.(area.id, e.shiftKey);
-                // Перетаскивание всего участка за тело полигона.
-                if (!onAreaMove) return;
+                // Зафиксированный участок можно выделить, но нельзя перемещать.
+                if (area.locked || !onAreaMove) return;
                 const host = (e.currentTarget.ownerSVGElement?.parentElement) ?? null;
                 const rect = host?.getBoundingClientRect();
                 if (!rect) return;
@@ -643,12 +728,13 @@ export function GeoGraphLayer({
                 target.addEventListener('pointercancel', finish);
               }}
               onPointerUp={(e) => e.stopPropagation()}
-            />
+              />
+            </g>
           );
         })}
         {/* Вершины выделенных участков — ручки для правки формы полигона */}
         {areas
-          .filter((a) => selectedAreaIds.includes(a.id))
+          .filter((a) => selectedAreaIds.includes(a.id) && !a.locked)
           .map((area) =>
             area.points.map((pt, index) => {
               const sp = graphPointToScreen(pt, camera);
@@ -691,7 +777,7 @@ export function GeoGraphLayer({
             угловые ручки — пропорционально, Shift — снап угла к 15°. */}
         {!readOnly &&
           areas
-            .filter((a) => selectedAreaIds.includes(a.id))
+            .filter((a) => selectedAreaIds.includes(a.id) && !a.locked)
             .map((area) => {
               // AABB участка в ЭКРАННЫХ координатах (рамка вокруг полигона).
               const screenPts = area.points.map((p) => graphPointToScreen(p, camera));
@@ -878,6 +964,8 @@ export function GeoGraphLayer({
                   // по карте (точка присоединения / продолжение полилинии).
                   if (drawingMode && !tapMode) return;
                   e.stopPropagation();
+                  // ПКМ открывает контекстное меню карты и не должна менять текущее выделение.
+                  if (e.button !== 0) return;
                   // В режиме врезки клик по ребру сразу ставит врезку в этой точке
                   if (tapMode) {
                     const host = (e.currentTarget.ownerSVGElement?.parentElement) ?? null;
@@ -987,14 +1075,15 @@ export function GeoGraphLayer({
         // (при zoom ≤ 8 названия нечитаемы и только зашумляют карту).
         const showLabel = showLabels && camera.zoom > MIN_ZOOM_FOR_LABEL;
         return (
-          <div
-            key={v.id}
-            className={`geo-graph-layer__vertex geo-graph-layer__vertex--${v.kind}${selected ? ' is-selected' : ''}${highlighted ? ' is-snap-target' : ''}`}
+            <div
+              key={v.id}
+              className={`geo-graph-layer__vertex geo-graph-layer__vertex--${v.kind}${selected ? ' is-selected' : ''}${highlighted ? ' is-snap-target' : ''}${draggingVertexId === v.id ? ' is-dragging' : ''}`}
             style={{
               left: p.x,
               top: p.y,
               width: w || undefined,
               height: h || undefined,
+              transform: `translate(-50%, -50%) rotate(${v.angle ?? 0}rad)`,
             }}
             onPointerDown={(e) => {
               // Режим СОЗДАНИЯ: клик по объекту — не выделение, а точка
@@ -1023,19 +1112,22 @@ export function GeoGraphLayer({
               <span className="geo-graph-layer__vertex-label">{v.label}</span>
             )}
             {selected &&
-              isBoxVertex(v.kind) &&
-              HANDLES.map((dir) => (
-                <span
-                  key={dir}
-                  className={`geo-graph-layer__handle geo-graph-layer__handle--${dir}`}
-                  style={{ cursor: CURSOR[dir] }}
-                  onPointerDown={(e) => startResize(e, v, dir)}
-                  onPointerUp={(e) => e.stopPropagation()}
-                />
-              ))}
-          </div>
-        );
-      })}
+             isBoxVertex(v.kind) &&
+             <>
+               
+                                  {HANDLES.map((dir) => (
+                                    <span
+                                      key={dir}
+                                      className={`geo-graph-layer__handle geo-graph-layer__handle--${dir}`}
+                                      style={{ cursor: CURSOR[dir] }}
+                                      onPointerDown={(e) => startResize(e, v, dir)}
+                                      onPointerUp={(e) => e.stopPropagation()}
+                                    />
+                                            ))}
+                                          </>}
+                                        </div>
+                                      );
+                                  })}
 
       {/* Тройники */}
       {fittings.map((f) => {

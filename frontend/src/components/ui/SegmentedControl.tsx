@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import './ui.css';
 
 export type SegmentedOption<T extends string> = {
