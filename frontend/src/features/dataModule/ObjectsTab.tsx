@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AppIcon } from '../../components/AppIcon';
-import type { BatchEditParams, BatchEditScope, ModelObject, ObjectTypeFilter } from './types';
+import type { BatchEditParams, BatchEditScope, ModelObject, ObjectTypeFilter, ObjectStatus } from './types';
 import { useMapDrawing } from '../map/mapDrawing';
 import { buildElementGroups, buildModelObjects } from '../../domain/elementGroups';
 import './ObjectsTab.css';
@@ -11,6 +11,19 @@ export type ObjectsTabProps = {
   /** Открыть карточку объекта / инспектор */
   onOpenObject?: (obj: ModelObject) => void;
 };
+
+type ObjectSortKey = 'name' | 'category' | 'status' | 'period';
+type SortDirection = 'asc' | 'desc';
+
+function uniqueValues(values: Array<string | undefined>): string[] {
+  return [...new Set(values.filter((value): value is string => Boolean(value)))].sort((a, b) =>
+    a.localeCompare(b, 'ru-RU', { sensitivity: 'base' }),
+  );
+}
+
+function sortValue(item: ModelObject, key: ObjectSortKey): string {
+  return item[key] || '—';
+}
 
 export function ObjectsTab({ onShowOnMap, onOpenObject }: ObjectsTabProps) {
   const { vertices, pipelines, segments, taps, batchUpdateEntityParams } = useMapDrawing();
@@ -74,6 +87,11 @@ export function ObjectsTab({ onShowOnMap, onOpenObject }: ObjectsTabProps) {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<ObjectTypeFilter>('all');
+  const [statusFilter, setStatusFilter] = useState<ObjectStatus>('');
+  const [ownerFilter, setOwnerFilter] = useState('all');
+  const [sourceFilter, setSourceFilter] = useState('all');
+  const [sortKey, setSortKey] = useState<ObjectSortKey>('name');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Состояние блока группового редактирования
@@ -86,31 +104,43 @@ export function ObjectsTab({ onShowOnMap, onOpenObject }: ObjectsTabProps) {
   });
   const [appliedToast, setAppliedToast] = useState<string | null>(null);
 
-  // Фильтрация объектов
+  const filterOptions = useMemo(() => ({
+    owners: uniqueValues(items.map((item) => item.owner)),
+    sources: uniqueValues(items.map((item) => item.source)),
+  }), [items]);
+
+  const hasActiveFilters = Boolean(
+    searchQuery.trim() || typeFilter !== 'all' || statusFilter || ownerFilter !== 'all' || sourceFilter !== 'all',
+  );
+
+  // Фильтрация и сортировка выполняются только на представлении списка; доменные данные не изменяются.
   const filteredItems = useMemo(() => {
-    return items.filter((item) => {
-      // Фильтр по типу/категории
+    const normalizedQuery = searchQuery.trim().toLocaleLowerCase('ru-RU');
+    const result = items.filter((item) => {
       if (typeFilter === 'wellpad' && item.category !== 'Объект добычи') return false;
       if (typeFilter === 'facility' && item.category !== 'Площадной объект') return false;
       if (typeFilter === 'pipeline' && item.category !== 'Трубопровод') return false;
       if (typeFilter === 'node' && item.category !== 'Узел') return false;
+      if (statusFilter && item.status !== statusFilter) return false;
+      if (ownerFilter !== 'all' && item.owner !== ownerFilter) return false;
+      if (sourceFilter !== 'all' && item.source !== sourceFilter) return false;
 
-      // Поиск по подстроке
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        const matchName = item.name.toLowerCase().includes(q);
-        const matchCat = item.category.toLowerCase().includes(q);
-        const matchType = item.typeClass.toLowerCase().includes(q);
-        const matchSource = item.source.toLowerCase().includes(q);
-        const matchOwner = (item.owner ?? '').toLowerCase().includes(q);
-        if (!matchName && !matchCat && !matchType && !matchSource && !matchOwner) {
-          return false;
-        }
+      if (normalizedQuery) {
+        const searchable = [item.name, item.category, item.typeClass, item.source, item.owner ?? '']
+          .join(' ')
+          .toLocaleLowerCase('ru-RU');
+        if (!searchable.includes(normalizedQuery)) return false;
       }
-
       return true;
     });
-  }, [items, typeFilter, searchQuery]);
+
+    return result.sort((left, right) => {
+      const leftValue = sortValue(left, sortKey);
+      const rightValue = sortValue(right, sortKey);
+      const comparison = leftValue.localeCompare(rightValue, 'ru-RU', { numeric: true, sensitivity: 'base' });
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+  }, [items, typeFilter, statusFilter, ownerFilter, sourceFilter, searchQuery, sortKey, sortDirection]);
 
   // Выбор объектов чекбоксами
   const allFilteredSelected =
@@ -212,79 +242,104 @@ export function ObjectsTab({ onShowOnMap, onOpenObject }: ObjectsTabProps) {
 
   return (
     <div className="objects-tab">
-      {/* 1. Верхняя панель: поиск + фильтры по типам + кнопка группового редактирования */}
-      <div className="objects-tab__topbar">
-        <div className="objects-tab__topbar-left">
-          <div className="objects-tab__search-wrap">
-            <span className="objects-tab__search-icon">
-              <AppIcon name="search" size={16} />
-            </span>
-            <input
-              type="text"
-              className="objects-tab__search-input"
-              placeholder="Поиск по объектам, кодам и типам"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+      <section className="objects-tab__toolbar" aria-label="Фильтры объектов">
+        <div className="objects-tab__toolbar-head">
+          <div>
+            <div className="objects-tab__eyebrow">ОБЪЕКТЫ МОДЕЛИ</div>
+            <h2 className="objects-tab__toolbar-title">Список объектов</h2>
+            <p className="objects-tab__toolbar-caption">Найдите, отфильтруйте и выберите элементы модели</p>
           </div>
-
-          <div className="objects-tab__filter-pills" role="tablist">
+          <div className="objects-tab__toolbar-actions">
+            <span className="objects-tab__result-count" aria-live="polite">
+              <strong>{filteredItems.length}</strong> из {items.length}
+            </span>
             <button
               type="button"
-              className={`objects-tab__filter-pill${typeFilter === 'all' ? ' is-active' : ''}`}
-              onClick={() => setTypeFilter('all')}
+              className="objects-tab__btn-batch-toggle"
+              onClick={() => document.getElementById('batch-edit-card')?.scrollIntoView({ behavior: 'smooth' })}
             >
-              Все типы
-            </button>
-            <button
-              type="button"
-              className={`objects-tab__filter-pill${typeFilter === 'wellpad' ? ' is-active' : ''}`}
-              onClick={() => setTypeFilter('wellpad')}
-            >
-              Добыча
-            </button>
-            <button
-              type="button"
-              className={`objects-tab__filter-pill${typeFilter === 'facility' ? ' is-active' : ''}`}
-              onClick={() => setTypeFilter('facility')}
-            >
-              Площадки
-            </button>
-            <button
-              type="button"
-              className={`objects-tab__filter-pill${typeFilter === 'pipeline' ? ' is-active' : ''}`}
-              onClick={() => setTypeFilter('pipeline')}
-            >
-              Трубопроводы
-            </button>
-            <button
-              type="button"
-              className={`objects-tab__filter-pill${typeFilter === 'node' ? ' is-active' : ''}`}
-              onClick={() => setTypeFilter('node')}
-            >
-              Узлы
+              Групповое редактирование
             </button>
           </div>
         </div>
 
-        <button
-          type="button"
-          className="objects-tab__btn-batch-toggle"
-          onClick={() => {
-            // Быстро переключить фокус на правую карточку
-            const el = document.getElementById('batch-edit-card');
-            el?.scrollIntoView({ behavior: 'smooth' });
-          }}
-        >
-          Групповое редактирование
-        </button>
-      </div>
+        <div className="objects-tab__toolbar-row">
+          <div className="objects-tab__search-wrap">
+            <span className="objects-tab__search-icon"><AppIcon name="search" size={16} /></span>
+            <input
+              type="text"
+              className="objects-tab__search-input"
+              placeholder="Поиск по названию, типу, владельцу или источнику"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              aria-label="Поиск по объектам"
+            />
+            {searchQuery && (
+              <button type="button" className="objects-tab__search-clear" onClick={() => setSearchQuery('')} aria-label="Очистить поиск">×</button>
+            )}
+          </div>
+          <label className="objects-tab__sort-control">
+            <span>Сортировать</span>
+            <select className="objects-tab__filter-select" value={sortKey} onChange={(event) => setSortKey(event.target.value as ObjectSortKey)}>
+              <option value="name">По названию</option>
+              <option value="category">По категории</option>
+              <option value="status">По статусу</option>
+              <option value="period">По периоду</option>
+            </select>
+            <button
+              type="button"
+              className="objects-tab__sort-direction"
+              onClick={() => setSortDirection((current) => current === 'asc' ? 'desc' : 'asc')}
+              aria-label={sortDirection === 'asc' ? 'По возрастанию' : 'По убыванию'}
+              title={sortDirection === 'asc' ? 'По возрастанию' : 'По убыванию'}
+            >{sortDirection === 'asc' ? '↑' : '↓'}</button>
+          </label>
+        </div>
+
+        <div className="objects-tab__filter-row">
+          <span className="objects-tab__filter-label">Тип объекта</span>
+          <div className="objects-tab__filter-pills" role="tablist" aria-label="Фильтр по типу">
+            {([
+              ['all', 'Все'], ['wellpad', 'Добыча'], ['facility', 'Площадки'],
+              ['pipeline', 'Трубопроводы'], ['node', 'Узлы'],
+            ] as const).map(([value, label]) => (
+              <button key={value} type="button" className={`objects-tab__filter-pill${typeFilter === value ? ' is-active' : ''}`} onClick={() => setTypeFilter(value)}>
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="objects-tab__filter-row objects-tab__filter-row--secondary">
+          <span className="objects-tab__filter-label">Дополнительно</span>
+          <div className="objects-tab__advanced-filters">
+            <select className="objects-tab__filter-select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as ObjectStatus)} aria-label="Фильтр по статусу">
+              <option value="">Все статусы</option><option value="Готов">Готов</option><option value="Проверить">Проверить</option>
+            </select>
+            <select className="objects-tab__filter-select" value={ownerFilter} onChange={(event) => setOwnerFilter(event.target.value)} aria-label="Фильтр по владельцу">
+              <option value="all">Все владельцы</option>
+              {filterOptions.owners.map((owner) => <option key={owner} value={owner}>{owner}</option>)}
+            </select>
+            <select className="objects-tab__filter-select" value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value)} aria-label="Фильтр по источнику">
+              <option value="all">Все источники</option>
+              {filterOptions.sources.map((source) => <option key={source} value={source}>{source}</option>)}
+            </select>
+            {hasActiveFilters && <button type="button" className="objects-tab__btn-reset" onClick={() => { setSearchQuery(''); setTypeFilter('all'); setStatusFilter(''); setOwnerFilter('all'); setSourceFilter('all'); }}>Сбросить фильтры</button>}
+          </div>
+        </div>
+      </section>
 
       {/* 2. Основная сетка: Таблица объектов слева + Панель параметров справа */}
       <div className="objects-tab__grid">
         {/* Левая карточка: Список объектов */}
-        <div className="objects-tab__card">
-          <div className="objects-tab__eyebrow">ОБЪЕКТЫ МОДЕЛИ</div>
+        <div className="objects-tab__card objects-tab__card--table">
+          <div className="objects-tab__table-meta">
+            <div>
+              <span className="objects-tab__table-title">Результаты поиска</span>
+              <span className="objects-tab__table-subtitle">Выберите строки для группового изменения</span>
+            </div>
+            <span className="objects-tab__selection-counter">Выбрано: <strong>{selectedIds.size}</strong></span>
+          </div>
 
           <div className="objects-tab__table-wrap">
             <table className="objects-tab__table">

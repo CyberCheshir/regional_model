@@ -7,24 +7,95 @@
   width: 100%;
 }
 
-/* Верхняя панель фильтров и поиска */
-.objects-tab__topbar {
-  background-color: #ffffff;
-  border-radius: 16px;
-  padding: 12px 20px;
+/* Панель управления списком: иерархия, группировка и спокойная плотность */
+.objects-tab__toolbar {
+  background: #ffffff;
+  border: 1px solid #e6ebf2;
+  border-radius: 18px;
+  padding: 20px 22px 18px;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06);
+}
+
+.objects-tab__toolbar-head,
+.objects-tab__toolbar-row,
+.objects-tab__filter-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 16px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.objects-tab__toolbar-head {
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #edf1f5;
+}
+
+.objects-tab__toolbar-title {
+  margin: -9px 0 3px;
+  color: #172033;
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+.objects-tab__toolbar-caption {
+  margin: 0;
+  color: #718096;
+  font-size: 12.5px;
+}
+
+.objects-tab__toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.objects-tab__toolbar-row {
+  padding: 16px 0 14px;
+}
+
+.objects-tab__filter-row {
+  min-height: 42px;
+  padding: 7px 0;
+}
+
+.objects-tab__filter-row--secondary {
+  border-top: 1px solid #f0f3f7;
+}
+
+.objects-tab__filter-label {
+  width: 104px;
+  flex: 0 0 104px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.objects-tab__topbar-left,
+.objects-tab__topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
 }
 
 .objects-tab__topbar-left {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   flex-wrap: wrap;
   flex: 1;
+  min-width: 0;
+}
+
+.objects-tab__topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .objects-tab__search-wrap {
@@ -32,9 +103,22 @@
   display: flex;
   align-items: center;
   min-width: 280px;
-  max-width: 360px;
+  max-width: 620px;
   flex: 1;
 }
+
+.objects-tab__search-clear {
+  position: absolute;
+  right: 9px;
+  border: 0;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.objects-tab__search-clear:hover { color: #334155; }
 
 .objects-tab__search-icon {
   position: absolute;
@@ -98,6 +182,114 @@
   font-weight: 600;
 }
 
+.objects-tab__advanced-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.objects-tab__filter-select {
+  min-height: 32px;
+  border: 1px solid #d8e0ea;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #334155;
+  padding: 5px 28px 5px 10px;
+  font-size: 12.5px;
+  cursor: pointer;
+  outline: none;
+}
+
+.objects-tab__filter-select:focus {
+  border-color: #99c2f0;
+  box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.1);
+}
+
+.objects-tab__sort-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #64748b;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.objects-tab__sort-direction {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #d8e0ea;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #0066cc;
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.objects-tab__sort-direction:hover,
+.objects-tab__btn-reset:hover {
+  background: #f0f7ff;
+  border-color: #99c2f0;
+}
+
+.objects-tab__btn-reset {
+  min-height: 32px;
+  border: 1px solid #d8e0ea;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #0066cc;
+  padding: 5px 10px;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+.objects-tab__result-count {
+  color: #64748b;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.objects-tab__result-count strong {
+  color: #172033;
+  font-size: 15px;
+}
+
+.objects-tab__table-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 16px;
+}
+
+.objects-tab__table-title,
+.objects-tab__table-subtitle {
+  display: block;
+}
+
+.objects-tab__table-title {
+  color: #172033;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.objects-tab__table-subtitle {
+  margin-top: 3px;
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.objects-tab__selection-counter {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #f1f6fc;
+  color: #60758e;
+  font-size: 12px;
+}
+
+.objects-tab__selection-counter strong { color: #0066cc; }
+
 .objects-tab__btn-batch-toggle {
   border: 1px solid #d0d7de;
   background-color: #ffffff;
@@ -130,11 +322,47 @@
   }
 }
 
+@media (max-width: 900px) {
+  .objects-tab__toolbar-head,
+  .objects-tab__toolbar-row,
+  .objects-tab__filter-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .objects-tab__toolbar-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .objects-tab__search-wrap,
+  .objects-tab__sort-control,
+  .objects-tab__advanced-filters {
+    width: 100%;
+    max-width: none;
+  }
+
+  .objects-tab__sort-control .objects-tab__filter-select {
+    flex: 1;
+  }
+
+  .objects-tab__filter-label {
+    width: auto;
+    flex-basis: auto;
+  }
+
+  .objects-tab__filter-pills,
+  .objects-tab__advanced-filters {
+    justify-content: flex-start;
+  }
+}
+
 /* Карточки */
 .objects-tab__card {
   background-color: #ffffff;
-  border-radius: 20px;
-  padding: 24px;
+  border: 1px solid #e6ebf2;
+  border-radius: 18px;
+  padding: 22px;
   display: flex;
   flex-direction: column;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
@@ -152,7 +380,10 @@
 /* Таблица объектов */
 .objects-tab__table-wrap {
   width: 100%;
-  overflow-x: auto;
+  max-height: min(58vh, 620px);
+  overflow: auto;
+  border: 1px solid #edf1f5;
+  border-radius: 12px;
 }
 
 .objects-tab__table {
@@ -162,8 +393,12 @@
 }
 
 .objects-tab__table th {
-  padding: 10px 8px;
-  font-size: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 11px 10px;
+  background: #f8fafc;
+  font-size: 11px;
   font-weight: 600;
   color: #64748b;
   border-bottom: 1px solid #edf2f7;
@@ -171,7 +406,7 @@
 }
 
 .objects-tab__table td {
-  padding: 12px 8px;
+  padding: 13px 10px;
   font-size: 13px;
   border-bottom: 1px solid #f1f5f9;
   vertical-align: middle;
@@ -186,6 +421,14 @@
 
 .objects-tab__table tbody tr:hover td {
   background-color: #f8fafc;
+}
+
+.objects-tab__table tbody tr:focus-within td {
+  background-color: #f1f6fc;
+}
+
+.objects-tab__table tbody tr.is-selected {
+  box-shadow: inset 3px 0 0 #0066cc;
 }
 
 .objects-tab__table tbody tr.is-selected td {
