@@ -291,6 +291,11 @@ type MapDrawingState = {
   applyPlatformCoordinates: (items: PlatformImportItem[]) => { updatedCount: number; createdCount: number };
   /** Применить профили добычи/поставки («добыча-поставка.xlsx») */
   applyEntityProfiles: (items: ProfileImportItem[]) => { updatedCount: number };
+  /**
+   * Применить профиль к ОДНОМУ объекту по id (загрузка из панели свойств).
+   * Для трубопровода профиль передаётся и его сегментам (как в applyEntityProfiles).
+   */
+  applyEntityProfileById: (id: string, item: ProfileImportItem, source: string) => { updated: boolean };
   /** Применить высотные отметки и свойства трасс («параметры по длине трубопроводов.xlsx») */
   applyPipelineElevations: (items: ElevationImportItem[]) => { updatedCount: number };
 
@@ -1599,6 +1604,71 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
     [pushHistory],
   );
 
+  /** Применить профиль к одному объекту по id (вершина или трубопровод + его сегменты). */
+  const applyEntityProfileById = useCallback(
+    (id: string, item: ProfileImportItem, source: string): { updated: boolean } => {
+      const profileAttrs = {
+        productProfile: item.profile,
+        period: item.period,
+        source,
+        supplyProfiles: item.rawRows,
+      };
+
+      const isVertex = verticesRef.current.some((v) => v.id === id);
+      const isPipeline = pipelinesRef.current.some((p) => p.id === id);
+      if (!isVertex && !isPipeline) return { updated: false };
+
+      pushHistory();
+
+      if (isVertex) {
+        setVertices((cur) =>
+          cur.map((v) =>
+            v.id === id
+              ? {
+                  ...v,
+                  period: item.period,
+                  source,
+                  attributes: { ...(v.attributes || {}), ...profileAttrs },
+                }
+              : v,
+          ),
+        );
+        return { updated: true };
+      }
+
+      const fluid = toDrainFluid(item.primaryFluid || 'oil');
+      const nextPipelines = pipelinesRef.current.map((p) =>
+        p.id === id
+          ? {
+              ...p,
+              fluid,
+              period: item.period,
+              source,
+              attributes: { ...(p.attributes || {}), ...profileAttrs },
+            }
+          : p,
+      );
+      setPipelines(nextPipelines);
+      pipelinesRef.current = nextPipelines;
+
+      setSegments((cur) =>
+        cur.map((s) =>
+          s.pipelineId === id
+            ? {
+                ...s,
+                fluid,
+                period: item.period,
+                source,
+                attributes: { ...(s.attributes || {}), ...profileAttrs },
+              }
+            : s,
+        ),
+      );
+      return { updated: true };
+    },
+    [pushHistory],
+  );
+
   /** Применить высотные отметки и параметры трасс («параметры по длине трубопроводов.xlsx») */
   const applyPipelineElevations = useCallback(
     (items: ElevationImportItem[]): { updatedCount: number } => {
@@ -1881,6 +1951,7 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
       batchUpdateEntityParams,
       applyPlatformCoordinates,
       applyEntityProfiles,
+      applyEntityProfileById,
       applyPipelineElevations,
       scaleArea,
       rotateArea,
@@ -1946,6 +2017,7 @@ export function MapDrawingProvider({ children }: { children: ReactNode }) {
       batchUpdateEntityParams,
       applyPlatformCoordinates,
       applyEntityProfiles,
+      applyEntityProfileById,
       applyPipelineElevations,
       scaleArea,
       rotateArea,

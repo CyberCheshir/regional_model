@@ -18,7 +18,7 @@ import { PanelTabRail } from './parts';
 import { ParameterPanelHeader } from './ParameterPanelHeader';
 import { GeneralTab } from './GeneralTab';
 import { CalendarTab } from './CalendarTab';
-import { ProductTab } from './ProductTab';
+import { ProductTab, type ProfileImportHandler } from './ProductTab';
 import { HydraulicTab } from './HydraulicTab';
 import { AnalyticsTab } from './AnalyticsTab';
 import './ParameterPanel.css';
@@ -58,6 +58,8 @@ export type ParameterPanelProps = {
   onAddShutdown?: () => void;
   /** Перейти в гидравлический расчёт (заготовка) */
   onOpenCalc?: () => void;
+  /** Загрузить профиль продукции из файла для выбранного объекта (вкладка «Профиль продукции») */
+  onImportProfile?: ProfileImportHandler;
   loading?: boolean;
   error?: Error | null;
   onRetry?: () => void;
@@ -78,6 +80,7 @@ export function ParameterPanel({
   onPipelineAdvancedChange,
   onAddShutdown,
   onOpenCalc,
+  onImportProfile,
   loading = false,
   error = null,
   onRetry,
@@ -137,6 +140,7 @@ export function ParameterPanel({
           onNavigateToRelation={onNavigateToRelation}
           onAddShutdown={onAddShutdown}
           onOpenCalc={onOpenCalc}
+          onImportProfile={onImportProfile}
         />
       </div>
     );
@@ -190,6 +194,7 @@ function TabContent({
   onNavigateToRelation,
   onAddShutdown,
   onOpenCalc,
+  onImportProfile,
 }: {
   tab: ParameterTabId;
   data: ReturnType<typeof buildParameterPanelData>;
@@ -211,6 +216,7 @@ function TabContent({
   onNavigateToRelation: (id: string) => void;
   onAddShutdown?: () => void;
   onOpenCalc?: () => void;
+  onImportProfile?: ProfileImportHandler;
 }) {
   switch (tab) {
     case 'general':
@@ -238,7 +244,13 @@ function TabContent({
       );
     case 'product':
       return (
-        <ProductTab profile={data.productProfile} showSideAxis={data.panelKind === 'facility'} />
+        <ProductTab
+          // Новый объект — свежее состояние вкладки (статус загрузки не переносится между объектами).
+          key={data.entity.id}
+          profile={data.productProfile}
+          showSideAxis={data.panelKind === 'facility'}
+          onImportProfile={onImportProfile}
+        />
       );
     case 'hydraulic':
       return <HydraulicTab calc={data.hydraulic} onOpenCalc={onOpenCalc} />;

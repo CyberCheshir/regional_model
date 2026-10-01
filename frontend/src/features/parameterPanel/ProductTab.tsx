@@ -3,20 +3,38 @@
  * с единицами измерения, профиль по годам (таблица) или столбцы с линией
  * ограничения (график) + tooltip.
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ProductProfile, ProductSeries, ProductType } from '../../domain/types';
 import { PanelSection } from './parts';
 import { PRODUCT_COLOR, PRODUCT_LABEL } from './productMeta';
+import {
+  assignAxes,
+  chooseIntervals,
+  formatTick,
+  niceScale,
+  prettyUnit,
+  type AxisScale,
+  type AxisSide,
+} from './chartScale';
 
 type View = 'table' | 'graph';
+
+/** Итог загрузки профиля из файла для выбранного объекта. */
+export type ProfileImportResult = { ok: true; message: string } | { ok: false; message: string };
+
+/** Колбэк загрузки профиля: разбор файла и запись в модель выполняет вызывающая сторона. */
+export type ProfileImportHandler = (file: File) => Promise<ProfileImportResult>;
 
 export function ProductTab({
   profile,
   /** Дополнительная ось для техплощадки: «Поступление ↔ Поставка» */
   showSideAxis = false,
+  onImportProfile,
 }: {
   profile: ProductProfile | null;
   showSideAxis?: boolean;
+  /** Загрузить профиль из файла (.xlsx/.xls/.csv) для выбранного объекта */
+  onImportProfile?: ProfileImportHandler;
 }) {
   const [view, setView] = useState<View>('table');
   const [enabled, setEnabled] = useState<ProductType[]>(() => {
@@ -37,11 +55,16 @@ export function ProductTab({
     }
   }, [profile]);
 
+  const importBar = onImportProfile ? <ProfileImportBar onImport={onImportProfile} /> : null;
+
   if (!profile) {
     return (
-      <PanelSection title="Профиль продукции">
-        <p className="pp-muted">Профиль продукции для этого объекта не задан.</p>
-      </PanelSection>
+      <>
+        {importBar}
+        <PanelSection title="Профиль продукции">
+          <p className="pp-muted">Профиль продукции для этого объекта не задан.</p>
+        </PanelSection>
+      </>
     );
   }
 
@@ -72,6 +95,8 @@ export function ProductTab({
           График
         </button>
       </div>
+
+      {importBar}
 
       {showSideAxis && (
         <div className="pp-side-axis" role="group" aria-label="Ось поступления/поставки">
@@ -115,6 +140,76 @@ export function ProductTab({
         )}
       </PanelSection>
     </>
+  );
+}
+
+/* ---------------------------------------------------------------- */
+
+type ImportState =
+  | { phase: 'idle' }
+  | { phase: 'loading'; fileName: string }
+  | { phase: 'done'; result: ProfileImportResult };
+
+/** Кнопка «Загрузить профиль» + статус последней загрузки. */
+function ProfileImportBar({ onImport }: { onImport: ProfileImportHandler }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [state, setState] = useState<ImportState>({ phase: 'idle' });
+
+  const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    // Сбрасываем значение, чтобы повторный выбор того же файла снова вызвал onChange.
+    e.target.value = '';
+    if (!file) return;
+    setState({ phase: 'loading', fileName: file.name });
+    try {
+      const result = await onImport(file);
+      setState({ phase: 'done', result });
+    } catch (err) {
+      const reason = err instanceof Error ? err.message : String(err);
+      setState({
+        phase: 'done',
+        result: { ok: false, message: `Не удалось прочитать файл «${file.name}»: ${reason}` },
+      });
+    }
+  };
+
+  const loading = state.phase === 'loading';
+
+  return (
+    <div className="pp-import">
+      <button
+        type="button"
+        className="pp-add-btn"
+        onClick={() => inputRef.current?.click()}
+        disabled={loading}
+        title="Файл профиля этого объекта: столбцы Тип, Продукт, Ед.изм, далее годы (2026, 2027, …)"
+      >
+        {loading ? 'Загрузка…' : 'Загрузить профиль'}
+      </button>
+      <input
+        ref={inputRef}
+        type="file"
+        accept=".xlsx,.xls,.csv"
+        hidden
+        onChange={handleChange}
+      />
+      {state.phase === 'loading' && (
+        <span className="pp-import__status" role="status">
+          Чтение «{state.fileName}»…
+        </span>
+      )}
+      {state.phase === 'done' && (
+        <span
+          className={
+            'pp-import__status ' +
+            (state.result.ok ? 'pp-import__status--ok' : 'pp-import__status--error')
+          }
+          role={state.result.ok ? 'status' : 'alert'}
+        >
+          {state.result.message}
+        </span>
+      )}
+    </div>
   );
 }
 
@@ -246,77 +341,153 @@ function ProfileGraph({
     );
   }
 
-  const max = Math.max(profile.limit ?? 0, ...uniqueSeries.flatMap((s) => s.points.map((p) => p.value)), 1);
+  const unitOf = (p: ProductType) => profile.products.find((x) => x.product === p)?.unit ?? '';
+  const valueAt = (s: ProductSeries, year: number) => s.points.find((p) => p.year === year)?.value ?? 0;
 
-  const hoverValues =
-    hoverYear == null
-      ? []
-      : uniqueSeries.map((s) => ({
-        product: s.product,
-        value: s.points.find((p) => p.year === hoverYear)?.value ?? 0,
-      }));
+  // Распределение рядов по шкалам: тыс. т/год — слева, млн м³/год — справа (без пересчёта единиц).
+  const { axes, unplotted } = assignAxes(uniqueSeries.map((s) => ({ product: s.product, unit: unitOf(s.product) })));
+  const sides = (['left', 'right'] as const).filter((side) => axes[side]);
+  const sideOf = (p: ProductType): AxisSide | undefined => sides.find((side) => axes[side]!.products.includes(p));
+  // Линия ограничения — по основной (левой, если есть) шкале, как и раньше по единственной.
+  const primary = sides[0];
+
+  const dataMax = (side: AxisSide) =>
+    Math.max(
+      side === primary ? (profile.limit ?? 0) : 0,
+      ...uniqueSeries.filter((s) => sideOf(s.product) === side).flatMap((s) => s.points.map((p) => p.value)),
+    );
+  const intervals = chooseIntervals(sides.map(dataMax));
+  const scales: Partial<Record<AxisSide, AxisScale>> = {};
+  for (const side of sides) scales[side] = niceScale(dataMax(side), intervals);
+  const gridTicks = primary ? scales[primary]!.ticks.slice(1) : [];
+
+  const plotted = uniqueSeries.filter((s) => sideOf(s.product));
+  const heightPct = (s: ProductSeries, v: number) => {
+    const side = sideOf(s.product);
+    return side ? Math.min(100, (v / scales[side]!.max) * 100) : 0;
+  };
+
+  const describe = (year: number) =>
+    plotted
+      .map((s) => `${PRODUCT_LABEL[s.product]} ${formatNum(valueAt(s, year))} ${prettyUnit(unitOf(s.product))}`)
+      .join(', ');
 
   return (
     <div className="pp-chart">
       <div className="pp-chart__head">
         <span className="pp-chart__eyebrow">{profile.measureLabel.toUpperCase()}</span>
-        {profile.limit != null && (
-          <span className="pp-chart__limit">Ограничение {profile.limit}</span>
+        {profile.limit != null && primary && (
+          <span className="pp-chart__limit">
+            Ограничение {formatNum(profile.limit)}
+          </span>
         )}
       </div>
-      <div className="pp-chart__plot">
-        {profile.limit != null && (
-          <span
-            className="pp-chart__limit-line"
-            style={{ bottom: `${(profile.limit / max) * 100}%` }}
-            aria-hidden="true"
-          />
-        )}
-        <div className="pp-chart__bars">
-          {allYears.map((year) => (
-            <button
-              type="button"
-              key={year}
-              className={'pp-chart__col' + (hoverYear === year ? ' pp-chart__col--hover' : '')}
-              onMouseEnter={() => setHoverYear(year)}
-              onMouseLeave={() => setHoverYear(null)}
-              onFocus={() => setHoverYear(year)}
-              onBlur={() => setHoverYear(null)}
-              aria-label={`${year}: ${hoverValues.map((v) => formatNum(v.value)).join(', ')}`}
+
+      {/* Единицы шкал с маркерами рядов: видно, какой продукт читается по какой шкале */}
+      <div className="pp-chart__units">
+        {sides.map((side) => (
+          <span key={side} className={`pp-chart__unit pp-chart__unit--${side}`}>
+            {axes[side]!.products.map((p) => (
+              <span
+                key={p}
+                className="pp-chart__unit-swatch"
+                style={{ background: PRODUCT_COLOR[p] }}
+                title={PRODUCT_LABEL[p]}
+                aria-hidden="true"
+              />
+            ))}
+            {prettyUnit(axes[side]!.unit)}
+          </span>
+        ))}
+      </div>
+
+      <div className="pp-chart__frame">
+        {sides.map((side) => {
+          const scale = scales[side]!;
+          const labels = scale.ticks.map((t) => formatTick(t.value, scale.decimals));
+          const widthCh = Math.max(...labels.map((l) => l.length));
+          return (
+            <div
+              key={side}
+              className={`pp-chart__scale pp-chart__scale--${side}`}
+              style={{ width: `calc(${widthCh}ch + 6px)` }}
+              aria-hidden="true"
             >
-              {uniqueSeries.map((s) => {
-                const v = s.points.find((p) => p.year === year)?.value ?? 0;
-                return (
+              {scale.ticks.map((t, i) => (
+                <span key={t.value} className="pp-chart__tick" style={{ bottom: `${t.fraction * 100}%` }}>
+                  {labels[i]}
+                </span>
+              ))}
+            </div>
+          );
+        })}
+
+        <div className="pp-chart__plot">
+          {gridTicks.map((t) => (
+            <span
+              key={t.value}
+              className="pp-chart__grid"
+              style={{ bottom: `${t.fraction * 100}%` }}
+              aria-hidden="true"
+            />
+          ))}
+          {profile.limit != null && primary && (
+            <span
+              className="pp-chart__limit-line"
+              style={{ bottom: `${Math.min(100, (profile.limit / scales[primary]!.max) * 100)}%` }}
+              aria-hidden="true"
+            />
+          )}
+          <div className="pp-chart__bars">
+            {allYears.map((year) => (
+              <button
+                type="button"
+                key={year}
+                className={'pp-chart__col' + (hoverYear === year ? ' pp-chart__col--hover' : '')}
+                onMouseEnter={() => setHoverYear(year)}
+                onMouseLeave={() => setHoverYear(null)}
+                onFocus={() => setHoverYear(year)}
+                onBlur={() => setHoverYear(null)}
+                aria-label={`${year}: ${describe(year)}`}
+              >
+                {plotted.map((s) => (
                   <span
                     key={s.product}
                     className="pp-chart__bar"
-                    style={{ height: `${(v / max) * 100}%`, background: PRODUCT_COLOR[s.product] }}
+                    style={{ height: `${heightPct(s, valueAt(s, year))}%`, background: PRODUCT_COLOR[s.product] }}
                   />
-                );
-              })}
-            </button>
-          ))}
-        </div>
-        {hoverYear != null && (
-          <div className="pp-chart__tooltip">
-            <span className="pp-chart__tooltip-date">01.01.{hoverYear}</span>
-            {hoverValues.map((v) => (
-              <span className="pp-chart__tooltip-row" key={v.product}>
-                <span
-                  className="pp-chart__tooltip-swatch"
-                  style={{ background: PRODUCT_COLOR[v.product] }}
-                />
-                {PRODUCT_LABEL[v.product]}: <b>{formatNum(v.value)}</b>
-              </span>
+                ))}
+              </button>
             ))}
           </div>
-        )}
+          {hoverYear != null && (
+            <div className="pp-chart__tooltip">
+              <span className="pp-chart__tooltip-date">01.01.{hoverYear}</span>
+              {plotted.map((s) => (
+                <span className="pp-chart__tooltip-row" key={s.product}>
+                  <span className="pp-chart__tooltip-swatch" style={{ background: PRODUCT_COLOR[s.product] }} />
+                  {PRODUCT_LABEL[s.product]}: <b>{formatNum(valueAt(s, hoverYear))}</b>{' '}
+                  {prettyUnit(unitOf(s.product))}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="pp-chart__axis">
+          <span>{allYears[0]}</span>
+          {allYears.length > 2 && <span>{allYears[Math.floor(allYears.length / 2)]}</span>}
+          <span>{allYears[allYears.length - 1]}</span>
+        </div>
       </div>
-      <div className="pp-chart__axis">
-        <span>{allYears[0]}</span>
-        {allYears.length > 2 && <span>{allYears[Math.floor(allYears.length / 2)]}</span>}
-        <span>{allYears[allYears.length - 1]}</span>
-      </div>
+
+      {unplotted.length > 0 && (
+        <p className="pp-chart__note" role="note">
+          Не показаны на графике (единица не совпадает со шкалами):{' '}
+          {unplotted.map((u) => `${PRODUCT_LABEL[u.product]} (${prettyUnit(u.unit) || 'ед. не задана'})`).join(', ')}.
+          Значения — во вкладке «Таблица».
+        </p>
+      )}
     </div>
   );
 }

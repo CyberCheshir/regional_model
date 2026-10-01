@@ -881,6 +881,35 @@
   box-shadow: var(--shadow-card, 0 1px 3px rgba(16, 26, 48, 0.05));
 }
 
+/* --- Профиль продукции: загрузка из файла --- */
+.pp-import {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin: 8px 16px 0;
+  flex: 0 0 auto;
+}
+
+.pp-import .pp-add-btn:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.pp-import__status {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-secondary, #3b4657);
+}
+
+.pp-import__status--ok {
+  color: var(--color-success, #15803d);
+}
+
+.pp-import__status--error {
+  color: var(--color-danger, #b91c1c);
+}
+
 /* --- Продукты (чекбоксы) --- */
 .pp-products {
   display: flex;
@@ -1017,11 +1046,101 @@
   color: #b45309;
 }
 
+/* Единицы шкал: слева — левой, справа — правой */
+.pp-chart__units {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary, #3b4657);
+}
+
+.pp-chart__unit {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.pp-chart__unit--right {
+  margin-left: auto;
+}
+
+.pp-chart__unit-swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+
+/* Левая шкала | область столбцов | правая шкала; под областью — годы */
+.pp-chart__frame {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    'lscale plot rscale'
+    '.      axis .';
+  row-gap: 4px;
+  /* Запас под половину высоты верхней подписи деления */
+  padding-top: 6px;
+}
+
+.pp-chart__scale {
+  position: relative;
+  font-size: 10.5px;
+  line-height: 1;
+  color: var(--text-muted, #6b7587);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Ширина колонки задаётся из длины самой длинной подписи (inline style), отступ — у .pp-chart__tick */
+.pp-chart__scale--left {
+  grid-area: lscale;
+  text-align: right;
+}
+
+.pp-chart__scale--right {
+  grid-area: rscale;
+  text-align: left;
+}
+
+/* Подпись центрируется по вертикали на своей линии сетки */
+.pp-chart__tick {
+  position: absolute;
+  left: 0;
+  right: 0;
+  transform: translateY(50%);
+}
+
+.pp-chart__scale--left .pp-chart__tick {
+  padding-right: 6px;
+}
+
+.pp-chart__scale--right .pp-chart__tick {
+  padding-left: 6px;
+}
+
 .pp-chart__plot {
+  grid-area: plot;
   position: relative;
   height: 180px;
-  padding: 4px 0;
   border-bottom: 1px solid var(--border-default, #d9e1ec);
+}
+
+.pp-chart__grid {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1px solid #e3e8ef;
+  pointer-events: none;
+}
+
+.pp-chart__note {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #b45309;
 }
 
 .pp-chart__limit-line {
@@ -1093,6 +1212,7 @@
 }
 
 .pp-chart__axis {
+  grid-area: axis;
   display: flex;
   justify-content: space-between;
   font-size: 10px;

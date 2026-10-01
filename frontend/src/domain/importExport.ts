@@ -269,44 +269,83 @@ export type ProfileImportItem = {
   rawRows?: Array<{ product: string; unit: string; values: Array<{ year: number; value: number }> }>;
 };
 
+/** Строка исходной таблицы профиля (один продукт одного объекта). */
+type ProfileSourceRow = {
+  type: string;
+  product: string;
+  unit: string;
+  values: Array<{ year: number; value: number }>;
+};
+
+type YearColumn = { year: number; colIdx: number };
+
 /**
- * Парсер файла «добыча-поставка.xlsx» («Профили»).
- * Столбцы: Наименование, Тип, Продукт, Ед.изм, 2026, 2027, ..., 2046.
+ * Первый лист книги как массив строк (xlsx/xls/csv — через SheetJS).
+ * `plainCsv`: .csv разбирается самостоятельно (см. `readPlainCsvRows`).
  */
-export async function parseProfilesFile(file: File): Promise<ProfileImportItem[]> {
-  const buffer = await file.arrayBuffer();
-  const wb = XLSX.read(buffer, { type: 'array' });
+async function readFirstSheetRows(file: File, { plainCsv = false } = {}): Promise<unknown[][]> {
+  if (plainCsv && file.name.toLowerCase().endsWith('.csv')) {
+    return readPlainCsvRows(await file.text());
+  }
+  const wb = XLSX.read(await file.arrayBuffer(), { type: 'array' });
   const firstSheetName = wb.SheetNames[0];
   if (!firstSheetName) return [];
   const ws = wb.Sheets[firstSheetName];
-  const rows = XLSX.utils.sheet_to_json(ws, { header: 1 }) as unknown[][];
-  if (rows.length < 2) return [];
+  return XLSX.utils.sheet_to_json(ws, { header: 1 }) as unknown[][];
+}
 
-  // Заголовок и колонки годов
-  const headerRow = rows[0] || [];
-  const yearCols: Array<{ year: number; colIdx: number }> = [];
+/**
+ * CSV как таблица строк-ячеек (текст уже декодирован как UTF-8).
+ * Разделитель — «;», если он есть в заголовке, иначе «,». Ячейки остаются строками:
+ * десятичную запятую («10,5») разбирает `readYearValues`. SheetJS здесь не используется:
+ * байты без BOM он читает как Latin-1, а «10,5» в CSV с «;» превращает в 105.
+ */
+function readPlainCsvRows(text: string): string[][] {
+  const lines = text
+    .replace(/^\uFEFF/, '')
+    .split(/\r?\n/)
+    .filter((l) => l.trim() !== '');
+  if (lines.length === 0) return [];
+  const sep = lines[0].includes(';') ? ';' : ',';
+  return lines.map((l) => l.split(sep).map((c) => c.trim().replace(/^"(.*)"$/, '$1')));
+}
 
+/** Колонки годов заголовка (1990–2100), по возрастанию года. */
+function readYearColumns(headerRow: unknown[]): YearColumn[] {
+  const yearCols: YearColumn[] = [];
   for (let c = 0; c < headerRow.length; c++) {
     const y = Number(headerRow[c]);
     if (Number.isInteger(y) && y >= 1990 && y <= 2100) {
       yearCols.push({ year: y, colIdx: c });
     }
   }
-
-  if (yearCols.length === 0) return [];
   yearCols.sort((a, b) => a.year - b.year);
-  const startYear = yearCols[0].year;
-  const endYear = yearCols[yearCols.length - 1].year;
-  const period = `${startYear}–${endYear}`;
+  return yearCols;
+}
+
+/** Значения строки по годам: десятичная запятая допустима, пусто/не число → 0, округление до 0,01. */
+function readYearValues(row: unknown[], yearCols: YearColumn[]): Array<{ year: number; value: number }> {
+  return yearCols.map(({ year, colIdx }) => {
+    const raw = row[colIdx];
+    const val = typeof raw === 'number' ? raw : parseFloat(String(raw || '0').replace(',', '.'));
+    return { year, value: isNaN(val) ? 0 : Math.round(val * 100) / 100 };
+  });
+}
+
+/**
+ * Парсер файла «добыча-поставка.xlsx» («Профили»).
+ * Столбцы: Наименование, Тип, Продукт, Ед.изм, 2026, 2027, ..., 2046.
+ */
+export async function parseProfilesFile(file: File): Promise<ProfileImportItem[]> {
+  const rows = await readFirstSheetRows(file);
+  if (rows.length < 2) return [];
+
+  // Заголовок и колонки годов
+  const yearCols = readYearColumns(rows[0] || []);
+  if (yearCols.length === 0) return [];
 
   // Группировка строк по имени объекта
-  type EntityRow = {
-    type: string;
-    product: string;
-    unit: string;
-    values: Array<{ year: number; value: number }>;
-  };
-  const grouped = new Map<string, EntityRow[]>();
+  const grouped = new Map<string, ProfileSourceRow[]>();
 
   for (let i = 1; i < rows.length; i++) {
     const row = rows[i];
@@ -315,12 +354,7 @@ export async function parseProfilesFile(file: File): Promise<ProfileImportItem[]
     const type = String(row[1] || 'Добыча').trim();
     const product = String(row[2] || '').trim();
     const unit = String(row[3] || '').trim();
-
-    const values = yearCols.map(({ year, colIdx }) => {
-      const raw = row[colIdx];
-      const val = typeof raw === 'number' ? raw : parseFloat(String(raw || '0').replace(',', '.'));
-      return { year, value: isNaN(val) ? 0 : Math.round(val * 100) / 100 };
-    });
+    const values = readYearValues(row, yearCols);
 
     const list = grouped.get(entityName) || [];
     list.push({ type, product, unit, values });
@@ -328,87 +362,202 @@ export async function parseProfilesFile(file: File): Promise<ProfileImportItem[]
   }
 
   const results: ProfileImportItem[] = [];
-
   for (const [entityName, rowList] of grouped.entries()) {
-    const series: ProductSeries[] = [];
-    const products: ProductProfile['products'] = [];
+    results.push(buildProfileImportItem(entityName, rowList, yearCols));
+  }
+  return results;
+}
 
-    for (const r of rowList) {
-      const pLower = r.product.toLowerCase();
-      let prodType: ProductType = 'oil';
-      if (pLower.includes('нефть')) prodType = 'oil';
-      else if (pLower.includes('газ') || pLower.includes('пг') || pLower.includes('пнг') || pLower.includes('сог')) prodType = 'gas';
-      else if (pLower.includes('вод')) prodType = 'water';
-      else if (pLower.includes('сгк') || pLower.includes('жидк')) prodType = 'liquid';
-      else continue; // Пропускаем давление/температуру для графика профилей флюидов
-
-      if (!products.some((p) => p.product === prodType)) {
-        products.push({
-          product: prodType,
-          unit: r.unit || (prodType === 'gas' ? 'млн м³/год' : 'тыс. т/год'),
-          enabled: true,
-        });
-      }
-
-      // Объединяем строки одного типа вещества (например, ПНГ + ПГ) в один ряд с суммированием по годам
-      const existing = series.find((s) => s.product === prodType);
-      if (existing) {
-        for (const pt of r.values) {
-          const targetPt = existing.points.find((p) => p.year === pt.year);
-          if (targetPt) {
-            targetPt.value = Math.round((targetPt.value + pt.value) * 100) / 100;
-          } else {
-            existing.points.push({ ...pt });
-          }
-        }
-      } else {
-        series.push({
-          product: prodType,
-          points: r.values.map((v) => ({ ...v })),
-        });
-      }
+/** Итог разбора файла профиля одного объекта. */
+export type EntityProfileParseResult =
+  | {
+      ok: true;
+      item: ProfileImportItem;
+      /** Строки с нераспознанным «Продуктом» (давление, температура и т.п.) — в профиль не вошли */
+      skippedProducts: string[];
     }
-
-    // Если нет стандартных флюидов (например, только технологические строки), берем базовый список
-    if (products.length === 0) {
-      products.push(
-        { product: 'oil', unit: 'тыс. т/год', enabled: true },
-        { product: 'gas', unit: 'млн м³/год', enabled: true },
-        { product: 'water', unit: 'тыс. т/год', enabled: true },
-      );
-    }
-
-    const measureLabel = rowList[0]?.type?.toLowerCase().includes('поставк') ? 'Поставка' : 'Добыча';
-
-    let primaryFluid: 'oil' | 'gas' | 'water' = 'oil';
-    const hasGas = series.some((s) => s.product === 'gas' && s.points.some((p) => p.value > 0));
-    const hasOil = series.some((s) => s.product === 'oil' && s.points.some((p) => p.value > 0));
-    const hasWater = series.some((s) => s.product === 'water' && s.points.some((p) => p.value > 0));
-
-    if (hasGas && !hasOil) primaryFluid = 'gas';
-    else if (hasWater && !hasOil && !hasGas) primaryFluid = 'water';
-    else primaryFluid = 'oil';
-
-    const profile: ProductProfile = {
-      measureLabel,
-      startYear,
-      endYear,
-      products,
-      series,
+  | {
+      ok: false;
+      code: 'empty-file' | 'no-year-columns' | 'has-name-column' | 'no-product-column' | 'no-rows';
+      message: string;
     };
 
-    results.push({
-      entityName,
-      flowType: rowList[0]?.type,
-      profile,
-      period,
-      primaryFluid,
-      rawProductsCount: rowList.length,
-      rawRows: rowList,
-    });
+/**
+ * Парсер файла профиля ОДНОГО объекта (загрузка из панели свойств элемента).
+ * Столбцы: Тип, Продукт, Ед.изм, 2026, 2027, ..., 2045 — без «Наименования»:
+ * объект известен заранее (`entityName`).
+ *
+ * Столбцы ищутся по заголовку («Тип» необязателен — по умолчанию «Добыча»);
+ * если ни один заголовок не распознан — по позиции (0, 1, 2).
+ * Разбор значений и сборка профиля — те же, что у `parseProfilesFile`.
+ */
+export async function parseEntityProfileFile(
+  file: File,
+  entityName: string,
+): Promise<EntityProfileParseResult> {
+  const rows = await readFirstSheetRows(file, { plainCsv: true });
+  if (rows.length < 2) {
+    return { ok: false, code: 'empty-file', message: 'Файл пуст или содержит только заголовок.' };
   }
 
-  return results;
+  const headerRow = rows[0] || [];
+  const yearCols = readYearColumns(headerRow);
+  if (yearCols.length === 0) {
+    return {
+      ok: false,
+      code: 'no-year-columns',
+      message: 'В заголовке нет столбцов годов (например, 2026, 2027, …).',
+    };
+  }
+
+  const header = headerRow.map((c) => String(c ?? '').trim().toLowerCase());
+  if (header.some((h) => h.includes('наименован'))) {
+    return {
+      ok: false,
+      code: 'has-name-column',
+      message:
+        'Файл содержит столбец «Наименование» — это файл нескольких объектов. ' +
+        'Загрузите его в «Данные → Импорт / экспорт» или удалите столбец.',
+    };
+  }
+
+  // По позиции (Тип, Продукт, Ед.изм) — только если ни один заголовок не распознан.
+  // Если заголовки есть, отсутствующий столбец (например, «Тип») не угадывается.
+  const firstYearCol = yearCols.reduce((min, c) => Math.min(min, c.colIdx), Infinity);
+  const matchers = {
+    type: (h: string) => h.startsWith('тип'),
+    product: (h: string) => h.startsWith('продукт'),
+    unit: (h: string) => h.startsWith('ед'),
+  };
+  const found = {
+    type: header.findIndex(matchers.type),
+    product: header.findIndex(matchers.product),
+    unit: header.findIndex(matchers.unit),
+  };
+  const hasHeaders = Object.values(found).some((idx) => idx !== -1);
+  const byPosition = (pos: number) => (pos < firstYearCol ? pos : -1);
+  const typeCol = hasHeaders ? found.type : byPosition(0);
+  const productCol = hasHeaders ? found.product : byPosition(1);
+  const unitCol = hasHeaders ? found.unit : byPosition(2);
+  if (productCol === -1) {
+    return { ok: false, code: 'no-product-column', message: 'В файле нет столбца «Продукт».' };
+  }
+
+  const rowList: ProfileSourceRow[] = [];
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row) continue;
+    const product = String(row[productCol] ?? '').trim();
+    if (!product) continue;
+    const type = String((typeCol !== -1 ? row[typeCol] : '') || 'Добыча').trim();
+    const unit = String((unitCol !== -1 ? row[unitCol] : '') || '').trim();
+    rowList.push({ type, product, unit, values: readYearValues(row, yearCols) });
+  }
+
+  if (rowList.length === 0) {
+    return { ok: false, code: 'no-rows', message: 'В файле нет строк с заполненным «Продуктом».' };
+  }
+
+  const skippedProducts = rowList
+    .filter((r) => classifyProfileProduct(r.product) === null)
+    .map((r) => r.product);
+
+  return { ok: true, item: buildProfileImportItem(entityName, rowList, yearCols), skippedProducts };
+}
+
+/**
+ * Распознавание продукта по подписи строки профиля.
+ * null — строка не относится к флюидам (давление, температура и т.п.) и в профиль не входит.
+ */
+function classifyProfileProduct(product: string): ProductType | null {
+  const pLower = product.toLowerCase();
+  if (pLower.includes('нефть')) return 'oil';
+  if (pLower.includes('газ') || pLower.includes('пг') || pLower.includes('пнг') || pLower.includes('сог')) return 'gas';
+  if (pLower.includes('вод')) return 'water';
+  if (pLower.includes('сгк') || pLower.includes('жидк')) return 'liquid';
+  return null;
+}
+
+/** Сборка профиля объекта из его строк исходной таблицы. */
+function buildProfileImportItem(
+  entityName: string,
+  rowList: ProfileSourceRow[],
+  yearCols: YearColumn[],
+): ProfileImportItem {
+  const startYear = yearCols[0].year;
+  const endYear = yearCols[yearCols.length - 1].year;
+  const period = `${startYear}–${endYear}`;
+  const series: ProductSeries[] = [];
+  const products: ProductProfile['products'] = [];
+
+  for (const r of rowList) {
+    const prodType = classifyProfileProduct(r.product);
+    if (prodType === null) continue; // Пропускаем давление/температуру для графика профилей флюидов
+
+    if (!products.some((p) => p.product === prodType)) {
+      products.push({
+        product: prodType,
+        unit: r.unit || (prodType === 'gas' ? 'млн м³/год' : 'тыс. т/год'),
+        enabled: true,
+      });
+    }
+
+    // Объединяем строки одного типа вещества (например, ПНГ + ПГ) в один ряд с суммированием по годам
+    const existing = series.find((s) => s.product === prodType);
+    if (existing) {
+      for (const pt of r.values) {
+        const targetPt = existing.points.find((p) => p.year === pt.year);
+        if (targetPt) {
+          targetPt.value = Math.round((targetPt.value + pt.value) * 100) / 100;
+        } else {
+          existing.points.push({ ...pt });
+        }
+      }
+    } else {
+      series.push({
+        product: prodType,
+        points: r.values.map((v) => ({ ...v })),
+      });
+    }
+  }
+
+  // Если нет стандартных флюидов (например, только технологические строки), берем базовый список
+  if (products.length === 0) {
+    products.push(
+      { product: 'oil', unit: 'тыс. т/год', enabled: true },
+      { product: 'gas', unit: 'млн м³/год', enabled: true },
+      { product: 'water', unit: 'тыс. т/год', enabled: true },
+    );
+  }
+
+  const measureLabel = rowList[0]?.type?.toLowerCase().includes('поставк') ? 'Поставка' : 'Добыча';
+
+  let primaryFluid: 'oil' | 'gas' | 'water' = 'oil';
+  const hasGas = series.some((s) => s.product === 'gas' && s.points.some((p) => p.value > 0));
+  const hasOil = series.some((s) => s.product === 'oil' && s.points.some((p) => p.value > 0));
+  const hasWater = series.some((s) => s.product === 'water' && s.points.some((p) => p.value > 0));
+
+  if (hasGas && !hasOil) primaryFluid = 'gas';
+  else if (hasWater && !hasOil && !hasGas) primaryFluid = 'water';
+  else primaryFluid = 'oil';
+
+  const profile: ProductProfile = {
+    measureLabel,
+    startYear,
+    endYear,
+    products,
+    series,
+  };
+
+  return {
+    entityName,
+    flowType: rowList[0]?.type,
+    profile,
+    period,
+    primaryFluid,
+    rawProductsCount: rowList.length,
+    rawRows: rowList,
+  };
 }
 
 export type ElevationPoint = {
