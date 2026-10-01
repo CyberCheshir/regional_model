@@ -25,7 +25,13 @@ import {
   type AreaExportFormat,
 } from './features/map/importAreas';
 import type { PipelineClass, PipelineType, SelectedEntity } from './domain/types';
-import { buildEntityDetails, downloadDomainModel, parseDomainModelFile } from './domain';
+import {
+  buildEntityDetails,
+  downloadDomainModel,
+  parseDomainModelFile,
+  parseEntityProfileFile,
+} from './domain';
+import type { ProfileImportResult } from './features/parameterPanel/ProductTab';
 import type { DrawTool } from './features/map/drawingTypes';
 
 /** Сопоставление категории узла дерева доменному kind выбранной сущности. */
@@ -95,6 +101,7 @@ function App() {
     renameSegment,
     renameTap,
     updateEntityParams,
+    applyEntityProfileById,
     fluid: drawFluid,
     setFluid: setDrawFluid,
     pipelineClass: drawPipelineClass,
@@ -241,6 +248,40 @@ function App() {
     if (id && (selectedEntity.kind === 'pipeline' || selectedEntity.kind === 'segment')) {
       updateEntityParams(id, patch);
     }
+  };
+
+  /**
+   * Загрузка профиля продукции для выбранного объекта (вкладка «Профиль продукции»).
+   * Файл без столбца «Наименование» (Тип, Продукт, Ед.изм, годы): объект уже
+   * известен, профиль применяется по его id, а не по совпадению имени.
+   */
+  const handleImportProfile = async (file: File): Promise<ProfileImportResult> => {
+    if (!localEntity) {
+      return {
+        ok: false,
+        message: 'Профиль можно загрузить только для объекта редактируемой модели на карте.',
+      };
+    }
+    const parsed = await parseEntityProfileFile(file, localEntity.label);
+    if (!parsed.ok) {
+      return { ok: false, message: `«${file.name}»: ${parsed.message}` };
+    }
+    const { item, skippedProducts } = parsed;
+    const { updated } = applyEntityProfileById(localEntity.id, item, `Импорт (${file.name})`);
+    if (!updated) {
+      return {
+        ok: false,
+        message: `Объект «${localEntity.label}» не найден среди кустов, площадок и трубопроводов модели — профиль не применён.`,
+      };
+    }
+    const skippedNote =
+      skippedProducts.length > 0
+        ? ` Не вошли в профиль (продукт не распознан): ${skippedProducts.map((p) => `«${p}»`).join(', ')}.`
+        : '';
+    return {
+      ok: true,
+      message: `Профиль загружен из «${file.name}» (${item.period} гг., рядов: ${item.profile.series.length}).${skippedNote}`,
+    };
   };
 
   /**
@@ -558,6 +599,7 @@ function App() {
             onPipelineWallThicknessChange={handlePipelineWallThicknessChange}
             onPipelineRoughnessChange={handlePipelineRoughnessChange}
             onPipelineAdvancedChange={handlePipelineAdvancedChange}
+            onImportProfile={handleImportProfile}
           />
         }
         bottom={activeModule === 'map' ? <BottomPanel value={timeRange} onChange={setTimeRange} /> : undefined}
