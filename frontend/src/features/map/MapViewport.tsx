@@ -494,6 +494,37 @@ export function MapViewport({
     return Array.from(byId.values());
   }, [networkEdges, drawingEdges]);
 
+  // --- Видимость элементов карты по тумблеру «Скрыть» в дереве объектов ---
+  // hiddenNodeIds содержит id узлов дерева, которые могут быть: вершиной-объектом
+  // (vertex), сегментом, трубопроводом (скрывает все его сегменты), врезкой
+  // (node/tap), тройником (fitting) или лицензионным участком (area).
+  // Фильтруем данные ПЕРЕД передачей в визуальный слой GeoGraphLayer.
+  const visibleVertices = useMemo(
+    () => vertices.filter((v) => !hiddenNodeIds.has(v.id)),
+    [vertices, hiddenNodeIds],
+  );
+  const visibleFittings = useMemo(
+    () => fittings.filter((f) => !hiddenNodeIds.has(f.id)),
+    [fittings, hiddenNodeIds],
+  );
+  const visibleTaps = useMemo(
+    () => taps.filter((t) => !hiddenNodeIds.has(t.id)),
+    [taps, hiddenNodeIds],
+  );
+  const visibleSegments = useMemo(() => {
+    if (hiddenNodeIds.size === 0) return drawingSegments;
+    return drawingSegments.filter(
+      (s) =>
+        !hiddenNodeIds.has(s.id) &&
+        // Скрыт трубопровод-родитель — скрываем все его сегменты.
+        !(s.pipelineId !== null && hiddenNodeIds.has(s.pipelineId)),
+    );
+  }, [drawingSegments, hiddenNodeIds]);
+  const visibleAreas = useMemo(
+    () => areas.filter((a) => !hiddenNodeIds.has(a.id)),
+    [areas, hiddenNodeIds],
+  );
+
   const options = useMemo<Options>(() => ({ ...NETWORK_OPTIONS }), []);
 
   // Реф сети создаём до хука, чтобы обработчик клика мог читать его актуально
@@ -1182,17 +1213,17 @@ export function MapViewport({
             // карте) — пользователь сам управляет видом. Проп focus не передаём.
           >
           <GeoFlowAnimation
-            segments={drawingSegments}
+            segments={visibleSegments}
             camera={geoCamera}
             enabled={displaySettings.flowAnimation}
           />
           <GeoGraphLayer
             camera={geoCamera}
-            vertices={vertices}
-            fittings={fittings}
-            taps={taps}
-            segments={drawingSegments}
-            areas={displaySettings.showLicenceAreas ? areas : []}
+            vertices={visibleVertices}
+            fittings={visibleFittings}
+            taps={visibleTaps}
+            segments={visibleSegments}
+            areas={displaySettings.showLicenceAreas ? visibleAreas : []}
             areaDraft={displaySettings.showLicenceAreas ? areaDraft : []}
             selectedAreaIds={selections.filter((s) => s.kind === 'area').map((s) => s.id)}
             onAreaScale={scaleArea}
