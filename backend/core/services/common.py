@@ -4,6 +4,7 @@ import math
 
 from django.db.models import QuerySet
 from django.shortcuts import get_object_or_404
+from django.utils.text import slugify
 
 from core.models import Facility, Project
 
@@ -20,6 +21,27 @@ def get_default_project() -> Project:
 
 def get_project_or_default(project_id) -> Project:
     return get_object_or_404(Project, id=project_id) if project_id else get_default_project()
+
+
+def _unique_project_slug(name: str = "") -> str:
+    """
+    Сгенерировать slug, свободный в таблице проектов.
+
+    Раньше slug выводился из счётчика записей (`scenario-{count+1}`), но это не
+    гарантирует уникальность: после удаления сценария (или создания с явным
+    slug мимо этой схемы) номер указывал на уже занятый slug — PostgreSQL
+    отклонял INSERT по `core_project_slug_key`, и сохранение падало с 500.
+
+    Теперь база slug берётся из имени (кириллица даёт пустой slugify →
+    `scenario`), а номер подбирается до первого свободного в БД.
+    """
+    base = slugify(name)[:90] or "scenario"
+    if not Project.objects.filter(slug=base).exists():
+        return base
+    index = 2
+    while Project.objects.filter(slug=f"{base}-{index}").exists():
+        index += 1
+    return f"{base}-{index}"
 
 
 def resolve_project_for_save(project_id, project_name) -> Project:
@@ -39,9 +61,7 @@ def resolve_project_for_save(project_id, project_name) -> Project:
         project = Project.objects.filter(name=name).first()
         if project is not None:
             return project
-        # slug должен быть уникален: берём из счётчика.
-        slug = f"scenario-{Project.objects.count() + 1}"
-        return Project.objects.create(name=name, slug=slug)
+        return Project.objects.create(name=name, slug=_unique_project_slug(name))
     return get_default_project()
 
 

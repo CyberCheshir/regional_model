@@ -4,7 +4,7 @@
  * кроме счётчика уникальных id (nextId).
  */
 import { lngLatToGraphPoint } from './geo';
-import { newUid } from './drawingTypes';
+import { nearestBorderPoint, newUid } from './drawingTypes';
 import type {
   DrawVertex,
   DrawnSegment,
@@ -269,7 +269,28 @@ export function nodeToDrawVertex(
 
   // Обычная вершина: если привязана к объекту — как стык к его границе.
   if (node.facility_id && verticesById.has(node.facility_id)) {
-    return { type: 'box', vid, x: world.x, y: world.y, boxId: node.facility_id, lx: 0, ly: 0 };
+    const box = verticesById.get(node.facility_id) as MapVertex;
+    const bw = box.w ?? 0;
+    const bh = box.h ?? 0;
+    // Объект без размеров — не можем восстановить точку контакта; оставляем
+    // координату узла без относительного смещения.
+    if (bw <= 0 || bh <= 0) {
+      return { type: 'box', vid, x: world.x, y: world.y, boxId: node.facility_id, lx: 0, ly: 0 };
+    }
+    // Восстанавливаем РЕАЛЬНУЮ точку контакта на контуре объекта по сохранённой
+    // геопозиции узла. Раньше здесь жёстко стояло lx:0, ly:0 — это центр объекта,
+    // поэтому все концы рёбер (в т.ч. логический поток) при загрузке «съезжали»
+    // в одну точку центра и визуально присоединялись к чужой вершине.
+    const bp = nearestBorderPoint(world, { x: box.x, y: box.y, w: bw, h: bh });
+    return {
+      type: 'box',
+      vid,
+      x: bp.x,
+      y: bp.y,
+      boxId: node.facility_id,
+      lx: bp.lx,
+      ly: bp.ly,
+    };
   }
   return { type: 'free', vid, x: world.x, y: world.y };
 }

@@ -305,6 +305,31 @@ class MapSaveTests(TestCase):
         response = APIClient().post("/api/map/save/", payload, format="json")
         self.assertEqual(response.status_code, 400)
 
+    def test_save_by_name_avoids_slug_collision_after_deletion(self):
+        # Регрессия HTTP 500 при сохранении: если проекты с похожими slug уже
+        # существуют (или часть сценариев удалили и счётчик count+1 попадает
+        # в существующий slug), авто-генератор slug обязан подбирать уникальный
+        # ключ, а не падать с IntegrityError по unique-constraint core_project_slug_key.
+        Project.objects.create(name="Старый 1", slug="scenarij-novyj")
+        Project.objects.create(name="Старый 2", slug="scenarij-novyj-2")
+        Project.objects.create(name="Старый 3", slug="scenario-1")
+
+        payload = {
+            "project_name": "Сценарий новый",
+            "facilities": [],
+            "nodes": [],
+            "segments": [],
+            "pipelines": [],
+            "licence_areas": [],
+        }
+        client = APIClient()
+        response = client.post("/api/map/save/", payload, format="json")
+        self.assertEqual(response.status_code, 201, response.json())
+        created = Project.objects.get(name="Сценарий новый")
+        # Должен выбрать свободный суффикс (например, scenarij-novyj-3 или scenario-N),
+        # главное — не упасть с 500 и сохранить запись.
+        self.assertTrue(created.slug.startswith("scenarij-novyj") or created.slug.startswith("scenario"))
+
 class LicenceAreaTests(TestCase):
     def test_polygon_requires_three_points(self):
         project = Project.objects.create(name="Тест", slug="test-4")
