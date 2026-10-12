@@ -71,6 +71,7 @@ function App() {
     toggleVisibility,
     inspectorTab,
     diagramEntityId,
+    openDiagram,
     closeDiagram,
     diagramConfig,
     setDiagramConfig,
@@ -361,12 +362,12 @@ function App() {
     selectEntity(node.id, nodeKindToEntityKind(node));
   };
   /**
-   * Кнопка «Диаграмма» в дереве — ПОКА ЗАГЛУШКА: ничего не делает.
-   * Раскрытие плавающего окна диаграммы временно отключено по требованию;
-   * сам компонент `MapDiagramModal` сохранён и готов к подключению обратно.
+   * Кнопка «Диаграмма» в дереве — открыть плавающее окно конфигурации
+   * диаграммы (MapDiagramModal) рядом с левым sidebar.
    */
-  const handleOpenDiagram = () => {
-    // no-op
+  const handleOpenDiagram = (node: TreeNodeData) => {
+    if (node.id.startsWith('group-')) return;
+    openDiagram(node.id);
   };
 
   /** Экспорт всех спроектированных участков в файл (JSON / CSV / GeoJSON). */
@@ -603,20 +604,6 @@ function App() {
             devMode={devMode}
             onMergeComplete={(count) => showToast(`Трубопроводы объединены (${count} сегм.)`)}
           >
-            <MapDiagramModal
-              isOpen={diagramEntityId !== null}
-              entityName={
-                drawVertices.find((v) => v.id === diagramEntityId)?.label ??
-                drawPipelines.find((p) => p.id === diagramEntityId)?.label ??
-                drawSegments.find((s) => s.id === diagramEntityId)?.label ??
-                drawTaps.find((t) => t.id === diagramEntityId)?.label ??
-                findTreeNode(diagramEntityId ?? '')?.label ??
-                ''
-              }
-              config={diagramConfig}
-              onChange={setDiagramConfig}
-              onClose={closeDiagram}
-            />
           </MapViewport>
         }
         right={
@@ -663,6 +650,24 @@ function App() {
             <AnalyticsView onNavigateToMap={() => setActiveModule('map')} />
           ) : undefined
         }
+      />
+      {/* Модалка конфигурации диаграммы — вне слоя карты: слой карты создаёт
+          собственный stacking context (z-index 0), и модалка внутри него
+          всегда рисовалась бы ПОД сайдбаром. На уровне app-root её
+          z-index 20 корректно поднимает окно над панелями. */}
+      <MapDiagramModal
+        isOpen={diagramEntityId !== null}
+        entityName={
+          drawVertices.find((v) => v.id === diagramEntityId)?.label ??
+          drawPipelines.find((p) => p.id === diagramEntityId)?.label ??
+          drawSegments.find((s) => s.id === diagramEntityId)?.label ??
+          drawTaps.find((t) => t.id === diagramEntityId)?.label ??
+          findTreeNode(diagramEntityId ?? '')?.label ??
+          ''
+        }
+        config={diagramConfig}
+        onChange={setDiagramConfig}
+        onClose={closeDiagram}
       />
     </div>
   );

@@ -24,7 +24,7 @@
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  border: 1.5px solid var(--border-default, rgba(255, 255, 255, 0.18));
+  border: 1.5px solid var(--border-default, #d9e1ec);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -37,13 +37,13 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--accent, #4f8dff);
+  background: var(--accent, var(--color-primary, #0066cc));
   transform: scale(0);
   transition: transform 0.12s;
 }
 
 .period-radio__option input:checked+.period-radio__dot {
-  border-color: var(--accent, #4f8dff);
+  border-color: var(--accent, var(--color-primary, #0066cc));
 }
 
 .period-radio__option input:checked+.period-radio__dot::after {
@@ -51,7 +51,7 @@
 }
 
 .period-radio__option input:focus-visible+.period-radio__dot {
-  outline: 2px solid var(--accent, #4f8dff);
+  outline: 2px solid var(--accent, var(--color-primary, #0066cc));
   outline-offset: 2px;
 }
 
@@ -69,10 +69,10 @@
 .period-radio__range input {
   width: 70px;
   padding: 4px 8px;
-  border: 1px solid var(--border-default, rgba(255, 255, 255, 0.18));
+  border: 1px solid var(--border-default, #d9e1ec);
   border-radius: var(--radius-control-inner, 6px);
-  background: var(--bg-inset, rgba(255, 255, 255, 0.04));
-  color: var(--text-primary, #e6ecf8);
+  background: var(--bg-panel, #ffffff);
+  color: var(--text-primary, #000);
   font: inherit;
   font-size: 12px;
   -moz-appearance: textfield;
@@ -86,5 +86,5 @@
 }
 
 .period-radio__range span {
-  color: var(--text-muted, #000);
+  color: var(--text-muted, #1a1a1a);
 }

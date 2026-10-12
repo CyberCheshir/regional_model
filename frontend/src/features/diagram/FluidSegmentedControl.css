@@ -3,7 +3,7 @@
   gap: 4px;
   padding: 3px;
   border-radius: var(--radius-control, 8px);
-  background: var(--bg-inset, rgba(255, 255, 255, 0.04));
+  background: var(--bg-inset, var(--slate-100, #f1f5f9));
 }
 
 .fluid-seg__item {
@@ -11,7 +11,7 @@
   border: none;
   border-radius: var(--radius-control-inner, 6px);
   background: transparent;
-  color: var(--text-secondary, #000);
+  color: var(--text-secondary, #334155);
   font: inherit;
   font-size: 12px;
   cursor: pointer;
@@ -24,7 +24,7 @@
 
 .fluid-seg__item--active,
 .fluid-seg__item--active:hover {
-  background: var(--bg-card-selected, #24406b);
-  color: var(--text-primary, #e6ecf8);
+  background: var(--surface-selected, #eff6ff);
+  color: var(--color-primary, #0066cc);
   font-weight: 600;
 }
