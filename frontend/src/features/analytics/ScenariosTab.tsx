@@ -574,7 +574,7 @@ export function ScenariosTab() {
               <DataTable
                 columns={controlYearsColumns}
                 rows={activeProdData.controlYears}
-                rowKey={(r) => r.year}
+                rowKey={(r) => String(r.year)}
                 wrapClassName="ui-table-wrap"
                 ariaLabel="Контрольные годы"
               />

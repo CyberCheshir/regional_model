@@ -9,7 +9,7 @@ import type {
   RecommendationItem,
 } from './types';
 import { HierarchyTree } from './HierarchyTree';
-import { enrichWithModelElements } from './modelMatch';
+import { enrichWithModelElements, toGraphNodes } from './modelMatch';
 import '../../components/ui/ui.css';
 import './RecommendationsTab.css';
 
@@ -144,7 +144,7 @@ export function RecommendationsTab({
 
   // Рекомендации с возможностью переопределения категории
   const [recommendations, setRecommendations] = useState<RecommendationItem[]>(() =>
-    enrichWithModelElements(DEFAULT_RECOMMENDATIONS, vertices, pipelines),
+    enrichWithModelElements(DEFAULT_RECOMMENDATIONS, toGraphNodes(vertices), pipelines),
   );
 
   // Выбранная рекомендация

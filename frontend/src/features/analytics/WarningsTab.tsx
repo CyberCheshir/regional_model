@@ -12,7 +12,7 @@ import type {
   WarningsFilterState,
 } from './types';
 import { HierarchyTree } from './HierarchyTree';
-import { enrichWithModelElements } from './modelMatch';
+import { enrichWithModelElements, toGraphNodes } from './modelMatch';
 import '../../components/ui/ui.css';
 import './WarningsTab.css';
 
@@ -143,7 +143,7 @@ export function WarningsTab({ onOpenRecommendations, onShowOnMap }: WarningsTabP
 
   // Формируем список предупреждений (обогащая реальными объектами, если они есть)
   const warningsList = useMemo<WarningDetailItem[]>(
-    () => enrichWithModelElements(DEFAULT_WARNINGS, vertices, pipelines),
+    () => enrichWithModelElements(DEFAULT_WARNINGS, toGraphNodes(vertices), pipelines),
     [vertices, pipelines],
   );
 

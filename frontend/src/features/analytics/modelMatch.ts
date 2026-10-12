@@ -1,8 +1,28 @@
 import type { GraphNode } from '../../domain/types';
-import type { Pipeline } from '../../domain/types';
+import type { MapVertex } from '../map/drawingTypes';
+import type { PipelineRecord } from '../map/mapDrawingHelpers';
 
 /** Результат сопоставления элемента с объектами модели */
 export type ElementMatch = { label: string } | undefined;
+
+/**
+ * Привести вершины-объекты карты (MapVertex) к форме узла графа (GraphNode).
+ * Сопоставление идёт по label, поэтому нужен только он;
+ * id/kind/entityId заполняются для соблюдения контракта GraphNode.
+ */
+export function toGraphNodes(vertices: MapVertex[]): GraphNode[] {
+  return vertices.map((v) => ({
+    id: v.id,
+    label: v.label,
+    kind:
+      v.kind === 'wellpad'
+        ? 'wellpad'
+        : v.kind === 'delivery-point'
+          ? 'delivery'
+          : 'processing',
+    entityId: v.uid,
+  }));
+}
 
 /**
  * Ищет элемент модели (вершину или трубопровод), чья подпись содержит имя `element`
@@ -11,7 +31,7 @@ export type ElementMatch = { label: string } | undefined;
  */
 export function matchElementLabel(
   vertices: GraphNode[],
-  pipelines: Pipeline[],
+  pipelines: readonly { label: string }[],
   element: string,
 ): ElementMatch {
   const needle = element.toLowerCase();
@@ -29,7 +49,7 @@ export function matchElementLabel(
 export function enrichWithModelElements<T extends { element: string }>(
   items: T[],
   vertices: GraphNode[],
-  pipelines: Pipeline[],
+  pipelines: readonly PipelineRecord[],
 ): T[] {
   if (vertices.length === 0 && pipelines.length === 0) {
     return items;

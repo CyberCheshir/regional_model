@@ -121,9 +121,11 @@ function SectionIdentification({
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(entity.label);
   const inputRef = useRef<HTMLInputElement>(null);
-  const pipelineClass = entity.pipelineClass === 'interfield' || entity.pipelineClass === 'trunk'
-    ? entity.pipelineClass
-    : 'field';
+  // Класс трубопровода без 'logical': у логического потока классификация не редактируется.
+  const pipelineClass: Exclude<PipelineClass, 'logical'> =
+    entity.pipelineClass === 'interfield' || entity.pipelineClass === 'trunk'
+      ? entity.pipelineClass
+      : 'field';
 
   useEffect(() => {
     setEditing(false);
@@ -218,7 +220,7 @@ function SectionIdentification({
                 disabled={!onPipelineClassChange}
                 aria-label="Классификация трубопровода"
               >
-                {(Object.keys(PIPELINE_CLASS_LABELS) as PipelineClass[]).map((classification) => (
+                {(Object.keys(PIPELINE_CLASS_LABELS) as Array<Exclude<PipelineClass, 'logical'>>).map((classification) => (
                   <option key={classification} value={classification}>
                     {PIPELINE_CLASS_LABELS[classification]}
                   </option>
