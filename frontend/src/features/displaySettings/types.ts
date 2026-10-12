@@ -30,7 +30,7 @@ export type MapDisplaySettings = {
 export const DEFAULT_MAP_DISPLAY_SETTINGS: MapDisplaySettings = {
   showLabels: true,
   showWarnings: true,
-  directedGraph: true,
+  directedGraph: false,
   flowAnimation: false,
   showLicenceAreas: true,
   showEdgeJoints: true,
