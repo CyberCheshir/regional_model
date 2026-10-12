@@ -8,7 +8,7 @@ export type TopBarBreadcrumbsProps = {
   items: readonly TopBarCrumb[];
 };
 
-/** Хлебные крошки верхней панели: «Восточная Сибирь › Региональный модуль». */
+/** Хлебные крошки верхней панели: «Восточная Сибирь › Инфраструктурная модель». */
 export function TopBarBreadcrumbs({ items }: TopBarBreadcrumbsProps) {
   if (items.length === 0) return null;
   return (

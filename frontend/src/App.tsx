@@ -542,7 +542,7 @@ function App() {
       />
       {activeModule === 'map' && (
         <TopBar
-          breadcrumbs={[{ label: 'Восточная Сибирь' }, { label: 'Региональный модуль' }]}
+          breadcrumbs={[{ label: 'Восточная Сибирь' }, { label: 'Инфраструктурная модель' }]}
           viewMode={viewMode}
           onViewModeChange={handleViewModeChange}
           scenarioLabel="Базовый сценарий"
